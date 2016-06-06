@@ -1,0 +1,325 @@
+instance_version:
+  type: version
+  name: instancing
+  id: 58
+  description: simple instancing api
+  version: 6
+instancing_config:
+  type: yaml data
+  # should the player be removed from the instance when he logs out
+  exit on logout: true
+  # should an instance automaticly get removed if the last person in it leaves it
+  close when empty: true
+  # this is the location the player gets teleported to if they automaticly get removed from an instance, in case their last known location fails
+  fallback location: l@-3000,200,-4000,zolaria
+######
+##- ~run initiate_instance def:<blueprint name> save:return
+##- narrate "<entry[return].created_queue.determination> is the dWorld of the instance I just made!"
+##- teleport <player> <entry[return].created_queue.determination>
+initiate_instance:
+  type: task
+  debug: false
+  speed: 0
+  script:
+  - define blueprint <def[blueprint]||<def[1]||none>>
+  - if <server.has_file[../../instancing/blueprints/<def[blueprint]>].not> {
+    - announce to_ops "uh oh! Tried to load an instance from an inexisting blueprint!"
+    - queue clear
+    }
+  - define instance_name "instancing/instances/<util.random.uuid>"
+  - createworld <def[instance_name]> copy_from:instancing/blueprints/<def[blueprint]>
+  - wait 1t
+  - define instance <def[instance_name].as_world||none>
+  - if <def[instance]||none> == none {
+    - announce "uh oh! Failed to create <def[instance_name]>"
+    }
+  - adjust <def[instance]> auto_save:false
+  - adjust <def[instance]> keep_spawn:false
+  - gamerule <def[instance]> doDaylightCycle false
+  - gamerule <def[instance]> doFireTick false
+  - gamerule <def[instance]> doMobSpawning false
+  - gamerule <def[instance]> mobGriefing false
+  - gamerule <def[instance]> randomTickSpeed 0
+  - determine "<def[instance]>" passively
+  - event "instance created" "context:blueprint|<def[blueprint]>|blueprint_world|instancing/blueprints/<def[blueprint]>|instance|<def[instance].name>"
+  - event "<def[blueprint]> instance created" "context:blueprint|<def[blueprint]>|blueprint_world|instancing/blueprints/<def[blueprint]>|instance|<def[instance].name>"
+remove_instance:
+  type: task
+  debug: false
+  speed: 0
+  script:
+  - define instance <def[1]||none>
+  - if <def[instance]||none> == none {
+    - announce to_ops "Uh oh! No instance specified to remove!"
+    - queue clear
+    }
+  - if <def[instance].name.starts_with[instancing/instances].not> {
+    - announce to_ops "uh oh! tried to remove a world that is not an instance!! bad! bad!"
+    - queue clear
+    }
+  - if <server.has_file[../../<def[instance].name||none>]> {
+    - if <server.list_worlds.contains[<def[instance]>]||false> {
+      - if <def[instance].players.size||0> > 0 {
+        - foreach <def[instance].players> {
+          - teleport <def[value]> <def[value].flag[instance_entry_location]||l@0,200,0,zolaria>
+          }
+        }
+      }
+    - if <def[world].npcs.size||0> > 0 {
+      - remove <def[instance].npcs>
+      }
+    - define instancename <def[instance].name>
+    - define blueprint <proc[get_instance_blueprint].context[<def[instance]>]>
+    - event "<def[blueprint]> instance closed" "context:instance|<def[instancename]>|blueprint|<def[blueprint]>|blueprint_world|instancing/blueprints/<def[blueprint]>"
+    - event "instance closed" "context:instance|<def[instancename]>|blueprint|<def[blueprint]>|blueprint_world|instancing/blueprints/<def[blueprint]>"
+    - adjust <def[instance]> destroy
+    }
+populate_instance:
+  type: task
+  debug: false
+  speed: 0
+  script:
+    - if <def[1].as_world.name||none> == none {
+      - announce to_ops "invalid instance specified to populate!"
+      - queue clear
+      }
+    - if <def[2].exists.not> {
+      - announce to_ops "No valid instance blueprint specified to clone population from!"
+      - queue clear
+      }
+    - define blueprint <def[2]>
+    - define world <def[1].as_world>
+    - if <server.has_file[../../<def[blueprint]>/population.yml]> {
+      - define id <def[blueprint]>_population
+      - yaml load:../../<def[blueprint]>/population.yml id:%id%
+      - foreach <yaml[%id%].list_keys[population]> {
+        - define location <yaml[%id%].read[population.%value%.location].replace[world].with[<def[world].name>]>
+        - if <yaml[%id%].read[population.%value%.type]||entity> == npc {
+          - create <yaml[%id%].read[population.%value%.name]> e@<yaml[%id%].read[population.%value%.entity]> <def[location]> save:npc
+          - define npc <entry[npc].created_npc>
+          - if <yaml[%id%].read[population.%value%.assignment]||none> != none {
+            - adjust %npc% set_assignment:<yaml[%id%].read[population.%value%.assignment]>
+            }
+          - if <yaml[%id%].read[population.%value%.skin]||none> != none {
+            - adjust %npc% skin_blob:<yaml[%id%].read[population.%value%.skin]>
+            }
+          - if <yaml[%id%].read[population.%value%.equipment]||none> != none {
+            - adjust %npc% "equipment:<yaml[%id%].read[population.%value%.equipment].as_list>"
+            }
+          } else if <yaml[%id%].read[population.%value%.entity]||entity> != entity {
+          - spawn e@<yaml[%id%].read[population.%value%.entity]> <def[location]>
+          }
+        }
+      - yaml unload id:%id%
+      }
+instancing_event_handler:
+  type: world
+  debug: false
+  events:
+    on instance created:
+    - flag server instances.<context.instance.after_last[/]>.blueprint:<context.blueprint>
+    - run s@populate_instance instantly def:<context.instance>|<context.blueprint>
+    on instance closed:
+    - flag server instances.<context.instance.after_last[/]>:!
+    on player exits instance:
+    - if "<s@instancing_config.yaml_key[close when empty].as_boolean||false>" {
+      - if <context.instance.as_world.players.size||0> < 1 {
+        - run remove_instance def:<def[instance]>
+        }
+      }
+    on player teleports:
+    - if <context.origin.world> == <context.destination.world> queue clear
+    # if the player teleports from a regular world, into an instancing world, then store its location in a flag
+    - if <context.destination.world.name.starts_with[instancing]||false> && <context.origin.world.name.starts_with[instancing].not> {
+      - flag <player> instance_entry_location:<context.origin>
+      }
+    # if the player leaves an instance
+    - if <context.origin.world.name.starts_with[instancing/instances]||false> {
+      - define instance <context.origin.world.name>
+      - define blueprint <proc[get_instance_blueprint].context[<def[instance]>]>
+      - event "player exits instance" context:instance|<def[instance]>|blueprint|<def[blueprint]>|blueprint_world|instancing/blueprints/<def[blueprint]>
+      - event "player exits <def[blueprint]> instance" context:instance|<def[instance]>|blueprint|<def[blueprint]>|blueprint_world|instancing/blueprints/<def[blueprint]>
+      }
+    # if the player enters an instance
+    - if <context.destination.world.name.starts_with[instancing/instances]||false> {
+      - define instance <context.destination.world.name>
+      - define blueprint <proc[get_instance_blueprint].context[<def[instance]>]>
+      - event "player enters instance" context:instance|<def[instance]>|blueprint|<def[blueprint]>|blueprint_world|instancing/blueprints/<def[blueprint]>
+      - event "player enters <def[blueprint]> instance" context:instance|<def[instance]>|blueprint|<def[blueprint]>|blueprint_world|instancing/blueprints/<def[blueprint]>
+      }
+    on player quits:
+    - if <player.location.world.name.starts_with[instancing/instances/].not> queue clear
+    - define instance <player.location.world>
+    - wait 1t
+    - if "<s@instancing_config.yaml_key[exit on logout].as_boolean||false>" {
+      - adjust <player> "location:<player.flag[instance_entry_location]||<s@instancing_config.yaml_key[fallback location].as_location>>"
+      - define blueprint <proc[get_instance_blueprint].context[<def[instance]>]>
+      - event "player exits instance" context:instance|<def[instance]>|blueprint|<def[blueprint]>|blueprint_world|instancing/blueprints/<def[blueprint]>
+      - event "player exits <def[blueprint]> instance" context:instance|<def[instance]>|blueprint|<def[blueprint]>|blueprint_world|instancing/blueprints/<def[blueprint]>
+      }
+#tags
+get_instance:
+  type: procedure
+  debug: false
+  script:
+  - if <def[1].exists.not> {
+    - define 1 <player||none>
+    }
+  - determine <def[1].location.world||null>
+get_instance_entry_location:
+  type: procedure
+  debug: false
+  script:
+  - if <def[1].exists.not> {
+    - define 1 <player||none>
+    }
+  - determine <def[1].flag[instance_entry_location]||null>
+get_instance_blueprint:
+  type: procedure
+  debug: false
+  script:
+  - determine <server.flag[instances.<def[1].after_last[/]>.blueprint]||null>
+list_instances:
+  type: procedure
+  debug: false
+  script:
+  - determine <server.list_worlds.filter[name.starts_with[instancing/instances]]||li@>
+# from here on it's only admin tools
+blueprint_command:
+  debug: false
+  type: command
+  name: blueprint
+  script:
+    - if <pl.is_op.not> queue clear
+    - choose <context.args.get[1]||none>:
+      - case delete:
+        - define blueprint <context.args.get[2]||none>
+        - if <def[blueprint]> == none {
+          - narrate "<&c>Please specify a valid blueprint name."
+          - queue clear
+          }
+        - if <def[blueprint]> == void {
+          - narrate "<&c>you cannot delete the void blueprint."
+          - queue clear
+          }
+        - if <server.has_file[../../instancing/blueprints/<def[blueprint]>].not> {
+          - narrate "<&c>Please specify an existing blueprint."
+          - queue clear
+          }
+        - if <server.list_worlds> !contains w@instancing/blueprints/<def[blueprint]> {
+          - createworld instancing/blueprints/<def[blueprint]>
+          }
+        - define world w@instancing/blueprints/<def[blueprint]>
+        - foreach <def[world].players> {
+          - teleport <def[value]> <def[value].flag[instance_entry_location]||l@0,200,0,zolaria>
+          }
+        - adjust w@instancing/blueprints/<def[blueprint]> destroy
+        - narrate "<&c>deleted <def[blueprint]>"
+      - case new:
+        - define blueprint <context.args.get[2]||none>
+        - if <def[blueprint]> == none {
+          - narrate "<&c>Please specify a valid blueprint name."
+          - queue clear
+          }
+        - if <server.has_file[../../instancing/blueprints/<def[blueprint]>]> {
+          - narrate "<&c>This blueprint already exists!."
+          - queue clear
+          }
+        - if <server.list_worlds> contains w@instancing/blueprints/<def[blueprint]> {
+          - narrate "<&c>This blueprint already exists!."
+          - queue clear
+          }
+        - if <server.has_file[../../instancing/blueprints/void].not> {
+          - narrate "<&c>The server does not have a base world named 'void' to clone from."
+          - queue clear
+          }
+        - createworld instancing/blueprints/<def[blueprint]> copy_from:instancing/blueprints/void
+        - narrate "<&c>Loaded <def[blueprint]> as instancing/blueprints/<def[blueprint]>."
+      - case load:
+        - define blueprint <context.args.get[2]||none>
+        - if <def[blueprint]> == none {
+          - narrate "<&c>Please specify a valid blueprint name."
+          - queue clear
+          }
+        - if <server.has_file[../../instancing/blueprints/<def[blueprint]>].not> {
+          - narrate "<&c>Please specify an existing blueprint."
+          - queue clear
+          }
+        - if <server.list_worlds> contains w@instancing/blueprints/<def[blueprint]> {
+          - narrate "<&c>This blueprint is already loaded."
+          - queue clear
+          }
+        - createworld instancing/blueprints/<def[blueprint]>
+        - narrate "<&c>Loaded <def[blueprint]> as instancing/blueprints/<def[blueprint]>."
+        - wait 1t
+        - run populate_instance def:w@instancing/blueprints/<def[blueprint]>|<def[blueprint]>
+      - case close:
+        - define blueprint <context.args.get[2]||none>
+        - if <def[blueprint]> == none {
+          - narrate "<&c>Please specify a valid blueprint name."
+          - queue clear
+          }
+        - if <server.list_worlds> !contains w@instancing/blueprints/<def[blueprint]> {
+          - narrate "<&c>This blueprint doesn't exist."
+          - queue clear
+          }
+        - define world w@instancing/blueprints/<def[blueprint]>
+        - foreach <def[world].players>:
+          - teleport <def[value]> <def[value].flag[instance_entry_location]||l@0,200,0,zolaria>
+        - define entities <def[world].entities.filter[is_player.not]||li@>
+        - choose <def[entities].size.is[more].than[0]>:
+          - case true:
+            - define id <def[blueprint]>_blueprint_population
+            - yaml create id:%id%
+            - foreach <def[world].entities||li@>:
+              - if <def[value].is_npc> {
+                - yaml id:%id% set population.<def[loop_index]>.entity:<def[value].entity_type>
+                - yaml id:%id% set population.<def[loop_index]>.type:npc
+                - yaml id:%id% set population.<def[loop_index]>.assignment:<def[value].script||none>
+                - yaml id:%id% set population.<def[loop_index]>.name:<def[value].name||none>
+                - yaml id:%id% set population.<def[loop_index]>.skin:<def[value].skin_blob||none>
+                - yaml id:%id% set population.<def[loop_index]>.equipment:<def[value].equipment||none>
+                } else {
+                - yaml id:%id% set population.<def[loop_index]>.entity:<def[value].describe>
+                - yaml id:%id% set population.<def[loop_index]>.type:entity
+                }
+              - yaml id:%id% set population.<def[loop_index]>.location:<def[value].location.replace[<def[world].name>].with[world]>
+              - narrate "adding %value% to population."
+              - remove <def[value]>
+            - yaml id:%id% savefile:../../instancing/blueprints/<def[blueprint]>/population.yml
+            - yaml unload id:%id%
+        - adjust w@instancing/blueprints/<def[blueprint]> unload
+        - narrate "<&c>closed and saved <def[blueprint]> to instancing/blueprints/<def[blueprint]>."
+      - case spawnpoint:
+        - if <player.location.world.name.starts_with[instancing/blueprints].not> {
+          - narrate "You have to be in a blueprint world to do this."
+          - queue clear
+          }
+        - adjust <player.location.world> spawn_location:<player.location>
+        - narrate "<&c>You set the spawnpoint of <player.location.world.after_last[/]>."
+      - case list:
+        - narrate "<&c>loaded instance blueprints<&co>"
+        - foreach <server.list_worlds.filter[starts_with[w@instancing/blueprints]]||li@>:
+          - narrate "<&c><def[value].after_last[/]>"
+      - case teleport:
+        - define blueprint <context.args.get[2]||none>
+        - if <def[blueprint]> == none {
+          - narrate "<&c>Please specify a valid blueprint name."
+          - queue clear
+          }
+        - if <server.list_worlds> !contains w@instancing/blueprints/<def[blueprint]> {
+          - narrate "<&c>This blueprint doesn't exist."
+          - queue clear
+          }
+        - if <player.location.world.name.starts_with[instancing].not> {
+          - flag <player> instance_entry_location:<pl.location>
+          }
+        - teleport <player> <w@instancing/blueprints/%blueprint%.spawn_location||l@0,200,0,instancing/blueprints/<def[blueprint]>>
+      - default:
+        - narrate "<&c>/blueprint load (blueprint) - load existing blueprint"
+        - narrate "<&c>/blueprint teleport (blueprint) - teleport to loaded blueprint"
+        - narrate "<&c>/blueprint spawnpoint - sets the spawnpoint of your current blueprint at your location."
+        - narrate "<&c>/blueprint close (blueprint) - save and unload"
+        - narrate "<&c>/blueprint delete (blueprint) - delete the blueprint entirely (no undo)"
+        - narrate "<&c>/blueprint new (blueprint) - create a new blueprint"
+        - narrate "<&c>/blueprint list - lists loaded blueprint"
