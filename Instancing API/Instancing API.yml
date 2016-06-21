@@ -3,7 +3,7 @@ instance_version:
   name: instancing
   id: 58
   description: simple instancing api
-  version: 6
+  version: 7
 instancing_config:
   type: yaml data
   # should the player be removed from the instance when he logs out
@@ -15,7 +15,7 @@ instancing_config:
 ######
 ##- ~run initiate_instance def:<blueprint name> save:return
 ##- narrate "<entry[return].created_queue.determination> is the dWorld of the instance I just made!"
-##- teleport <player> <entry[return].created_queue.determination>
+##- teleport <player> <entry[return].created_queue.determination.spawn_location>
 initiate_instance:
   type: task
   debug: false
@@ -93,7 +93,7 @@ populate_instance:
       - define id <def[blueprint]>_population
       - yaml load:../../<def[blueprint]>/population.yml id:%id%
       - foreach <yaml[%id%].list_keys[population]> {
-        - define location <yaml[%id%].read[population.%value%.location].replace[world].with[<def[world].name>]>
+        - define location "<yaml[%id%].read[population.%value%.location]>,<def[world].name>"
         - if <yaml[%id%].read[population.%value%.type]||entity> == npc {
           - create <yaml[%id%].read[population.%value%.name]> e@<yaml[%id%].read[population.%value%.entity]> <def[location]> save:npc
           - define npc <entry[npc].created_npc>
@@ -157,6 +157,13 @@ instancing_event_handler:
       - event "player exits instance" context:instance|<def[instance]>|blueprint|<def[blueprint]>|blueprint_world|instancing/blueprints/<def[blueprint]>
       - event "player exits <def[blueprint]> instance" context:instance|<def[instance]>|blueprint|<def[blueprint]>|blueprint_world|instancing/blueprints/<def[blueprint]>
       }
+    on shutdown:
+    - foreach <proc[list_instances]>:
+      - run remove_instance def:<def[value]> instantly
+    on server start:
+    - foreach <server.list_files[../../instancing/instances]>:
+      - ~createworld instancing/instances/<def[value]> save:world
+      - run remove_instance def:w@instancing/instances/<def[value]>
 #tags
 get_instance:
   type: procedure
@@ -276,14 +283,11 @@ blueprint_command:
                 - yaml id:%id% set population.<def[loop_index]>.entity:<def[value].entity_type>
                 - yaml id:%id% set population.<def[loop_index]>.type:npc
                 - yaml id:%id% set population.<def[loop_index]>.assignment:<def[value].script||none>
-                - yaml id:%id% set population.<def[loop_index]>.name:<def[value].name||none>
-                - yaml id:%id% set population.<def[loop_index]>.skin:<def[value].skin_blob||none>
-                - yaml id:%id% set population.<def[loop_index]>.equipment:<def[value].equipment||none>
                 } else {
                 - yaml id:%id% set population.<def[loop_index]>.entity:<def[value].describe>
                 - yaml id:%id% set population.<def[loop_index]>.type:entity
                 }
-              - yaml id:%id% set population.<def[loop_index]>.location:<def[value].location.replace[<def[world].name>].with[world]>
+              - yaml id:%id% set population.<def[loop_index]>.location:<def[value].location.before_last[,]>
               - narrate "adding %value% to population."
               - remove <def[value]>
             - yaml id:%id% savefile:../../instancing/blueprints/<def[blueprint]>/population.yml
