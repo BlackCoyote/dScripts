@@ -3,7 +3,6 @@ instance_version:
   name: instancing
   id: 58
   description: simple instancing api
-  version: 7
 instancing_config:
   type: yaml data
   # should the player be removed from the instance when he logs out
@@ -12,6 +11,8 @@ instancing_config:
   close when empty: true
   # this is the location the player gets teleported to if they automaticly get removed from an instance, in case their last known location fails
   fallback location: l@-3000,200,-4000,zolaria
+  # on some servers the events fire twice, i dont know why, but this feature helps fight that
+  prevent double triggers: false
 ######
 ##- ~run initiate_instance def:<blueprint name> save:return
 ##- narrate "<entry[return].created_queue.determination> is the dWorld of the instance I just made!"
@@ -87,7 +88,7 @@ populate_instance:
       - announce to_ops "No valid instance blueprint specified to clone population from!"
       - queue clear
       }
-    - define blueprint <def[2]>
+    - define blueprint "instancing/blueprints/<def[2]>"
     - define world <def[1].as_world>
     - if <server.has_file[../../<def[blueprint]>/population.yml]> {
       - define id <def[blueprint]>_population
@@ -99,12 +100,6 @@ populate_instance:
           - define npc <entry[npc].created_npc>
           - if <yaml[%id%].read[population.%value%.assignment]||none> != none {
             - adjust %npc% set_assignment:<yaml[%id%].read[population.%value%.assignment]>
-            }
-          - if <yaml[%id%].read[population.%value%.skin]||none> != none {
-            - adjust %npc% skin_blob:<yaml[%id%].read[population.%value%.skin]>
-            }
-          - if <yaml[%id%].read[population.%value%.equipment]||none> != none {
-            - adjust %npc% "equipment:<yaml[%id%].read[population.%value%.equipment].as_list>"
             }
           } else if <yaml[%id%].read[population.%value%.entity]||entity> != entity {
           - spawn e@<yaml[%id%].read[population.%value%.entity]> <def[location]>
@@ -135,6 +130,13 @@ instancing_event_handler:
       }
     # if the player leaves an instance
     - if <context.origin.world.name.starts_with[instancing/instances]||false> {
+      - if "<s@instancing_config.yaml_key[prevent double triggers].as_boolean||false>" {
+        - if <player.has_flag[instancing.exit_cooldown]> {
+          - queue clear
+          } else {
+          - flag <player> "instancing.exit_cooldown:true" duration:2t
+          }
+        }
       - define instance <context.origin.world.name>
       - define blueprint <proc[get_instance_blueprint].context[<def[instance]>]>
       - event "player exits instance" context:instance|<def[instance]>|blueprint|<def[blueprint]>|blueprint_world|instancing/blueprints/<def[blueprint]>
@@ -142,6 +144,13 @@ instancing_event_handler:
       }
     # if the player enters an instance
     - if <context.destination.world.name.starts_with[instancing/instances]||false> {
+      - if "<s@instancing_config.yaml_key[prevent double triggers].as_boolean||false>" {
+        - if <player.has_flag[instancing.enter_cooldown]> {
+          - queue clear
+          } else {
+          - flag <player> "instancing.enter_cooldown:true" duration:2t
+          }
+        }
       - define instance <context.destination.world.name>
       - define blueprint <proc[get_instance_blueprint].context[<def[instance]>]>
       - event "player enters instance" context:instance|<def[instance]>|blueprint|<def[blueprint]>|blueprint_world|instancing/blueprints/<def[blueprint]>
@@ -150,8 +159,14 @@ instancing_event_handler:
     on player quits:
     - if <player.location.world.name.starts_with[instancing/instances/].not> queue clear
     - define instance <player.location.world>
-    - wait 1t
     - if "<s@instancing_config.yaml_key[exit on logout].as_boolean||false>" {
+      - if "<s@instancing_config.yaml_key[prevent double triggers].as_boolean||false>" {
+        - if <player.has_flag[instancing.quit_cooldown]> {
+          - queue clear
+          } else {
+          - flag <player> "instancing.quit_cooldown:true" duration:2t
+          }
+        }
       - adjust <player> "location:<player.flag[instance_entry_location]||<s@instancing_config.yaml_key[fallback location].as_location>>"
       - define blueprint <proc[get_instance_blueprint].context[<def[instance]>]>
       - event "player exits instance" context:instance|<def[instance]>|blueprint|<def[blueprint]>|blueprint_world|instancing/blueprints/<def[blueprint]>
@@ -281,6 +296,7 @@ blueprint_command:
             - foreach <def[world].entities||li@>:
               - if <def[value].is_npc> {
                 - yaml id:%id% set population.<def[loop_index]>.entity:<def[value].entity_type>
+                - yaml id:%id% set population.<def[loop_index]>.name:<def[value].name>
                 - yaml id:%id% set population.<def[loop_index]>.type:npc
                 - yaml id:%id% set population.<def[loop_index]>.assignment:<def[value].script||none>
                 } else {
