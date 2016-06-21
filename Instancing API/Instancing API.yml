@@ -3,6 +3,7 @@ instance_version:
   name: instancing
   id: 58
   description: simple instancing api
+  version: 10
 instancing_config:
   type: yaml data
   # should the player be removed from the instance when he logs out
