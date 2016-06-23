@@ -1,9 +1,9 @@
 instance_version:
   type: version
   name: instancing
-  id: 58
+  id: 94
   description: simple instancing api
-  version: 10
+  version: 12
 instancing_config:
   type: yaml data
   # should the player be removed from the instance when he logs out
@@ -25,7 +25,7 @@ initiate_instance:
   script:
   - define blueprint <def[blueprint]||<def[1]||none>>
   - if <server.has_file[../../instancing/blueprints/<def[blueprint]>].not> {
-    - announce to_ops "uh oh! Tried to load an instance from an inexisting blueprint!"
+    - debug error "Uh oh! Tried to load an instance from an inexisting blueprint! Aborting instance initiating!"
     - queue clear
     }
   - define instance_name "instancing/instances/<util.random.uuid>"
@@ -33,7 +33,7 @@ initiate_instance:
   - wait 1t
   - define instance <def[instance_name].as_world||none>
   - if <def[instance]||none> == none {
-    - announce "uh oh! Failed to create <def[instance_name]>"
+    - debug error "Uh oh! Instance went missing! Did a plugin prevent the world from loading?"
     }
   - adjust <def[instance]> auto_save:false
   - adjust <def[instance]> keep_spawn:false
@@ -52,13 +52,14 @@ remove_instance:
   script:
   - define instance <def[1]||none>
   - if <def[instance]||none> == none {
-    - announce to_ops "Uh oh! No instance specified to remove!"
+    - debug error "Uh oh! No instance was provided to be removed!"
     - queue clear
     }
-  - if <def[instance].name.starts_with[instancing/instances].not> {
-    - announce to_ops "uh oh! tried to remove a world that is not an instance!! bad! bad!"
+  - if <proc[list_instances].contains[w@<def[instance]>].not> && <proc[list_instances].contains[<def[instance]>].not> {
+    - debug error "Uh oh! The specified instance can't be removed because it is not loaded!"
     - queue clear
     }
+  - define instance <def[instance].as_world>
   - if <server.has_file[../../<def[instance].name||none>]> {
     - if <server.list_worlds.contains[<def[instance]>]||false> {
       - if <def[instance].players.size||0> > 0 {
@@ -90,9 +91,10 @@ populate_instance:
       - queue clear
       }
     - define blueprint "instancing/blueprints/<def[2]>"
+    - define blueprintname "<def[2]>"
     - define world <def[1].as_world>
     - if <server.has_file[../../<def[blueprint]>/population.yml]> {
-      - define id <def[blueprint]>_population
+      - define id <def[blueprintname]>_population
       - yaml load:../../<def[blueprint]>/population.yml id:%id%
       - foreach <yaml[%id%].list_keys[population]> {
         - define location "<yaml[%id%].read[population.%value%.location]>,<def[world].name>"
@@ -119,8 +121,8 @@ instancing_event_handler:
     - flag server instances.<context.instance.after_last[/]>:!
     on player exits instance:
     - if "<s@instancing_config.yaml_key[close when empty].as_boolean||false>" {
-      - if <context.instance.as_world.players.size||0> < 1 {
-        - run remove_instance def:<def[instance]>
+      - if <context.instance.as_world.players.exclude[<player>].size||0> < 1 {
+        - run remove_instance def:<context.instance>
         }
       }
     on player teleports:
@@ -179,7 +181,7 @@ instancing_event_handler:
     on server start:
     - foreach <server.list_files[../../instancing/instances]>:
       - ~createworld instancing/instances/<def[value]> save:world
-      - run remove_instance def:w@instancing/instances/<def[value]>
+      - run remove_instance "def:instancing/instances/<def[value]>"
 #tags
 get_instance:
   type: procedure
@@ -275,7 +277,7 @@ blueprint_command:
         - createworld instancing/blueprints/<def[blueprint]>
         - narrate "<&c>Loaded <def[blueprint]> as instancing/blueprints/<def[blueprint]>."
         - wait 1t
-        - run populate_instance def:w@instancing/blueprints/<def[blueprint]>|<def[blueprint]>
+        - run populate_instance "def:w@instancing/blueprints/<def[blueprint]>|<def[blueprint]>"
       - case close:
         - define blueprint <context.args.get[2]||none>
         - if <def[blueprint]> == none {
