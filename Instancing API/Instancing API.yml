@@ -3,7 +3,7 @@ instance_version:
   name: instancing
   id: 94
   description: simple instancing api
-  version: 12
+  version: 14
 instancing_config:
   type: yaml data
   # should the player be removed from the instance when he logs out
@@ -125,8 +125,10 @@ instancing_event_handler:
         - run remove_instance def:<context.instance>
         }
       }
+    on player enters instance:
+    - flag <player> "instancing.in_instance:<context.instance>"
     on player teleports:
-    - if <context.origin.world> == <context.destination.world> queue clear
+    - if <context.origin.world> == <context.destination.world||none> queue clear
     # if the player teleports from a regular world, into an instancing world, then store its location in a flag
     - if <context.destination.world.name.starts_with[instancing]||false> && <context.origin.world.name.starts_with[instancing].not> {
       - flag <player> instance_entry_location:<context.origin>
@@ -144,6 +146,9 @@ instancing_event_handler:
       - define blueprint <proc[get_instance_blueprint].context[<def[instance]>]>
       - event "player exits instance" context:instance|<def[instance]>|blueprint|<def[blueprint]>|blueprint_world|instancing/blueprints/<def[blueprint]>
       - event "player exits <def[blueprint]> instance" context:instance|<def[instance]>|blueprint|<def[blueprint]>|blueprint_world|instancing/blueprints/<def[blueprint]>
+      - if <context.destination.world.name.starts_with[instancing/instances/].not> {
+        - flag <player> "instancing.in_instance:!"
+        }
       }
     # if the player enters an instance
     - if <context.destination.world.name.starts_with[instancing/instances]||false> {
@@ -171,9 +176,15 @@ instancing_event_handler:
           }
         }
       - adjust <player> "location:<player.flag[instance_entry_location]||<s@instancing_config.yaml_key[fallback location].as_location>>"
+      - flag <player> "instancing.in_instance:!"
       - define blueprint <proc[get_instance_blueprint].context[<def[instance]>]>
       - event "player exits instance" context:instance|<def[instance]>|blueprint|<def[blueprint]>|blueprint_world|instancing/blueprints/<def[blueprint]>
       - event "player exits <def[blueprint]> instance" context:instance|<def[instance]>|blueprint|<def[blueprint]>|blueprint_world|instancing/blueprints/<def[blueprint]>
+      }
+    on player joins:
+    - if <player.has_flag[instancing.in_instance].not> queue clear
+    - if <proc[list_instances].contains[w@<player.flag[instancing.in_instance]||noworld>].not> {
+      - teleport <player> <proc[get_instance_entry_location]>
       }
     on shutdown:
     - foreach <proc[list_instances]>:

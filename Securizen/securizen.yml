@@ -1,0 +1,370 @@
+securizen:
+  type: version
+  name: Securizen
+  id: 51
+  description: logging and rolling back features for your entire server.
+  version: 9
+#####
+# Events for handling the writing and saving of data.
+####
+securizen_core:
+  type: world
+  debug: false
+  events:
+    on player breaks hanging:
+    - if <context.cancelled||false> determine cancelled
+    - run securizen_write_data def:entity_change|<player>|<context.hanging.location.block>|m@air|<context.hanging.describe>
+    on player places hanging:
+    - if <context.cancelled||false> determine cancelled
+    - run securizen_write_data def:entity_change|<player>|<context.hanging.location.block>|<context.hanging.describe>|m@air
+    on player breaks block priority:999:
+    - if <context.cancelled||false> determine cancelled
+    - run securizen_write_data def:block_change|<player>|<context.location>|m@air|<context.material>
+    on player places block priority:999:
+    - if <context.cancelled||false> determine cancelled
+    - run securizen_write_data def:block_change|<player>|<context.location>|<context.material>|<context.old_material>
+    on player empties bucket priority:999:
+    - if <context.cancelled||false> determine cancelled
+    - if <context.item.material> == m@water_bucket {
+      - define material m@stationary_water
+      } else if <context.item.material> == m@lava_bucket {
+      - define material m@stationary_lava
+      } else {
+      - queue clear
+      }
+    - run securizen_write_data def:block_change|<player>|<context.relative>|%material%|<context.relative.material>
+    on player fills bucket priority:999:
+    - if <context.cancelled||false> determine cancelled
+    - run securizen_write_data def:block_change|<player>|<context.location>|m@air
+    on entity explodes priority:999:
+    - if <context.cancelled||false> determine cancelled
+    - foreach <context.blocks> {
+      - run securizen_write_data def:block_change|<context.entity.entity_type>|%value%|m@air|<def[value].material>
+      }
+    on block burns priority:999:
+    - if <context.cancelled||false> determine cancelled
+    - run securizen_write_data def:block_change|FIRE|<context.location>|m@air|<context.material>
+    on chunk unloads:
+    - wait 1t
+    - if "<yaml.list.contains[securizen_<context.chunk>]>" {
+      - yaml "savefile:/securizen/<context.chunk.world>/<context.chunk.x>/<context.chunk.z>/<context.chunk>.yml" id:securizen_<context.chunk>
+      - yaml unload id:securizen_<context.chunk>
+      }
+    on server start:
+    - wait 1m
+    - run securizen_periodical_unload
+    on shutdown:
+    - foreach <yaml.list.filter[starts_with[securizen_]]> {
+      - define chunk <def[value].replace[securizen_].as_chunk>
+      - yaml "savefile:/securizen/<def[chunk].world>/<def[chunk].x>/<def[chunk].z>/<def[chunk]>.yml" id:%value%
+      - yaml unload id:%value%
+      }
+securizen_write_data:
+  type: task
+  debug: false
+  speed: 0
+  definitions: type|cause|location|material|old_material
+  script:
+  - wait 1t
+  - async:
+    - if !<yaml.list.contains[securizen_<def[location].chunk>]> {
+      - if !<server.has_file[/securizen/<def[location].chunk.world>/<def[location].chunk.x>/<def[location].chunk.z>/<def[location].chunk>.yml]> {
+        - yaml create id:securizen_<def[location].chunk>
+        } else {
+        - yaml "load:/securizen/<def[location].chunk.world>/<def[location].chunk.x>/<def[location].chunk.z>/<def[location].chunk>.yml" id:securizen_<def[location].chunk>
+        }
+      }
+    - define timestamp "d@<server.current_time_millis.div[50].as_int>t"
+    - if <yaml[securizen_<def[location].chunk>].contains[<def[location].simple.before_last[,].replace[,].with[.]>].not> {
+      - yaml set "<def[location].simple.before_last[,].replace[,].with[.]>.d@0t.cause:WORLD_GEN" "id:securizen_<def[location].chunk>"
+      - yaml set "<def[location].simple.before_last[,].replace[,].with[.]>.d@0t.material:%old_material%" "id:securizen_<def[location].chunk>"
+      - yaml set "<def[location].simple.before_last[,].replace[,].with[.]>.d@0t.type:block_change" "id:securizen_<def[location].chunk>"
+      }
+    - yaml set "<def[location].simple.before_last[,].replace[,].with[.]>.%timestamp%.cause:%cause%" "id:securizen_<def[location].chunk>"
+    - yaml set "<def[location].simple.before_last[,].replace[,].with[.]>.%timestamp%.material:%material%" "id:securizen_<def[location].chunk>"
+    - yaml set "<def[location].simple.before_last[,].replace[,].with[.]>.%timestamp%.type:%type%" "id:securizen_<def[location].chunk>"
+#####
+# loop to unload chunks still loaded but with no players in it, on a periodical base.
+####
+securizen_periodical_unload:
+  type: task
+  debug: false
+  script:
+    - foreach <yaml.list.filter[starts_with[securizen_]]> {
+      - define chunk <def[value].replace[securizen_].as_chunk>
+      - if <def[chunk].is_loaded||false> {
+        - if <def[chunk].players.size||0> < 1 {
+          - if <yaml.list> contains securizen_%value% {
+            - yaml "savefile:/securizen/<def[chunk].world>/<def[chunk].x>/<def[chunk].z>/<def[chunk]>.yml" id:%value%
+            - yaml unload id:%value%
+            - announce to_ops "unloaded %value%"
+            }
+          }
+        }
+      - wait 10s
+      }
+    - run securizen_periodical_unload delay:2m
+#####
+# main script user interface
+####
+securizen_commands:
+  debug: false
+  type: command 
+  name: securizen 
+  description: Securizen commands
+  usage: /securizen <&lt>myArg1<&gt> 
+  aliases: 
+  - sz
+  script: 
+  - if <player.is_op.not> && <player.has_permission[securizen.lookup].not> && <player.has_permission[securizen.*].not> { 
+    - narrate "<red>You do not have permission for that command." 
+    - queue clear 
+    }
+  - choose <context.args.get[1]>:
+    - case version:
+      - narrate "<&6>You are running Securizen version <&e><s@securizen.yaml_key[version]><&6>."
+      - execute as_op "denizen scriptversions"
+    - case lookup:
+      - define location <player.location.cursor_on>
+      - if !<yaml.list.contains[securizen_<def[location].chunk>]> {
+        - if !<server.has_file[/securizen/<def[location].chunk.world>/<def[location].chunk.x>/<def[location].chunk.z>/<def[location].chunk>.yml]> {
+          - narrate "<&c>No logged info was found for this location."
+          - queue clear
+          } else {
+          - yaml "load:/securizen/<def[location].chunk.world>/<def[location].chunk.x>/<def[location].chunk.z>/<def[location].chunk>.yml" id:securizen_<def[location].chunk>
+          }
+        }
+      - if "<yaml[securizen_<def[location].chunk>].contains[<def[location].simple.before_last[,].replace[,].with[.]>]>" {
+        - define lookup_start <server.current_time_millis>
+        - narrate "<&6>Found <&b><yaml[securizen_<def[location].chunk>].list_keys[<def[location].simple.before_last[,].replace[,].with[.]>].size||0><&6> entries for this location. Showing most recent <&b><context.args.get[2].as_int||3><&6><&co>"
+        - foreach <proc[securizen_location_get_edits].context[%location%|1|<context.args.get[2].as_int||3>]||li@> {
+          - define entry <def[value].split[/]>
+          - narrate "<&6><def[entry].get[1].time.year>/<def[entry].get[1].time.month>/<def[entry].get[1].time.day> <def[entry].get[1].time.hour><&co><def[entry].get[1].time.minute><&co><def[entry].get[1].time.second><&co> <&b><def[entry].get[3].as_player.name||<def[entry].get[3]>><&e> did <&b><def[entry].get[2]><&e> with result <&b><def[entry].get[4]><&e>."
+          }
+        - narrate "<&c>Looked up results in <server.current_time_millis.sub[%lookup_start%].as_int>ms."
+        } else {
+        - narrate "<&c>No logged info was found for this location."
+        - queue clear
+        }
+    - case rollback:
+      - if <player.is_op.not> && <player.has_permission[securizen.rollback].not> && <player.has_permission[securizen.*].not> { 
+        - narrate "<red>You do not have permission for that command." 
+        - queue clear 
+        }
+      - if <context.args.get[2].as_player||none> != none {
+        - define cause <context.args.get[2].as_player>
+        } else {
+        - define cause <context.args.get[2]>
+        }
+      - if li@block_change||all !contains <context.args.get[3]> {
+        - narrate "<&c>The specified action type was not valid for rolling back."
+        - queue clear
+        }
+      - if <context.args.get[4].as_int||none> == none {
+        - narrate "<&c>The specified radius was not valid."
+        - queue clear
+        }
+      - if <context.args.get[5].as_duration||none> == none {
+        - narrate "<&c>The specified duration was not valid. Examples of valid durations <&co> 1d, 2h, 37m, 50s."
+        - queue clear
+        }
+      - narrate "<&c>reverting area..."
+      - run securizen_rollback_task def:<pl.location>|%cause%|<context.args.get[3]>|<context.args.get[4]>|<context.args.get[5]>
+    - case scanfor:
+      - if <context.args.get[5].as_int||none> == none {
+        - narrate "<&c>Invalid arguments. please see /securizen help"
+        - queue clear
+        }
+      - define radius <context.args.get[5].as_int>
+      - if <context.args.get[6].as_duration||none> == none {
+        - narrate "<&c>The specified duration was not valid. Examples of valid durations <&co> 1d, 2h, 37m, 50s."
+        - queue clear
+        }
+      - define duration <context.args.get[6].as_duration||none>
+      - if <context.args.get[4].as_material||none> != none {
+        - define result <context.args.get[4].as_material||none>
+        } else {
+        - define result <context.args.get[4]>
+        }
+      - define cause <context.args.get[2]>
+      - define action <context.args.get[3]>
+      - narrate "<&c>Scanning area..."
+      - define blocks li@
+      - define base_location <player.location>
+      - define cuboid cu@<def[base_location].add[-%radius%,-%radius%,-%radius%]>|<def[base_location].add[%radius%,%radius%,%radius%]>
+      - foreach <def[cuboid].list_partial_chunks> {
+        - define chunk %value%
+        - if !<yaml.list.contains[securizen_%chunk%]> {
+          - if <server.has_file[/securizen/<def[chunk].world>/<def[chunk].x>/<def[chunk].z>/<def[chunk]>.yml]> {
+            - yaml "load:/securizen/<def[chunk].world>/<def[chunk].x>/<def[chunk].z>/<def[chunk]>.yml" id:securizen_<def[chunk]>
+            } else {
+            - foreach next
+            }
+          }
+        - foreach <yaml[securizen_%chunk%].list_keys[]> {
+          - define x %value%
+          - if <def[base_location].x.sub[%x%].abs> <= %radius% {
+            - foreach <yaml[securizen_%chunk%].list_keys[%X%]> {
+              - define y %value%
+              - if <def[base_location].y.sub[%y%].abs> <= %radius% {
+                - foreach <yaml[securizen_%chunk%].list_keys[%X%.%Y%]> {
+                  - define z %value%
+                  - if <def[base_location].z.sub[%z%].abs> <= %radius% {
+                    - define blocks <def[blocks].include[l@%X%,%Y%,%Z%,<def[base_location].world.name>]>
+                    }
+                  }
+                }
+              } 
+            }
+          }
+        }
+      - foreach %blocks% {
+        - if <player.is_online.not> foreach stop
+        - if <def[loop_index].mod[20]> == 0 wait 1t
+        - if <server.recent_tps.get[1]> < 18 {
+          - narrate "<&4>TPS LOW! <&e>Pausing search querry for 5 seconds."
+          - wait 5s
+          }
+        - define location %value%
+        - define entries "<proc[securizen_location_get_edits].context[%location%|1|999]>"
+        - if <def[entries].size||0> < 1 foreach next
+        - define matching_entries <def[entries].filter[split[/].get[1].in_milliseconds.is[MORE].than[<server.current_time_millis.sub[<def[duration].as_duration.in_milliseconds>]>]]||li@>
+        - if %action% != all {
+          - define matching_entries <def[matching_entries].filter[split[/].get[2].is[==].to[%action%]]>
+          }
+        - if %cause% == player {
+          - define matching_entries <def[matching_entries].filter[split[/].get[3].as_player.is_player]>
+          } else if <def[cause].as_player.is_player> {
+          - define matching_entries <def[matching_entries].filter[split[/].get[3].is[==].to[<def[cause].as_player>]]>
+          } else if %cause% != all {
+          - define matching_entries <def[matching_entries].filter[split[/].get[3].is[==].to[%cause%]]>
+          }
+        - if %result% != all {
+          - define matching_entries <def[matching_entries].filter[split[/].get[4].is[==].to[%result%]]>
+          }
+        - if <def[matching_entries].size||0> != 0 {
+          - narrate "<&c>Found matching entry at <def[location].simple>"
+          - playeffect <def[location].add[0.5,-0.5,0.5]> effect:red_dust qty:50 offset:0.3 visibility:%radius% targets:<player>
+          - define matching_results <def[matching_results].add[1]||1>
+          }
+        - if <def[loop_index].mod[5]> == 0 wait 1t
+        }
+      - narrate "<&c>completed scan. Found <def[matching_results].as_int||0> entries."
+    - default:
+      - narrate "<&c>Incorrect usage."
+      - inject locally path:help
+  help:
+  - narrate "<&6>/securizen lookup (#)<&0> - <&e>Returns the recent changes to the targetted block."
+  - narrate "<&6>/securizen scanfor [<&lt>cause<&gt>/all] [<&lt>action<&gt>/all] [<&lt>result<&gt>/all] (radius) (duration)<&0> - <&e>scans the area within the radius for any entries matching the filters."
+  - narrate "<&6>/securizen rollback [<&lt>cause<&gt>/all] [<&lt>action<&gt>/all] (radius) (duration)<&0> - <&e>Rolls back specific types of actions with a specified radius and duration."
+#####
+# tags and tasks to use in your own scripts
+####
+securizen_rollback_task:
+  type: task
+  debug: false
+  speed: 0t
+  definitions: base_location|cause|action|radius|duration
+  script:
+  - if <def[base_location].as_location||none> == none {
+    - debug error "Missing location for "securizen_rollback_task!"
+    - queue clear
+    }
+  - if <player.is_online||false> define lookup_start <server.current_time_millis> 
+  - define blocks li@
+  - define cuboid cu@<def[base_location].add[-%radius%,-%radius%,-%radius%]>|<def[base_location].add[%radius%,%radius%,%radius%]>
+  - foreach <def[cuboid].list_partial_chunks> {
+    - define chunk %value%
+    - if !<yaml.list.contains[securizen_%chunk%]> {
+      - if <server.has_file[/securizen/<def[chunk].world>/<def[chunk].x>/<def[chunk].z>/<def[chunk]>.yml]> {
+        - yaml "load:/securizen/<def[chunk].world>/<def[chunk].x>/<def[chunk].z>/<def[chunk]>.yml" id:securizen_<def[chunk]>
+        } else {
+        - foreach next
+        }
+      }
+    - foreach <yaml[securizen_%chunk%].list_keys[]> {
+      - define x %value%
+      - if <def[base_location].x.sub[%x%].abs> <= %radius% {
+        - foreach <yaml[securizen_%chunk%].list_keys[%X%]> {
+          - define y %value%
+          - if <def[base_location].y.sub[%y%].abs> <= %radius% {
+            - foreach <yaml[securizen_%chunk%].list_keys[%X%.%Y%]> {
+              - define z %value%
+              - if <def[base_location].z.sub[%z%].abs> <= %radius% {
+                - define blocks <def[blocks].include[l@%X%,%Y%,%Z%,<def[base_location].world.name>]>
+                }
+              }
+            }
+          } 
+        }
+      }
+    }
+  - foreach %blocks% {
+    - if <def[loop_index].mod[20]> == 0 wait 1t
+    - if <server.recent_tps.get[1]> < 18 {
+      - narrate "<&c>TPS LOW! Pausing search querry for 5 seconds."
+      - wait 5s
+      }
+    - define location %value%
+    - define entries "<proc[securizen_location_get_edits].context[%location%|1|999]>"
+    - if <def[entries].size||0> > 0 {
+      - define rolled_entries <def[entries].filter[split[/].get[1].in_milliseconds.is[MORE].than[<server.current_time_millis.sub[<def[duration].as_duration.in_milliseconds>]>]]||li@>
+      - if %action% != all define rolled_entries <def[rolled_entries].filter[split[/].get[2].is[==].to[%action%]]>
+      - if %cause% != all define rolled_entries <def[rolled_entries].filter[split[/].get[3].is[==].to[%cause%]]>
+      } else {
+      - foreach next
+      }
+    - if <def[rolled_entries].size||0> > 0 {
+      - define material "<def[entries].get[<def[entries].find[<def[rolled_entries].last>].add[1]>].split[/].get[4]||none>"
+      - if %material% != none {
+        - modifyblock %location% "%material%"
+        - foreach <def[rolled_entries]||li@> {
+          - yaml set "<def[location].simple.before_last[,].replace[,].with[.]>.d@<def[value].split[/].get[1].in_ticks>t:!" "id:securizen_<def[location].chunk>"
+          }
+        }
+      - define block_count <def[block_count].add[1]||1>
+      }
+    - if <server.recent_tps.get[1]> < 10 {
+      - narrate "<&c>TPS LOW! Pausing search querry for 5 seconds."
+      - wait 5s
+      }
+    }
+  - if <player.is_online||false> narrate "<&c>Rolled back <def[block_count]||0> blocks in <server.current_time_millis.sub[%lookup_start%].as_int>ms."
+securizen_location_get_edits:
+  type: procedure
+  debug: false
+  script:
+  - if <def[1].as_location||none> == none {
+    - debug error "Missing location for "securizen_location_get_edits!"
+    - determine null
+    }
+  - define location %1%
+  - if <def[2].as_int||none> != none {
+    - define first <def[2].as_int>
+    } else {
+    - debug warning "Value for first entry is not a valid integer."
+    - define first 1
+    }
+  - if <def[3].as_int||none> != none {
+    - define last <def[3].as_int>
+    } else {
+    - debug warning "Value for last entry is not a valid integer."
+    - define last 9999
+    }
+  - if !<yaml.list.contains[securizen_<def[location].chunk>]> {
+    - if !<server.has_file[/securizen/<def[location].chunk.world>/<def[location].chunk.x>/<def[location].chunk.z>/<def[location].chunk>.yml]> {
+      - determine li@
+      - queue clear
+      } else {
+      - yaml "load:/securizen/<def[location].chunk.world>/<def[location].chunk.x>/<def[location].chunk.z>/<def[location].chunk>.yml" id:securizen_<def[location].chunk>
+      }
+    }
+  - if <yaml[securizen_<def[location].chunk>].contains[<def[location].simple.before_last[,].replace[,].with[.]>].not> {
+    - determine li@
+    }
+  - define entries li@
+  - foreach <yaml[securizen_<def[location].chunk>].list_keys[<def[location].simple.before_last[,].replace[,].with[.]>].parse[in_ticks].numerical.reverse.get[%first%].to[%last%]||li@> {
+    - define timestamp "d@%value%t"
+    - define entries <def[entries].include[%timestamp%/<yaml[securizen_<def[location].chunk>].read[<def[location].simple.before_last[,].replace[,].with[.]>.%timestamp%.type]||nobody>/<yaml[securizen_<def[location].chunk>].read[<def[location].simple.before_last[,].replace[,].with[.]>.%timestamp%.cause]||nobody>/<yaml[securizen_<def[location].chunk>].read[<def[location].simple.before_last[,].replace[,].with[.]>.%timestamp%.material]||none>]>
+    }
+  - determine %entries%

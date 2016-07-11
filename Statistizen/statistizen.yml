@@ -1,0 +1,510 @@
+statistizen:
+  type: version
+  name: Statistizen
+  id: 58
+  description: Providing useful statistics to help you develop your server.
+  version: 7
+#
+#
+# config manager, handles the config file
+#
+#
+statistizen_config_manager:
+  type: world
+  debug: false
+  events:
+    on server start:
+    - wait 1t
+    - run statistizen_reload_config
+    on reload scripts:
+    - wait 1t
+    - run statistizen_reload_config
+statistizen_reload_config:
+  type: task
+  debug: false
+  speed: 0t
+  script:
+    - if <server.has_file[/statistizen/config/config.yml].not> {
+      - yaml create id:statistizen_config
+      - yaml id:statistizen_config set data_logging.online_players.enabled:true
+      - yaml id:statistizen_config set data_logging.online_players.depth_in_days:10
+      - yaml id:statistizen_config set data_logging.unique_pings.enabled:true
+      - yaml id:statistizen_config set data_logging.unique_pings.depth_in_days:10
+      - yaml id:statistizen_config set data_logging.online_time.enabled:true
+      - yaml id:statistizen_config set data_logging.TPS.depth_in_days:10
+      - yaml id:statistizen_config set data_logging.TPS.enabled:true
+      - yaml id:statistizen_config set data_logging.queues.depth_in_days:10
+      - yaml id:statistizen_config set data_logging.queues.enabled:true
+      - yaml id:statistizen_config set data_logging.votifier_votes.depth_in_days:10
+      - yaml id:statistizen_config set data_logging.votifier_votes.enabled:false
+      - yaml id:statistizen_config set data_logging.first_time_logins.depth_in_days:10
+      - yaml id:statistizen_config set data_logging.first_time_logins.enabled:false
+      - yaml id:statistizen_config set web_page.port:10123
+      - yaml id:statistizen_config set web_page.pagename:statistics
+      - yaml id:statistizen_config "savefile:/statistizen/config/config.yml"
+      } else {
+      - yaml "load:/statistizen/config/config.yml" id:statistizen_config
+      - run statistizen_repair_config instantly
+      }
+statistizen_repair_config:
+  type: task
+  debug: false
+  speed: 0
+  script:
+  - queue clear
+###
+#
+# this script makes sure any missing hours in the log will be added with empty data
+#
+###
+statistizen_repair_logs_trigger:
+  type: world
+  debug: false
+  events:
+    on server start:
+    - wait 10s
+    # - run statistizen_repair_logs instantly
+statistizen_repair_logs:
+  type: task
+  speed: 0
+  debug: false
+  script:
+  - foreach li@hourly_players|hourly_queues|hourly_pings|hourly_tps {
+    - define file %value%
+    - if <server.has_file[/statistizen/%file%.yml].not> {
+      - yaml create id:statistizen_%file%
+      } else {
+      - yaml "load:/statistizen/%file%.yml" id:statistizen_%file%
+      }
+    - foreach <yaml[statistizen_%file%].list_keys[].filter[in_days.round_up.is[LESS].than[<util.date.time.duration.in_days.round_down>]]> {
+      - define key1 %value%
+      - if <yaml[statistizen_%file%].list_keys[%key1%].size> < 24 {
+        - repeat <el@24.sub[<yaml[statistizen_%file%].list_keys[%key1%].size||0>]> {
+          - if li@hourly_players|hourly_pings contains %file% {
+            - yaml id:statistizen_%file% set %key1%.d@%value%t:li@
+            } else if li@hourly_queues|hourly_TPS contains %file% {
+            - yaml id:statistizen_%file% set %key1%.d@%value%t:0
+            }
+          }
+        }
+      }
+    - yaml "savefile:/statistizen/%file%.yml" id:statistizen_%file%
+    }
+####
+#
+#data mining, this collects all the data and writes it to the logs on an hourly base
+#
+#####
+statistizen_data_collecting:
+  type: world
+  debug: false
+  events:
+    on system time minutely:
+    - if <yaml[statistizen_config].read[data_logging.tps.enabled]||true> flag server statistizen_hourly_tps_average:->:<server.recent_tps.get[1]>
+    - if <yaml[statistizen_config].read[data_logging.queues.enabled]||true> flag server statistizen_hourly_queues_average:->:<queue.list.size>
+    on system time hourly:
+    - run statistizen_cycle_hourly_data instantly
+    on votifier vote:
+    - if <yaml[statistizen_config].read[data_logging.votifier_votes.enabled]||true> flag server statistizen_hourly_votes_counter:++
+    on server list ping:
+    - wait 1t
+    - if <server.flag[statistizen_hourly_pings_counter].as_list||li@> !contains <context.address> {
+      - if <yaml[statistizen_config].read[data_logging.unique_pings.enabled]||true> flag server statistizen_hourly_pings_counter:->:<context.address>
+      }
+    on proxy server list ping:
+    - wait 1t
+    - if <server.flag[statistizen_hourly_pings_counter].as_list||li@> !contains <context.address> {
+      - if <yaml[statistizen_config].read[data_logging.unique_pings.enabled]||true> flag server statistizen_hourly_pings_counter:->:<context.address>
+      }
+    on player logs in for the first time:
+    - wait 1t
+    - if <yaml[statistizen_config].read[data_logging.first_time_logins.enabled]||true> flag server statistizen_hourly_first_time_logins_counter:->:<player>
+    on player joins:
+    - wait 1t
+    - if <server.flag[statistizen_hourly_players_counter].as_list||li@> !contains <player> {
+      - if <yaml[statistizen_config].read[data_logging.online_players.enabled]||true> flag server statistizen_hourly_players_counter:->:<player>
+      }
+    - flag <player> statistizen_online_time_counter:<server.current_time_millis>
+    on player quits:
+    - if <server.flag[statistizen_hourly_players_counter].as_list||li@> !contains <player> {
+      - if <yaml[statistizen_config].read[data_logging.online_players.enabled]||true> flag server statistizen_hourly_players_counter:->:<player>
+      }
+    - if <yaml.list> !contains statistizen_online_time {
+      - if <server.has_file[/statistizen/statistizen_online_time.yml].not> {
+        - yaml create id:statistizen_online_time
+        } else {
+        - yaml "load:/statistizen/statistizen_online_time.yml" id:statistizen_online_time
+        }
+      - if <yaml[statistizen_config].read[data_logging.online_time.enabled]||true> yaml id:statistizen_online_time set players.<player>:+:<server.current_time_millis.sub[<player.flag[statistizen_online_time_counter]||<server.current_time_millis>>]||0>
+      }
+statistizen_cycle_hourly_data:
+  type: task
+  debug: false
+  script:
+    - if <yaml[statistizen_config].read[data_logging.online_players.enabled]||true> inject locally path:cycle_hourly_players
+    - if <yaml[statistizen_config].read[data_logging.unique_pings.enabled]||true> inject locally path:cycle_hourly_pings
+    - if <yaml[statistizen_config].read[data_logging.tps.enabled]||true> inject locally path:cycle_hourly_tps
+    - if <yaml[statistizen_config].read[data_logging.queues.enabled]||true> inject locally path:cycle_hourly_queues
+    - if <yaml[statistizen_config].read[data_logging.votifier_votes.enabled]||true> inject locally path:cycle_hourly_votes
+    - if <yaml[statistizen_config].read[data_logging.first_time_logins.enabled]||true> inject locally path:cycle_hourly_first_time_logins
+    - inject locally path:savefiles
+  cycle_hourly_players:
+    - if <server.has_file[/statistizen/hourly_players.yml].not> {
+      - yaml create id:statistizen_hourly_players
+      } else {
+      - yaml "load:/statistizen/hourly_players.yml" id:statistizen_hourly_players
+      }
+    - yaml id:statistizen_hourly_players set d@<util.date.time.duration.sub[d@<util.date.time.hour>h].sub[d@<util.date.time.minute>m].sub[d@<util.date.time.second>s].in_ticks>t.d@<util.date.time.duration.in_ticks>t:<server.flag[statistizen_hourly_players_counter].as_list.include[<server.list_online_players>].deduplicate||<server.list_online_players>>
+    - yaml id:statistizen_hourly_players "savefile:/statistizen/hourly_players.yml"
+    - yaml unload id:statistizen_hourly_players
+    - flag server statistizen_hourly_players_counter:!
+  cycle_hourly_pings:
+    - if <server.has_file[/statistizen/hourly_pings.yml].not> {
+      - yaml create id:statistizen_hourly_pings
+      } else {
+      - yaml "load:/statistizen/hourly_pings.yml" id:statistizen_hourly_pings
+      }
+    - yaml id:statistizen_hourly_pings set d@<util.date.time.duration.sub[d@<util.date.time.hour>h].sub[d@<util.date.time.minute>m].sub[d@<util.date.time.second>s].in_ticks>t.d@<util.date.time.duration.in_ticks>t:<server.flag[statistizen_hourly_pings_counter].as_list||li@>
+    - yaml id:statistizen_hourly_pings "savefile:/statistizen/hourly_pings.yml"
+    - yaml unload id:statistizen_hourly_pings
+    - flag server statistizen_hourly_pings_counter:!
+  cycle_hourly_first_time_logins:
+    - if <server.has_file[/statistizen/hourly_first_time_logins.yml].not> {
+      - yaml create id:statistizen_hourly_first_time_logins
+      } else {
+      - yaml "load:/statistizen/hourly_first_time_logins.yml" id:statistizen_hourly_first_time_logins
+      }
+    - yaml id:statistizen_hourly_first_time_logins set d@<util.date.time.duration.sub[d@<util.date.time.hour>h].sub[d@<util.date.time.minute>m].sub[d@<util.date.time.second>s].in_ticks>t.d@<util.date.time.duration.in_ticks>t:<server.flag[statistizen_hourly_first_time_logins_counter].as_list||li@>
+    - yaml id:statistizen_hourly_first_time_logins "savefile:/statistizen/hourly_first_time_logins.yml"
+    - yaml unload id:statistizen_hourly_first_time_logins
+    - flag server statistizen_hourly_first_time_logins_counter:!
+  savefiles:
+    - yaml id:statistizen_online_time "savefile:/statistizen/online_time.yml"
+  cycle_hourly_tps:
+    - if <server.has_file[/statistizen/hourly_tps.yml].not> {
+      - yaml create id:statistizen_hourly_tps
+      } else {
+      - yaml "load:/statistizen/hourly_tps.yml" id:statistizen_hourly_tps
+      }
+    - foreach <server.flag[statistizen_hourly_tps_average].as_list> {
+      - define total <def[total].add[%value%]||%value%>
+      }
+    - define tps <def[total].div[<server.flag[statistizen_hourly_tps_average].as_list.size>].as_money>
+    - yaml id:statistizen_hourly_tps set d@<util.date.time.duration.sub[d@<util.date.time.hour>h].sub[d@<util.date.time.minute>m].sub[d@<util.date.time.second>s].in_ticks>t.d@<util.date.time.duration.in_ticks>t:%tps%
+    - yaml id:statistizen_hourly_tps "savefile:/statistizen/hourly_tps.yml"
+    - yaml unload id:statistizen_hourly_tps
+    - flag server statistizen_hourly_tps_average:!
+  cycle_hourly_queues:
+    - if <server.has_file[/statistizen/hourly_queues.yml].not> {
+      - yaml create id:statistizen_hourly_queues
+      } else {
+      - yaml "load:/statistizen/hourly_queues.yml" id:statistizen_hourly_queues
+      }
+    - foreach <server.flag[statistizen_hourly_queues_average].as_list> {
+      - define total <def[total].add[%value%]||%value%>
+      }
+    - define queues <def[total].div[<server.flag[statistizen_hourly_queues_average].as_list.size>]>
+    - yaml id:statistizen_hourly_queues set d@<util.date.time.duration.sub[d@<util.date.time.hour>h].sub[d@<util.date.time.minute>m].sub[d@<util.date.time.second>s].in_ticks>t.d@<util.date.time.duration.in_ticks>t:%queues%
+    - yaml id:statistizen_hourly_queues "savefile:/statistizen/hourly_queues.yml"
+    - yaml unload id:statistizen_hourly_queues
+    - flag server statistizen_hourly_queues_average:!
+  cycle_hourly_votes:
+    - if <server.has_file[/statistizen/hourly_votes.yml].not> {
+      - yaml create id:statistizen_hourly_votes
+      } else {
+      - yaml "load:/statistizen/hourly_votes.yml" id:statistizen_hourly_votes
+      }
+    - define votes <server.flag[statistizen_hourly_votes_counter]||0>
+    - yaml id:statistizen_hourly_votes set d@<util.date.time.duration.sub[d@<util.date.time.hour>h].sub[d@<util.date.time.minute>m].sub[d@<util.date.time.second>s].in_ticks>t.d@<util.date.time.duration.in_ticks>t:%votes%
+    - yaml id:statistizen_hourly_votes "savefile:/statistizen/hourly_votes.yml"
+    - yaml unload id:statistizen_hourly_votes
+    - flag server statistizen_hourly_votes_counter:!
+#
+#
+#
+# this prepares the data for use on the web page
+#
+#
+#
+statistizen_show_data:
+  type: world
+  debug: false
+  events:
+    on generate_statistics command:
+    - if <player.is_op.not> queue clear
+    - narrate "generating statistics"
+    - inject locally path:generate_data
+    on system time hourly:
+    - inject locally path:generate_data
+  generate_data:
+    - wait 1s
+    - if <yaml[statistizen_config].read[data_logging.online_players.enabled]||true> inject locally path:generate_hourly_players
+    - if <yaml[statistizen_config].read[data_logging.unique_pings.enabled]||true> inject locally path:generate_unique_pings
+    - if <yaml[statistizen_config].read[data_logging.tps.enabled]||true> inject locally path:generate_hourly_tps
+    - if <yaml[statistizen_config].read[data_logging.queues.enabled]||true> inject locally path:generate_hourly_queues
+    - if <yaml[statistizen_config].read[data_logging.votifier_votes.enabled]||true> inject locally path:generate_hourly_votes
+    - if <yaml[statistizen_config].read[data_logging.first_time_logins.enabled]||true> inject locally path:generate_hourly_first_time_logins
+  generate_hourly_players:
+    - if <server.has_file[/statistizen/hourly_players.yml].not> {
+      - yaml create id:statistizen_hourly_players
+      } else {
+      - yaml "load:/statistizen/hourly_players.yml" id:statistizen_hourly_players
+      }
+    - define list li@
+    - if <yaml[statistizen_config].read[data_logging.online_players.depth_in_days]||10> matches number {
+      - define depth <yaml[statistizen_config].read[data_logging.online_players.depth_in_days]||10>
+      } else {
+      - define depth 10
+      }
+    - define entries <yaml[statistizen_hourly_players].list_keys[].parse[in_ticks].numerical.reverse.get[1].to[%depth%].reverse>
+    - foreach %entries% {
+      - define key1 d@%value%t
+      - define dayvalues <yaml[statistizen_hourly_players].list_keys[%key1%].parse[in_ticks].numerical>
+      - foreach <yaml[statistizen_hourly_players].list_keys[%key1%].parse[in_ticks].numerical> {
+        - define value <yaml[statistizen_hourly_players].read[%key1%.d@%value%t]||0>
+        - define list <def[list].include[<def[value].size>]>
+        }
+      - if <def[dayvalues].size> < 24 {
+        - repeat <el@24.sub[<def[dayvalues].size>]> {
+          - define list <def[list].include[0]>
+          }
+        }
+      }
+    - if <def[list].size> < <def[depth].mul[24]> {
+      - define fake_list li@
+      - repeat <def[depth].mul[24].sub[<def[list].size>]> {
+        - define fake_list <def[fake_list].include[0]>
+        }
+      - define list <def[fake_list].include[%list%].replace[null].with[0]>
+      }
+    - flag server statistics_daily_logins:<def[list].separated_by[,]>
+    - if <def[entries].size> > <def[depth]> {
+      - foreach <yaml[statistizen_hourly_players].list_keys[].exclude[%entries%]> {
+        - yaml id:statistizen_hourly_players set %value%:!
+        }
+      }
+    - yaml id:statistizen_hourly_players "savefile:/statistizen/hourly_players.yml"
+    - yaml id:statistizen_hourly_players unload
+  generate_unique_pings:
+    - if <server.has_file[/statistizen/hourly_pings.yml].not> {
+      - yaml create id:statistizen_hourly_pings
+      } else {
+      - yaml "load:/statistizen/hourly_pings.yml" id:statistizen_hourly_pings
+      }
+    - define list li@
+    - if <yaml[statistizen_config].read[data_logging.unique_pings.depth_in_days]||10> matches number {
+      - define depth <yaml[statistizen_config].read[data_logging.unique_pings.depth_in_days]||10>
+      } else {
+      - define depth 10
+      }
+    - define entries <yaml[statistizen_hourly_pings].list_keys[].parse[in_ticks].numerical.reverse.get[1].to[%depth%].reverse>
+    - foreach %entries% {
+      - define key1 d@%value%t
+      - define dayvalues <yaml[statistizen_hourly_pings].list_keys[%key1%].parse[in_ticks].numerical>
+      - foreach <yaml[statistizen_hourly_pings].list_keys[%key1%].parse[in_ticks].numerical> {
+        - define value <yaml[statistizen_hourly_pings].read[%key1%.d@%value%t]||0>
+        - define list <def[list].include[<def[value].size>]>
+        }
+      - if <def[dayvalues].size> < 24 {
+        - repeat <el@24.sub[<def[dayvalues].size>]> {
+          - define list <def[list].include[0]>
+          }
+        }
+      }
+    - if <def[list].size> < <def[depth].mul[24]> {
+      - define fake_list li@
+      - repeat <def[depth].mul[24].sub[<def[list].size>]> {
+        - define fake_list <def[fake_list].include[0]>
+        }
+      - define list <def[fake_list].include[%list%].replace[null].with[0]>
+      }
+    - flag server statistics_daily_pings:<def[list].separated_by[,]>
+    - if <def[entries].size> > <def[depth]> {
+      - foreach <yaml[statistizen_hourly_pings].list_keys[].exclude[%entries%]> {
+        - yaml id:statistizen_hourly_pings set %value%:!
+        }
+      }
+    - yaml id:statistizen_hourly_pings "savefile:/statistizen/hourly_pings.yml"
+    - yaml id:statistizen_hourly_pings unload
+  generate_hourly_first_time_logins:
+    - if <server.has_file[/statistizen/hourly_first_time_logins.yml].not> {
+      - yaml create id:statistizen_hourly_first_time_logins
+      } else {
+      - yaml "load:/statistizen/hourly_first_time_logins.yml" id:statistizen_hourly_first_time_logins
+      }
+    - define list li@
+    - if <yaml[statistizen_config].read[data_logging.first_time_logins.depth_in_days]||10> matches number {
+      - define depth <yaml[statistizen_config].read[data_logging.first_time_logins.depth_in_days]||10>
+      } else {
+      - define depth 10
+      }
+    - define entries <yaml[statistizen_hourly_first_time_logins].list_keys[].parse[in_ticks].numerical.reverse.get[1].to[%depth%].reverse>
+    - foreach %entries% {
+      - define key1 d@%value%t
+      - define dayvalues <yaml[statistizen_hourly_first_time_logins].list_keys[%key1%].parse[in_ticks].numerical>
+      - foreach <yaml[statistizen_hourly_first_time_logins].list_keys[%key1%].parse[in_ticks].numerical> {
+        - define value <yaml[statistizen_hourly_first_time_logins].read[%key1%.d@%value%t]||0>
+        - define list <def[list].include[<def[value].size>]>
+        }
+      - if <def[dayvalues].size> < 24 {
+        - repeat <el@24.sub[<def[dayvalues].size>]> {
+          - define list <def[list].include[0]>
+          }
+        }
+      }
+    - if <def[list].size> < <def[depth].mul[24]> {
+      - define fake_list li@
+      - repeat <def[depth].mul[24].sub[<def[list].size>]> {
+        - define fake_list <def[fake_list].include[0]>
+        }
+      - define list <def[fake_list].include[%list%].replace[null].with[0]>
+      }
+    - flag server statistics_daily_first_time_logins:<def[list].separated_by[,]>
+    - if <def[entries].size> > <def[depth]> {
+      - foreach <yaml[statistizen_hourly_first_time_logins].list_keys[].exclude[%entries%]> {
+        - yaml id:statistizen_hourly_first_time_logins set %value%:!
+        }
+      }
+    - yaml id:statistizen_hourly_first_time_logins "savefile:/statistizen/hourly_first_time_logins.yml"
+    - yaml id:statistizen_hourly_first_time_logins unload
+  generate_hourly_tps:
+    - if <server.has_file[/statistizen/hourly_tps.yml].not> {
+      - yaml create id:statistizen_hourly_TPS
+      } else {
+      - yaml "load:/statistizen/hourly_tps.yml" id:statistizen_hourly_TPS
+      }
+    - define list li@
+    - if <yaml[statistizen_config].read[data_logging.unique_TPS.depth_in_days]||10> matches number {
+      - define depth <yaml[statistizen_config].read[data_logging.unique_TPS.depth_in_days]||10>
+      } else {
+      - define depth 10
+      }
+    - define entries <yaml[statistizen_hourly_TPS].list_keys[].parse[in_ticks].numerical.reverse.get[1].to[%depth%].reverse>
+    - foreach %entries% {
+      - define key1 d@%value%t
+      - define dayvalues <yaml[statistizen_hourly_TPS].list_keys[%key1%].parse[in_ticks].numerical>
+      - foreach <yaml[statistizen_hourly_TPS].list_keys[%key1%].parse[in_ticks].numerical> {
+        - define value <yaml[statistizen_hourly_TPS].read[%key1%.d@%value%t]||0>
+        - define list <def[list].include[<def[value]>]>
+        }
+      - if <def[dayvalues].size> < 24 {
+        - repeat <el@24.sub[<def[dayvalues].size>]> {
+          - define list <def[list].include[0]>
+          }
+        }
+      }
+    - if <def[list].size> < <def[depth].mul[24]> {
+      - define fake_list li@
+      - repeat <def[depth].mul[24].sub[<def[list].size>]> {
+        - define fake_list <def[fake_list].include[0]>
+        }
+      - define list <def[fake_list].include[%list%].replace[null].with[0]>
+      }
+    - flag server statistics_daily_TPS:<def[list].separated_by[,]>
+    - if <def[entries].size> > <def[depth]> {
+      - foreach <yaml[statistizen_hourly_TPS].list_keys[].exclude[%entries%]> {
+        - yaml id:statistizen_hourly_TPS set %value%:!
+        }
+      }
+    - yaml id:statistizen_hourly_TPS "savefile:/statistizen/hourly_tps.yml"
+    - yaml id:statistizen_hourly_TPS unload
+  generate_hourly_queues:
+    - if <server.has_file[/statistizen/hourly_queues.yml].not> {
+      - yaml create id:statistizen_hourly_queues
+      } else {
+      - yaml "load:/statistizen/hourly_queues.yml" id:statistizen_hourly_queues
+      }
+    - define list li@
+    - if <yaml[statistizen_config].read[data_logging.unique_queues.depth_in_days]||10> matches number {
+      - define depth <yaml[statistizen_config].read[data_logging.unique_queues.depth_in_days]||10>
+      } else {
+      - define depth 10
+      }
+    - define entries <yaml[statistizen_hourly_queues].list_keys[].parse[in_ticks].numerical.reverse.get[1].to[%depth%].reverse>
+    - foreach %entries% {
+      - define key1 d@%value%t
+      - define dayvalues <yaml[statistizen_hourly_queues].list_keys[%key1%].parse[in_ticks].numerical>
+      - foreach <yaml[statistizen_hourly_queues].list_keys[%key1%].parse[in_ticks].numerical> {
+        - define value <yaml[statistizen_hourly_queues].read[%key1%.d@%value%t].as_int||0>
+        - define list <def[list].include[<def[value]>]>
+        }
+      - if <def[dayvalues].size> < 24 {
+        - repeat <el@24.sub[<def[dayvalues].size>]> {
+          - define list <def[list].include[0]>
+          }
+        }
+      }
+    - if <def[list].size> < <def[depth].mul[24]> {
+      - define fake_list li@
+      - repeat <def[depth].mul[24].sub[<def[list].size>]> {
+        - define fake_list <def[fake_list].include[0]>
+        }
+      - define list <def[fake_list].include[%list%].replace[null].with[0]>
+      }
+    - flag server statistics_daily_queues:<def[list].separated_by[,]>
+    - if <def[entries].size> > <def[depth]> {
+      - foreach <yaml[statistizen_hourly_queues].list_keys[].exclude[%entries%]> {
+        - yaml id:statistizen_hourly_queues set %value%:!
+        }
+      }
+    - yaml id:statistizen_hourly_queues "savefile:/statistizen/hourly_queues.yml"
+    - yaml id:statistizen_hourly_queues unload
+  generate_hourly_votes:
+    - if <server.has_file[/statistizen/hourly_votes.yml].not> {
+      - yaml create id:statistizen_hourly_votes
+      } else {
+      - yaml "load:/statistizen/hourly_votes.yml" id:statistizen_hourly_votes
+      }
+    - define list li@
+    - if <yaml[statistizen_config].read[data_logging.unique_votes.depth_in_days]||10> matches number {
+      - define depth <yaml[statistizen_config].read[data_logging.unique_votes.depth_in_days]||10>
+      } else {
+      - define depth 10
+      }
+    - define entries <yaml[statistizen_hourly_votes].list_keys[].parse[in_ticks].numerical.reverse.get[1].to[%depth%].reverse>
+    - foreach %entries% {
+      - define key1 d@%value%t
+      - define dayvalues <yaml[statistizen_hourly_votes].list_keys[%key1%].parse[in_ticks].numerical>
+      - foreach %dayvalues% {
+        - define value <yaml[statistizen_hourly_votes].read[%key1%.d@%value%t]||0>
+        - define list <def[list].include[<def[value]>]>
+        }
+      - if <def[dayvalues].size> < 24 {
+        - repeat <el@24.sub[<def[dayvalues].size>]> {
+          - define list <def[list].include[0]>
+          }
+        }
+      }
+    - if <def[list].size> < <def[depth].mul[24]> {
+      - define fake_list li@
+      - repeat <def[depth].mul[24].sub[<def[list].size>]> {
+        - define fake_list <def[fake_list].include[0]>
+        }
+      - define list <def[fake_list].include[%list%].replace[null].with[0]>
+      }
+    - flag server statistics_daily_votes:<def[list].separated_by[,]>
+    - if <def[entries].size> > <def[depth]> {
+      - foreach <yaml[statistizen_hourly_votes].list_keys[].exclude[%entries%]> {
+        - yaml id:statistizen_hourly_votes set %value%:!
+        }
+      }
+    - yaml id:statistizen_hourly_votes "savefile:/statistizen/hourly_votes.yml"
+    - yaml id:statistizen_hourly_votes unload
+statistizen_web_page:
+  type: world
+  debug: false
+  events:
+    on server start:
+    - wait 5t
+    - web start port:<yaml[statistizen_config].read[web_page.port]||10123>
+    on get request:
+    - if <context.request> == /<yaml[statistizen_config].read[web_page.pagename]||statistics> {
+      - define labels "Future,Today"
+      - repeat 9 {
+        - define duration <util.date.time.duration.sub[<el@val[86400].mul[%value%]>]>
+        - define labels "%labels%,<def[duration].time.day>/<def[duration].time.month>"
+        }
+      - determine passively "code:200"  
+      - determine passively "type:text/html"
+      - determine "<&lt>!doctype html<&gt><&lt>html<&gt><&lt>head<&gt><&lt>title>STATISTICS<&lt>/title<&gt><&lt>/head<&gt><&lt>body<&gt><&lt>p<&gt>Server time<&co> <util.date> <util.date.time> <util.date.time.formatted_zone><&lt>p<&gt>Next day cycle in<&co> <el@24.sub[<util.date.time.hour>]> hours<&lt>p<&gt><&lt>img src='http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Online<&pc>20Players&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=2&xnotches=1&xsteps=0.04166&max=50&values=<server.flag[statistics_daily_logins]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%'<&gt><&lt>img src='http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=First<&pc>20Time<&pc>20Logins&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=2&xnotches=1&xsteps=0.04166&max=50&values=<server.flag[statistics_daily_first_time_logins]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%'<&gt><&lt>img src='http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Unique<&pc>20Pings&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=2&xnotches=1&xsteps=0.04166&max=50&values=<server.flag[statistics_daily_pings]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%'<&gt><&lt>img src='http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Average<&pc>20TPS&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=1&xnotches=1&xsteps=0.04166&max=20&values=<server.flag[statistics_daily_TPS]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%'<&gt><&lt>img src='http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Average<&pc>20queues&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=5&xnotches=1&xsteps=0.04166&max=100&values=<server.flag[statistics_daily_queues]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%'<&gt><&lt>img src='http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Votifier<&pc>20Votes&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=2&xnotches=1&xsteps=0.04166&max=50&values=<server.flag[statistics_daily_votes]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%'<&gt><&lt>/body<&gt><&lt>/html<&gt>"
+      }
