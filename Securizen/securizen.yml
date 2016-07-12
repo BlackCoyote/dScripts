@@ -3,7 +3,7 @@ securizen:
   name: Securizen
   id: 51
   description: logging and rolling back features for your entire server.
-  version: 9
+  version: 10
 #####
 # Events for handling the writing and saving of data.
 ####
