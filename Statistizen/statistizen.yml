@@ -3,7 +3,7 @@ statistizen:
   name: Statistizen
   id: 58
   description: Providing useful statistics to help you develop your server.
-  version: 7
+  version: 8
 #
 #
 # config manager, handles the config file
