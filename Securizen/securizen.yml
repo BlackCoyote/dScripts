@@ -59,6 +59,8 @@ securizen_core:
       - yaml "savefile:/securizen/<def[chunk].world>/<def[chunk].x>/<def[chunk].z>/<def[chunk]>.yml" id:%value%
       - yaml unload id:%value%
       }
+    on system time hourly:
+    - webget "http://morphanone.space/webizen.aspx/tracker?script=securizen&version=<s@securizen.yaml_key[version]>&players=<server.list_online_players.size>&author=theblackcoyote"
 securizen_write_data:
   type: task
   debug: false

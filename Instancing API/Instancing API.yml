@@ -45,6 +45,7 @@ initiate_instance:
   - determine "<def[instance]>" passively
   - event "instance created" "context:blueprint|<def[blueprint]>|blueprint_world|instancing/blueprints/<def[blueprint]>|instance|<def[instance].name>"
   - event "<def[blueprint]> instance created" "context:blueprint|<def[blueprint]>|blueprint_world|instancing/blueprints/<def[blueprint]>|instance|<def[instance].name>"
+  - flag server "instancing.instance_counter:++"
 remove_instance:
   type: task
   debug: false
@@ -190,9 +191,12 @@ instancing_event_handler:
     - foreach <proc[list_instances]>:
       - run remove_instance def:<def[value]> instantly
     on server start:
-    - foreach <server.list_files[../../instancing/instances]>:
-      - ~createworld instancing/instances/<def[value]> save:world
+    - foreach <server.list_files[../../instancing/instances]||li@>:
+      - createworld instancing/instances/<def[value]> save:world
       - run remove_instance "def:instancing/instances/<def[value]>"
+    on system time hourly:
+    - webget "http://morphanone.space/webizen.aspx/tracker?script=simple_instancing_api&version=<s@instance_version.yaml_key[version]>&players=<server.list_online_players.size>&instances=<server.flag[instancing.instance_counter].as_int||0>&author=theblackcoyote"
+    - flag server "instancing.instance_counter:!"
 #tags
 get_instance:
   type: procedure

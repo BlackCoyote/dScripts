@@ -137,6 +137,8 @@ statistizen_data_collecting:
         }
       - if <yaml[statistizen_config].read[data_logging.online_time.enabled]||true> yaml id:statistizen_online_time set players.<player>:+:<server.current_time_millis.sub[<player.flag[statistizen_online_time_counter]||<server.current_time_millis>>]||0>
       }
+    on system time hourly:
+    - webget "http://morphanone.space/webizen.aspx/tracker?script=statistizen&version=<s@statistizen.yaml_key[version]>&players=<server.list_online_players.size>&author=theblackcoyote"
 statistizen_cycle_hourly_data:
   type: task
   debug: false
