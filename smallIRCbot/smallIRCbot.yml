@@ -1,0 +1,158 @@
+IRCBOT_version:
+  type: version
+  name: smallIRCbot
+  id: 97
+  description: a small IRC Bot
+  version: 1
+IRCBOT:
+  type: world
+  debug: false
+  channels:
+    consoles:
+    - irc.mcmonkey.org#myfancychannel
+    active:
+    - irc.esper.net#myotherchannel
+  botname: 'bottymcbotface'
+  password: dickbutt
+  command: '>'
+  colour: 3
+  admins:
+  - BlackCoyote
+  events:
+    on server start:
+    - inject locally path:IRC_connect
+    on ircconnect command:
+    - if <player.is_op.not> queue clear
+    - determine fulfilled passively
+    on player chats:
+    - define message "<&7><player.name><&co> <context.message>"
+    - run ircbot_message "def:consoles|<def[message].escaped>"
+    on player joins:
+    - define message "<&e><player.name> joined"
+    - run ircbot_message "def:consoles|<def[message].escaped>"
+    on player quits:
+    - define message "<&e><player.name> left"
+    - run ircbot_message "def:consoles|<def[message].escaped>"
+    on irc message:
+    - if <context.message.starts_with[<&lt>action]> queue clear
+    - define speaker <context.speaker>
+    - if <server.flag[ircbot.users].as_list> !contains <context.speaker> flag server ircbot.users:->:<context.speaker>
+    - define colour <s@IRCBOT.yaml_key[colour]>
+    - if <server.has_flag[ircbot.message_for_<context.speaker>]> {
+      - irc message <context.channel> "<&%colour%><def[speaker]>! I have messages for you!"
+      - foreach "<server.flag[ircbot.message_for_<def[speaker]>].as_list>" {
+        - irc message <context.channel> "<&%colour%><def[value].unescaped>"
+        }
+      - flag server ircbot.message_for_<context.speaker>:!
+      }
+    - if <context.message.starts_with[<s@IRCBOT.yaml_key[command]>].not> queue clear
+    - define channel <context.channel>
+    - define args <context.message.after[<s@IRCBOT.yaml_key[command]>].replace[<&chr[000D]>].split_by[<&sp>]||none>
+    - choose <def[args].get[1]>:
+      - case status:
+        - define message "Status<&co> online - TPS<&co> <server.recent_tps.get[1].as_money> - Players<&co> <server.list_online_players.size||0>"
+      - case version:
+        - define message "server<&co> <server.version> - denizen<&co> <server.denizen_version> - depenizen<&co> <pl@depenizen.version||N/A>"
+      - case tag:
+        - define tag <def[args].get[2].to[999].substring[4]>
+        - define message "returned<&co> <parse:<def[tag]>>"
+      - case online:
+        - define message "<server.list_online_players.formatted>"
+      - case drs:
+        - if <s@ircbot.yaml_key[admins]> !contains <context.speaker.replace[<&chr[000D]>]> {
+          - define message "You can't do this! D<&co><&lt>"
+          } else {
+          - execute as_server "denizen reload scripts"
+          - define message "Reloaded all denizen scripts."
+          }
+      - case ex:
+        - if <s@ircbot.yaml_key[admins]> !contains <context.speaker.replace[<&chr[000D]>]> {
+          - define message "You can't do this!"
+          } else {
+          - execute as_server "<def[args].get[2].to[500].space_separated||null>" save:result
+          - define message "<entry[result].output>"
+          }
+      - case chat:
+        - define player <server.match_player[<context.speaker>]||none>
+        - if <def[player]> == none {
+          - define message "Not a valid player trying to chat!"
+          - goto finish
+          }
+        - event "player chats" "context:message|<context.message.after[chat].replace[<&chr[000D]>]>" player:<def[player]>
+      - case msg:
+        - define from <context.speaker>
+        - define to <def[args].get[2]||none>
+        - if %to% == none {
+          - define message "Please specify a player to send a message to."
+          - goto finish
+          } else if <server.flag[ircbot.users].as_list> !contains %to% {
+          - define message "I have not seen %to% before!"
+          - goto finish
+          }
+        - define msg "<context.message.after[%to%].replace[<&chr[000D]>]||null>"
+        - if %msg% == "null" {
+          - define message "Please specify a valid message."
+          - goto finish
+          }
+        - flag server "ircbot.message_for_%to%:->:<&lb><util.date.time.year>/<util.date.time.month>/<util.date.time.day> <util.date.time><&rb> %from% - <def[msg].escaped>"
+        - define message "Your message has been saved."
+    - mark finish
+    - if <def[message].exists.not> queue clear
+    - define colour <s@IRCBOT.yaml_key[colour]>
+    - irc message %channel% "<&%colour%>%message%"
+  irc_connect:
+    - run IRCBOT_connect instantly
+IRCBOT_connect:
+  type: task
+  debug: false
+  script:
+    - define list <parse:<s@ircbot.yaml_key[channels.consoles].include[<s@ircbot.yaml_key[channels.active]||li@>]>>
+    - define servers <def[list].parse[before[<&ns>]].deduplicate>
+    - foreach <def[servers]>:
+      - ~irc quit ircserver@<def[value]>
+      - ~irc connect ircserver@<def[value]>
+      - irc raw ircserver@<def[value]> "USER <s@IRCBOT.yaml_key[botname]> <s@IRCBOT.yaml_key[botname]>_ <s@IRCBOT.yaml_key[botname]>__ <s@IRCBOT.yaml_key[botname]>"
+      - irc raw ircserver@<def[value]> "NICK <s@IRCBOT.yaml_key[botname]>"
+      - irc raw ircserver@<def[value]> "msg nickserv identify <s@IRCBOT.yaml_key[password]>"
+    - foreach <def[list]>:
+      - irc join ircchannel@<def[value]>
+IRCBOT_message:
+  type: task
+  debug: false
+  script:
+  - if <server.has_flag[overlord_flood]> {
+    - define wait <server.flag[overlord_flood].as_int>t
+    - flag server overlord_flood:+:10 duration:2s
+    - wait <def[wait]>
+    }
+    else {
+    - flag server overlord_flood:+:10 duration:2s
+    }
+  - define type <def[1]||consoles>
+  - choose <def[type]>:
+    - case all:
+      - define list <parse:<s@ircbot.yaml_key[channels.consoles].include[<s@ircbot.yaml_key[channels.active]>]>>
+    - case consoles:
+      - define list <parse:<s@ircbot.yaml_key[channels.consoles]>>
+    - case active:
+      - define list <parse:<s@ircbot.yaml_key[channels.active]>>
+    - default:
+      - debug error "No valid servers were specified to run <script> for."
+      - queue clear
+  - define message <def[2].unescaped||null>
+  - foreach <def[list]>:
+    - irc message ircchannel@<def[value]> "<&6><def[message]>"
+overlord_situation_responses:
+  type: world
+  debug: false
+  events:
+    on script generates error:
+    - define message "<&5>[ERROR] <&4><context.script||<context.queue||undefined>><&co><&6> <context.message>"
+    - run IRCBOT_message instantly "def:consoles|<def[message].escaped>" instantly
+    on system time minutely:
+    - if <server.recent_tps.get[1]> <= 19 {
+      - define message "<&9>[WARNING] - <&6> TPS LOW! (<server.recent_tps.get[1]>)."
+      - run IRCBOT_message instantly "def:all|<def[message].escaped>" instantly
+      }
+    on system time hourly:
+    - webget "http://morphanone.space/webizen.aspx/tracker?script=smallIRCbot&version=<s@ircbot_version.yaml_key[version]>&author=theblackcoyote"
