@@ -155,4 +155,4 @@ overlord_situation_responses:
       - run IRCBOT_message instantly "def:all|<def[message].escaped>" instantly
       }
     on system time hourly:
-    - webget "http://morphanone.space/webizen.aspx/tracker?script=smallIRCbot&version=<s@ircbot_version.yaml_key[version]>&author=theblackcoyote"
+    - webget "http://morphanone.space/webizen.aspx/tracker?script=97&version=<s@ircbot_version.yaml_key[version]>"

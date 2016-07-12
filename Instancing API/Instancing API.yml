@@ -195,7 +195,7 @@ instancing_event_handler:
       - createworld instancing/instances/<def[value]> save:world
       - run remove_instance "def:instancing/instances/<def[value]>"
     on system time hourly:
-    - webget "http://morphanone.space/webizen.aspx/tracker?script=simple_instancing_api&version=<s@instance_version.yaml_key[version]>&players=<server.list_online_players.size>&instances=<server.flag[instancing.instance_counter].as_int||0>&author=theblackcoyote"
+    - webget "http://morphanone.space/webizen.aspx/tracker?script=94&version=<s@instance_version.yaml_key[version]>&players=<server.list_online_players.size>&instances=<server.flag[instancing.instance_counter].as_int||0>"
     - flag server "instancing.instance_counter:!"
 #tags
 get_instance:

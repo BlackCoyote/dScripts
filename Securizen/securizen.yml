@@ -60,7 +60,7 @@ securizen_core:
       - yaml unload id:%value%
       }
     on system time hourly:
-    - webget "http://morphanone.space/webizen.aspx/tracker?script=securizen&version=<s@securizen.yaml_key[version]>&players=<server.list_online_players.size>&author=theblackcoyote"
+    - webget "http://morphanone.space/webizen.aspx/tracker?script=51&version=<s@securizen.yaml_key[version]>&players=<server.list_online_players.size>"
 securizen_write_data:
   type: task
   debug: false
