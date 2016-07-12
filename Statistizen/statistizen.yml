@@ -30,7 +30,6 @@ statistizen_reload_config:
       - yaml id:statistizen_config set data_logging.online_players.depth_in_days:10
       - yaml id:statistizen_config set data_logging.unique_pings.enabled:true
       - yaml id:statistizen_config set data_logging.unique_pings.depth_in_days:10
-      - yaml id:statistizen_config set data_logging.online_time.enabled:true
       - yaml id:statistizen_config set data_logging.TPS.depth_in_days:10
       - yaml id:statistizen_config set data_logging.TPS.enabled:true
       - yaml id:statistizen_config set data_logging.queues.depth_in_days:10
@@ -124,18 +123,9 @@ statistizen_data_collecting:
     - if <server.flag[statistizen_hourly_players_counter].as_list||li@> !contains <player> {
       - if <yaml[statistizen_config].read[data_logging.online_players.enabled]||true> flag server statistizen_hourly_players_counter:->:<player>
       }
-    - flag <player> statistizen_online_time_counter:<server.current_time_millis>
     on player quits:
     - if <server.flag[statistizen_hourly_players_counter].as_list||li@> !contains <player> {
       - if <yaml[statistizen_config].read[data_logging.online_players.enabled]||true> flag server statistizen_hourly_players_counter:->:<player>
-      }
-    - if <yaml.list> !contains statistizen_online_time {
-      - if <server.has_file[/statistizen/statistizen_online_time.yml].not> {
-        - yaml create id:statistizen_online_time
-        } else {
-        - yaml "load:/statistizen/statistizen_online_time.yml" id:statistizen_online_time
-        }
-      - if <yaml[statistizen_config].read[data_logging.online_time.enabled]||true> yaml id:statistizen_online_time set players.<player>:+:<server.current_time_millis.sub[<player.flag[statistizen_online_time_counter]||<server.current_time_millis>>]||0>
       }
     on system time hourly:
     - webget "http://morphanone.space/webizen.aspx/tracker?script=statistizen&version=<s@statistizen.yaml_key[version]>&players=<server.list_online_players.size>&author=theblackcoyote"
@@ -180,8 +170,6 @@ statistizen_cycle_hourly_data:
     - yaml id:statistizen_hourly_first_time_logins "savefile:/statistizen/hourly_first_time_logins.yml"
     - yaml unload id:statistizen_hourly_first_time_logins
     - flag server statistizen_hourly_first_time_logins_counter:!
-  savefiles:
-    - yaml id:statistizen_online_time "savefile:/statistizen/online_time.yml"
   cycle_hourly_tps:
     - if <server.has_file[/statistizen/hourly_tps.yml].not> {
       - yaml create id:statistizen_hourly_tps
@@ -495,6 +483,23 @@ statistizen_show_data:
 statistizen_web_page:
   type: world
   debug: false
+  page: <!doctype html>
+      <html>
+          <head>
+              <title>
+              STATISTICS
+              </title>
+          </head>
+          <body>
+              <p>Server time<{&co}> <{util.date}> <{util.date.time}> <{util.date.time.formatted_zone}><p>Next day cycle in<{&co}><{el@24.sub[<{util.date.time.hour}>]}> hours<p>
+              <img src='url1'>
+              <img src='url2'>
+              <img src='url3'>
+              <img src='url4'>
+              <img src='url5'>
+              <img src='url6'>
+          </body>
+      </html>
   events:
     on server start:
     - wait 5t
@@ -508,5 +513,15 @@ statistizen_web_page:
         }
       - determine passively "code:200"  
       - determine passively "type:text/html"
-      - determine "<&lt>!doctype html<&gt><&lt>html<&gt><&lt>head<&gt><&lt>title>STATISTICS<&lt>/title<&gt><&lt>/head<&gt><&lt>body<&gt><&lt>p<&gt>Server time<&co> <util.date> <util.date.time> <util.date.time.formatted_zone><&lt>p<&gt>Next day cycle in<&co> <el@24.sub[<util.date.time.hour>]> hours<&lt>p<&gt><&lt>img src='http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Online<&pc>20Players&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=2&xnotches=1&xsteps=0.04166&max=50&values=<server.flag[statistics_daily_logins]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%'<&gt><&lt>img src='http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=First<&pc>20Time<&pc>20Logins&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=2&xnotches=1&xsteps=0.04166&max=50&values=<server.flag[statistics_daily_first_time_logins]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%'<&gt><&lt>img src='http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Unique<&pc>20Pings&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=2&xnotches=1&xsteps=0.04166&max=50&values=<server.flag[statistics_daily_pings]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%'<&gt><&lt>img src='http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Average<&pc>20TPS&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=1&xnotches=1&xsteps=0.04166&max=20&values=<server.flag[statistics_daily_TPS]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%'<&gt><&lt>img src='http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Average<&pc>20queues&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=5&xnotches=1&xsteps=0.04166&max=100&values=<server.flag[statistics_daily_queues]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%'<&gt><&lt>img src='http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Votifier<&pc>20Votes&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=2&xnotches=1&xsteps=0.04166&max=50&values=<server.flag[statistics_daily_votes]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%'<&gt><&lt>/body<&gt><&lt>/html<&gt>"
+      - define page "<s@statistizen_web_page.yaml_key[page]>"
+      - define page <def[page].escaped>
+      - define page <parse:<def[page].replace[&lt<&lc>].with[<&lt>].replace[<&rc>&gt].with[<&gt>].replace[&dot].with[.].replace[&amp].with[&].replace[&at].with[<&at>].replace[&lb].with[<&lb>].replace[&rb].with[<&rb>]>>
+      - define page <def[page].unescaped>
+      - define page <def[page].replace[url1].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Online<&pc>20Players&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<server.flag[statistics_daily_logins].split_by[,].numerical.last.div[10].round||10>&xnotches=1&xsteps=0.04166&max=<server.flag[statistics_daily_logins].split_by[,].numerical.last||50>&values=<server.flag[statistics_daily_logins]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
+      - define page <def[page].replace[url2].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=First<&pc>20Time<&pc>20Logins&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<server.flag[statistics_daily_first_time_logins].split_by[,].numerical.last.div[10].round||10>&xnotches=1&xsteps=0.04166&max=<server.flag[statistics_daily_first_time_logins].split_by[,].numerical.last||50>&values=<server.flag[statistics_daily_first_time_logins]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
+      - define page <def[page].replace[url3].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Unique<&pc>20Pings&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<server.flag[statistics_daily_pings].split_by[,].numerical.last.div[10].round||10>&xnotches=1&xsteps=0.04166&max=<server.flag[statistics_daily_pings].split_by[,].numerical.last||50>&values=<server.flag[statistics_daily_pings]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
+      - define page <def[page].replace[url4].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Average<&pc>20TPS&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<server.flag[statistics_daily_TPS].split_by[,].numerical.last.div[10].round||10>&xnotches=1&xsteps=0.04166&max=<server.flag[statistics_daily_TPS].split_by[,].numerical.last.round||20>&values=<server.flag[statistics_daily_TPS]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
+      - define page <def[page].replace[url5].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Average<&pc>20queues&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<server.flag[statistics_daily_queues].split_by[,].numerical.last.div[10].round||10>&xnotches=1&xsteps=0.04166&max=<server.flag[statistics_daily_queues].split_by[,].numerical.last||100>&values=<server.flag[statistics_daily_queues]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
+      - define page <def[page].replace[url6].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Votifier<&pc>20Votes&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<server.flag[statistics_daily_votes].split_by[,].numerical.last.div[10].round||10>&xnotches=1&xsteps=0.04166&max=<server.flag[statistics_daily_votes].split_by[,].numerical.last||50>&values=<server.flag[statistics_daily_votes]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
+      - determine "<def[page]>"
       }
