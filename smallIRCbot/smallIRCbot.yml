@@ -131,11 +131,11 @@ IRCBOT_message:
   - define type <def[1]||consoles>
   - choose <def[type]>:
     - case all:
-      - define list <parse:<s@ircbot.yaml_key[channels.consoles].include[<s@ircbot.yaml_key[channels.active]>]>>
+      - define list <parse:<s@ircbot.yaml_key[channels.consoles].include[<s@ircbot.yaml_key[channels.active]||li@>]||li@>>
     - case consoles:
-      - define list <parse:<s@ircbot.yaml_key[channels.consoles]>>
+      - define list <parse:<s@ircbot.yaml_key[channels.consoles]||li@>>
     - case active:
-      - define list <parse:<s@ircbot.yaml_key[channels.active]>>
+      - define list <parse:<s@ircbot.yaml_key[channels.active]||li@>>
     - default:
       - debug error "No valid servers were specified to run <script> for."
       - queue clear
