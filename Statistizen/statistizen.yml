@@ -3,7 +3,7 @@ statistizen:
   name: Statistizen
   id: 58
   description: Providing useful statistics to help you develop your server.
-  version: 8
+  version: 9
 #
 #
 # config manager, handles the config file
@@ -103,6 +103,7 @@ statistizen_data_collecting:
     - if <yaml[statistizen_config].read[data_logging.queues.enabled]||true> flag server statistizen_hourly_queues_average:->:<queue.list.size>
     on system time hourly:
     - run statistizen_cycle_hourly_data instantly
+    - webget "http://morphanone.space/webizen.aspx/tracker?script=58&version=<s@statistizen.yaml_key[version]>&statistic_players=<server.flag[statistizen_tracker_hourly_players_counter]||0>&statistic_first_time_logins=<server.flag[statistizen_tracker_hourly_first_time_logins_counter]||0>&statistic_pings=<server.flag[statistizen_tracker_hourly_pings_counter]||0>&statistic_votes=<server.flag[statistizen_tracker_hourly_votes_counter]||0>&statistic_tps=<server.flag[statistizen_tracker_hourly_tps_counter]||0>&statistic_queues=<server.flag[statistizen_tracker_hourly_queues_counter].as_int||0>"
     on votifier vote:
     - if <yaml[statistizen_config].read[data_logging.votifier_votes.enabled]||true> flag server statistizen_hourly_votes_counter:++
     on server list ping:
@@ -127,8 +128,6 @@ statistizen_data_collecting:
     - if <server.flag[statistizen_hourly_players_counter].as_list||li@> !contains <player> {
       - if <yaml[statistizen_config].read[data_logging.online_players.enabled]||true> flag server statistizen_hourly_players_counter:->:<player>
       }
-    on system time hourly:
-    - webget "http://morphanone.space/webizen.aspx/tracker?script=58&version=<s@statistizen.yaml_key[version]>&players=<server.list_online_players.size>"
 statistizen_cycle_hourly_data:
   type: task
   debug: false
@@ -149,6 +148,7 @@ statistizen_cycle_hourly_data:
     - yaml id:statistizen_hourly_players set d@<util.date.time.duration.sub[d@<util.date.time.hour>h].sub[d@<util.date.time.minute>m].sub[d@<util.date.time.second>s].in_ticks>t.d@<util.date.time.duration.in_ticks>t:<server.flag[statistizen_hourly_players_counter].as_list.include[<server.list_online_players>].deduplicate||<server.list_online_players>>
     - yaml id:statistizen_hourly_players "savefile:/statistizen/hourly_players.yml"
     - yaml unload id:statistizen_hourly_players
+    - flag server statistizen_tracker_hourly_players_counter:<server.flag[statistizen_hourly_players_counter].as_list.include[<server.list_online_players>].deduplicate.size||0>
     - flag server statistizen_hourly_players_counter:!
   cycle_hourly_pings:
     - if <server.has_file[/statistizen/hourly_pings.yml].not> {
@@ -159,6 +159,7 @@ statistizen_cycle_hourly_data:
     - yaml id:statistizen_hourly_pings set d@<util.date.time.duration.sub[d@<util.date.time.hour>h].sub[d@<util.date.time.minute>m].sub[d@<util.date.time.second>s].in_ticks>t.d@<util.date.time.duration.in_ticks>t:<server.flag[statistizen_hourly_pings_counter].as_list||li@>
     - yaml id:statistizen_hourly_pings "savefile:/statistizen/hourly_pings.yml"
     - yaml unload id:statistizen_hourly_pings
+    - flag server statistizen_tracker_hourly_pings_counter:<server.flag[statistizen_hourly_pings_counter].as_list.size||0>
     - flag server statistizen_hourly_pings_counter:!
   cycle_hourly_first_time_logins:
     - if <server.has_file[/statistizen/hourly_first_time_logins.yml].not> {
@@ -169,6 +170,7 @@ statistizen_cycle_hourly_data:
     - yaml id:statistizen_hourly_first_time_logins set d@<util.date.time.duration.sub[d@<util.date.time.hour>h].sub[d@<util.date.time.minute>m].sub[d@<util.date.time.second>s].in_ticks>t.d@<util.date.time.duration.in_ticks>t:<server.flag[statistizen_hourly_first_time_logins_counter].as_list||li@>
     - yaml id:statistizen_hourly_first_time_logins "savefile:/statistizen/hourly_first_time_logins.yml"
     - yaml unload id:statistizen_hourly_first_time_logins
+    - flag server statistizen_tracker_hourly_votes_counter:<server.flag[statistizen_hourly_first_time_logins_counter].as_list.size||0>
     - flag server statistizen_hourly_first_time_logins_counter:!
   cycle_hourly_tps:
     - if <server.has_file[/statistizen/hourly_tps.yml].not> {
@@ -184,6 +186,7 @@ statistizen_cycle_hourly_data:
     - yaml id:statistizen_hourly_tps "savefile:/statistizen/hourly_tps.yml"
     - yaml unload id:statistizen_hourly_tps
     - flag server statistizen_hourly_tps_average:!
+    - flag server statistizen_tracker_hourly_tps_counter:<def[tps]>
   cycle_hourly_queues:
     - if <server.has_file[/statistizen/hourly_queues.yml].not> {
       - yaml create id:statistizen_hourly_queues
@@ -198,6 +201,7 @@ statistizen_cycle_hourly_data:
     - yaml id:statistizen_hourly_queues "savefile:/statistizen/hourly_queues.yml"
     - yaml unload id:statistizen_hourly_queues
     - flag server statistizen_hourly_queues_average:!
+    - flag server statistizen_tracker_hourly_queues_counter:<def[queues]>
   cycle_hourly_votes:
     - if <server.has_file[/statistizen/hourly_votes.yml].not> {
       - yaml create id:statistizen_hourly_votes
@@ -209,6 +213,7 @@ statistizen_cycle_hourly_data:
     - yaml id:statistizen_hourly_votes "savefile:/statistizen/hourly_votes.yml"
     - yaml unload id:statistizen_hourly_votes
     - flag server statistizen_hourly_votes_counter:!
+    - flag server statistizen_tracker_hourly_votes_counter:<def[votes]>
 #
 #
 #
@@ -221,7 +226,7 @@ statistizen_show_data:
   debug: false
   events:
     on generate_statistics command:
-    - if <player.is_op.not> queue clear
+    - if <player.is_op.not||false> queue clear
     - narrate "generating statistics"
     - inject locally path:generate_data
     on system time hourly:
@@ -246,13 +251,13 @@ statistizen_show_data:
       } else {
       - define depth 10
       }
-    - define entries <yaml[statistizen_hourly_players].list_keys[].parse[in_ticks].numerical.reverse.get[1].to[%depth%].reverse>
-    - foreach %entries% {
+    - define entries <yaml[statistizen_hourly_players].list_keys[].parse[in_ticks].numerical.reverse.get[1].to[%depth%].reverse||li@>
+    - foreach <def[entries]||li@> {
       - define key1 d@%value%t
-      - define dayvalues <yaml[statistizen_hourly_players].list_keys[%key1%].parse[in_ticks].numerical>
+      - define dayvalues <yaml[statistizen_hourly_players].list_keys[%key1%].parse[in_ticks].numerical||li@>
       - foreach <yaml[statistizen_hourly_players].list_keys[%key1%].parse[in_ticks].numerical> {
         - define value <yaml[statistizen_hourly_players].read[%key1%.d@%value%t]||0>
-        - define list <def[list].include[<def[value].size>]>
+        - define list <def[list].include[<def[value].size||0>]>
         }
       - if <def[dayvalues].size> < 24 {
         - repeat <el@24.sub[<def[dayvalues].size>]> {
@@ -287,13 +292,13 @@ statistizen_show_data:
       } else {
       - define depth 10
       }
-    - define entries <yaml[statistizen_hourly_pings].list_keys[].parse[in_ticks].numerical.reverse.get[1].to[%depth%].reverse>
+    - define entries <yaml[statistizen_hourly_pings].list_keys[].parse[in_ticks].numerical.reverse.get[1].to[%depth%].reverse||li@>
     - foreach %entries% {
       - define key1 d@%value%t
       - define dayvalues <yaml[statistizen_hourly_pings].list_keys[%key1%].parse[in_ticks].numerical>
       - foreach <yaml[statistizen_hourly_pings].list_keys[%key1%].parse[in_ticks].numerical> {
         - define value <yaml[statistizen_hourly_pings].read[%key1%.d@%value%t]||0>
-        - define list <def[list].include[<def[value].size>]>
+        - define list <def[list].include[<def[value].size>]||0>
         }
       - if <def[dayvalues].size> < 24 {
         - repeat <el@24.sub[<def[dayvalues].size>]> {
@@ -328,13 +333,13 @@ statistizen_show_data:
       } else {
       - define depth 10
       }
-    - define entries <yaml[statistizen_hourly_first_time_logins].list_keys[].parse[in_ticks].numerical.reverse.get[1].to[%depth%].reverse>
+    - define entries <yaml[statistizen_hourly_first_time_logins].list_keys[].parse[in_ticks].numerical.reverse.get[1].to[%depth%].reverse||li@>
     - foreach %entries% {
       - define key1 d@%value%t
       - define dayvalues <yaml[statistizen_hourly_first_time_logins].list_keys[%key1%].parse[in_ticks].numerical>
       - foreach <yaml[statistizen_hourly_first_time_logins].list_keys[%key1%].parse[in_ticks].numerical> {
         - define value <yaml[statistizen_hourly_first_time_logins].read[%key1%.d@%value%t]||0>
-        - define list <def[list].include[<def[value].size>]>
+        - define list <def[list].include[<def[value].size>]||0>
         }
       - if <def[dayvalues].size> < 24 {
         - repeat <el@24.sub[<def[dayvalues].size>]> {
@@ -369,13 +374,13 @@ statistizen_show_data:
       } else {
       - define depth 10
       }
-    - define entries <yaml[statistizen_hourly_TPS].list_keys[].parse[in_ticks].numerical.reverse.get[1].to[%depth%].reverse>
+    - define entries <yaml[statistizen_hourly_TPS].list_keys[].parse[in_ticks].numerical.reverse.get[1].to[%depth%].reverse||li@>
     - foreach %entries% {
       - define key1 d@%value%t
       - define dayvalues <yaml[statistizen_hourly_TPS].list_keys[%key1%].parse[in_ticks].numerical>
       - foreach <yaml[statistizen_hourly_TPS].list_keys[%key1%].parse[in_ticks].numerical> {
         - define value <yaml[statistizen_hourly_TPS].read[%key1%.d@%value%t]||0>
-        - define list <def[list].include[<def[value]>]>
+        - define list <def[list].include[<def[value]>]||0>
         }
       - if <def[dayvalues].size> < 24 {
         - repeat <el@24.sub[<def[dayvalues].size>]> {
@@ -410,13 +415,13 @@ statistizen_show_data:
       } else {
       - define depth 10
       }
-    - define entries <yaml[statistizen_hourly_queues].list_keys[].parse[in_ticks].numerical.reverse.get[1].to[%depth%].reverse>
+    - define entries <yaml[statistizen_hourly_queues].list_keys[].parse[in_ticks].numerical.reverse.get[1].to[%depth%].reverse||li@>
     - foreach %entries% {
       - define key1 d@%value%t
       - define dayvalues <yaml[statistizen_hourly_queues].list_keys[%key1%].parse[in_ticks].numerical>
       - foreach <yaml[statistizen_hourly_queues].list_keys[%key1%].parse[in_ticks].numerical> {
         - define value <yaml[statistizen_hourly_queues].read[%key1%.d@%value%t].as_int||0>
-        - define list <def[list].include[<def[value]>]>
+        - define list <def[list].include[<def[value]>]||0>
         }
       - if <def[dayvalues].size> < 24 {
         - repeat <el@24.sub[<def[dayvalues].size>]> {
@@ -451,13 +456,13 @@ statistizen_show_data:
       } else {
       - define depth 10
       }
-    - define entries <yaml[statistizen_hourly_votes].list_keys[].parse[in_ticks].numerical.reverse.get[1].to[%depth%].reverse>
+    - define entries <yaml[statistizen_hourly_votes].list_keys[].parse[in_ticks].numerical.reverse.get[1].to[%depth%].reverse||li@>
     - foreach %entries% {
       - define key1 d@%value%t
       - define dayvalues <yaml[statistizen_hourly_votes].list_keys[%key1%].parse[in_ticks].numerical>
       - foreach %dayvalues% {
         - define value <yaml[statistizen_hourly_votes].read[%key1%.d@%value%t]||0>
-        - define list <def[list].include[<def[value]>]>
+        - define list <def[list].include[<def[value]>]||0>
         }
       - if <def[dayvalues].size> < 24 {
         - repeat <el@24.sub[<def[dayvalues].size>]> {

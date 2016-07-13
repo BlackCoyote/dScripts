@@ -24,6 +24,7 @@ IRCBOT:
     on ircconnect command:
     - if <player.is_op.not> queue clear
     - determine fulfilled passively
+    - run ircbot_connect
     on player chats:
     - define message "<&7><player.name><&co> <context.message>"
     - run ircbot_message "def:consoles|<def[message].escaped>"
