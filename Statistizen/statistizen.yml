@@ -3,7 +3,7 @@ statistizen:
   name: Statistizen
   id: 58
   description: Providing useful statistics to help you develop your server.
-  version: 9
+  version: 10
 #
 #
 # config manager, handles the config file
@@ -488,23 +488,81 @@ statistizen_show_data:
 statistizen_web_page:
   type: world
   debug: false
-  page: <!doctype html>
-      <html>
-          <head>
-              <title>
-              STATISTICS
-              </title>
-          </head>
-          <body>
-              <p>Server time<{&co}> <{util.date}> <{util.date.time}> <{util.date.time.formatted_zone}><p>Next day cycle in<{&co}><{el@24.sub[<{util.date.time.hour}>]}> hours<p>
-              <img src='url1'>
-              <img src='url2'>
-              <img src='url3'>
-              <img src='url4'>
-              <img src='url5'>
-              <img src='url6'>
-          </body>
-      </html>
+  page: <!DOCTYPE html>
+    <html>
+        <head>
+            <link rel="stylesheet" href="https<{&co}>//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+            <title> STATISTICS </title>
+        </head>
+        <body>
+            <div class="container">
+                <div class="col-md-12 text-center">
+                    <p>Server time<{&co}> <{util.date}> <{util.date.time}> <{util.date.time.formatted_zone}></p>
+                    <p>Next day cycle in <{&co}><{el@24.sub[<{util.date.time.hour}>]}> hours</p>
+                </div>
+                <div class="col-md-12 text-center">
+                    <div>
+                        <!-- Nav tabs -->
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active">
+                                <a href="#online_players" aria-controls="online_players" role="tab" data-toggle="tab">
+                                    Online players
+                                </a>
+                            </li>
+                            <li role="presentation">
+                                <a href="#first_time_logins" aria-controls="first_time_logins" role="tab" data-toggle="tab">
+                                    First time logins
+                                </a>
+                            </li>
+                            <li role="presentation">
+                                <a href="#unique_pings" aria-controls="unique_pings" role="tab" data-toggle="tab">
+                                    Unique pings
+                                </a>
+                            </li>
+                            <li role="presentation">
+                                <a href="#average_tps" aria-controls="average_tps" role="tab" data-toggle="tab">
+                                    Average TPS
+                                </a>
+                            </li>
+                            <li role="presentation">
+                                <a href="#average_queues" aria-controls="average_queues" role="tab" data-toggle="tab">
+                                    Average queues
+                                </a>
+                            </li>
+                            <li role="presentation">
+                                <a href="#average_votifier_votes" aria-controls="average_votifier_votes" role="tab" data-toggle="tab">
+                                    Average votifier votes
+                                </a>
+                            </li>
+                        </ul>
+                        <!-- Tab panes -->
+                        <div class="tab-content">
+                            <div role="tabpanel" class="tab-pane active" id="online_players">
+                                <img src='url1'>
+                            </div>
+                            <div role="tabpanel" class="tab-pane" id="first_time_logins">
+                                <img src='url2'>
+                            </div>
+                            <div role="tabpanel" class="tab-pane" id="unique_pings">
+                                <img src='url3'>
+                            </div>
+                            <div role="tabpanel" class="tab-pane" id="average_tps">
+                                <img src='url4'>
+                            </div>
+                            <div role="tabpanel" class="tab-pane" id="average_queues">
+                                <img src='url5'>
+                            </div>
+                            <div role="tabpanel" class="tab-pane" id="average_votifier_votes">
+                                <img src='url6'>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <script src="https<{&co}>//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+            <script src="https<{&co}>//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+        </body>
+    </html>
   events:
     on server start:
     - wait 5t
@@ -522,11 +580,11 @@ statistizen_web_page:
       - define page <def[page].escaped>
       - define page <parse:<def[page].replace[&lt<&lc>].with[<&lt>].replace[<&rc>&gt].with[<&gt>].replace[&dot].with[.].replace[&amp].with[&].replace[&at].with[<&at>].replace[&lb].with[<&lb>].replace[&rb].with[<&rb>]>>
       - define page <def[page].unescaped>
-      - define page <def[page].replace[url1].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Online<&pc>20Players&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<server.flag[statistics_daily_logins].split_by[,].numerical.last.div[10].round||10>&xnotches=1&xsteps=0.04166&max=<server.flag[statistics_daily_logins].split_by[,].numerical.last||50>&values=<server.flag[statistics_daily_logins]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
-      - define page <def[page].replace[url2].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=First<&pc>20Time<&pc>20Logins&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<server.flag[statistics_daily_first_time_logins].split_by[,].numerical.last.div[10].round||10>&xnotches=1&xsteps=0.04166&max=<server.flag[statistics_daily_first_time_logins].split_by[,].numerical.last||50>&values=<server.flag[statistics_daily_first_time_logins]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
-      - define page <def[page].replace[url3].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Unique<&pc>20Pings&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<server.flag[statistics_daily_pings].split_by[,].numerical.last.div[10].round||10>&xnotches=1&xsteps=0.04166&max=<server.flag[statistics_daily_pings].split_by[,].numerical.last||50>&values=<server.flag[statistics_daily_pings]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
-      - define page <def[page].replace[url4].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Average<&pc>20TPS&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<server.flag[statistics_daily_TPS].split_by[,].numerical.last.div[10].round||10>&xnotches=1&xsteps=0.04166&max=<server.flag[statistics_daily_TPS].split_by[,].numerical.last.round||20>&values=<server.flag[statistics_daily_TPS]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
-      - define page <def[page].replace[url5].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Average<&pc>20queues&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<server.flag[statistics_daily_queues].split_by[,].numerical.last.div[10].round||10>&xnotches=1&xsteps=0.04166&max=<server.flag[statistics_daily_queues].split_by[,].numerical.last||100>&values=<server.flag[statistics_daily_queues]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
-      - define page <def[page].replace[url6].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Votifier<&pc>20Votes&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<server.flag[statistics_daily_votes].split_by[,].numerical.last.div[10].round||10>&xnotches=1&xsteps=0.04166&max=<server.flag[statistics_daily_votes].split_by[,].numerical.last||50>&values=<server.flag[statistics_daily_votes]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
+      - define page <def[page].replace[url1].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Online<&pc>20Players&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<server.flag[statistics_daily_logins].split_by[,].numerical.last.div[10].round.max[1].as_int||10>&xnotches=1&xsteps=0.04166&max=<server.flag[statistics_daily_logins].split_by[,].numerical.last||50>&values=<server.flag[statistics_daily_logins]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
+      - define page <def[page].replace[url2].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=First<&pc>20Time<&pc>20Logins&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<server.flag[statistics_daily_first_time_logins].split_by[,].numerical.last.div[10].round.max[1].as_int||10>&xnotches=1&xsteps=0.04166&max=<server.flag[statistics_daily_first_time_logins].split_by[,].numerical.last||50>&values=<server.flag[statistics_daily_first_time_logins]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
+      - define page <def[page].replace[url3].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Unique<&pc>20Pings&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<server.flag[statistics_daily_pings].split_by[,].numerical.last.div[10].round.max[1].as_int||10>&xnotches=1&xsteps=0.04166&max=<server.flag[statistics_daily_pings].split_by[,].numerical.last||50>&values=<server.flag[statistics_daily_pings]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
+      - define page <def[page].replace[url4].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Average<&pc>20TPS&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<server.flag[statistics_daily_TPS].split_by[,].numerical.last.div[10].round.max[1].as_int||10>&xnotches=1&xsteps=0.04166&max=<server.flag[statistics_daily_TPS].split_by[,].numerical.last.round||20>&values=<server.flag[statistics_daily_TPS]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
+      - define page <def[page].replace[url5].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Average<&pc>20queues&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<server.flag[statistics_daily_queues].split_by[,].numerical.last.div[10].round.max[1].as_int||10>&xnotches=1&xsteps=0.04166&max=<server.flag[statistics_daily_queues].split_by[,].numerical.last||100>&values=<server.flag[statistics_daily_queues]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
+      - define page <def[page].replace[url6].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Votifier<&pc>20Votes&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<server.flag[statistics_daily_votes].split_by[,].numerical.last.div[10].round.max[1].as_int||10>&xnotches=1&xsteps=0.04166&max=<server.flag[statistics_daily_votes].split_by[,].numerical.last||50>&values=<server.flag[statistics_daily_votes]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
       - determine "<def[page]>"
       }
