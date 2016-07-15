@@ -36,15 +36,15 @@ IRCBOT:
     - run ircbot_message "def:consoles|<def[message].escaped>"
     on irc message:
     - if <context.message.starts_with[<&lt>action]> queue clear
-    - define speaker <context.speaker>
-    - if <server.flag[ircbot.users].as_list> !contains <context.speaker> flag server ircbot.users:->:<context.speaker>
+    - define speaker <context.speaker.escaped>
+    - if <server.flag[ircbot.users].as_list||li@> !contains <def[speaker]> flag server ircbot.users:->:<def[speaker]>
     - define colour <s@IRCBOT.yaml_key[colour]>
-    - if <server.has_flag[ircbot.message_for_<context.speaker>]> {
+    - if <server.has_flag[ircbot.message_for_<def[speaker]>]> {
       - irc message <context.channel> "<&%colour%><def[speaker]>! I have messages for you!"
       - foreach "<server.flag[ircbot.message_for_<def[speaker]>].as_list>" {
         - irc message <context.channel> "<&%colour%><def[value].unescaped>"
         }
-      - flag server ircbot.message_for_<context.speaker>:!
+      - flag server ircbot.message_for_<def[speaker]>:!
       }
     - if <context.message.starts_with[<s@IRCBOT.yaml_key[command]>].not> queue clear
     - define channel <context.channel>
@@ -74,14 +74,14 @@ IRCBOT:
           - define message "<entry[result].output>"
           }
       - case chat:
-        - define player <server.match_player[<context.speaker>]||none>
+        - define player <server.match_player[<def[speaker].unescaped>]||none>
         - if <def[player]> == none {
           - define message "Not a valid player trying to chat!"
           - goto finish
           }
         - event "player chats" "context:message|<context.message.after[chat].replace[<&chr[000D]>]>" player:<def[player]>
       - case msg:
-        - define from <context.speaker>
+        - define from <def[speaker]>
         - define to <def[args].get[2]||none>
         - if %to% == none {
           - define message "Please specify a player to send a message to."
