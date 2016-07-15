@@ -3,7 +3,7 @@ IRCBOT_version:
   name: smallIRCbot
   id: 97
   description: a small IRC Bot
-  version: 1
+  version: 2
 IRCBOT:
   type: world
   debug: false
