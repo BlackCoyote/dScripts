@@ -3,7 +3,7 @@ IRCBOT_version:
   name: smallIRCbot
   id: 97
   description: a small IRC Bot
-  version: 2
+  version: 3
 IRCBOT:
   type: world
   debug: false
@@ -74,12 +74,12 @@ IRCBOT:
           - define message "<entry[result].output>"
           }
       - case chat:
-        - define player <server.match_player[<def[speaker].unescaped>]||none>
+        - define player <server.match_offline_player[<def[speaker].unescaped>]||none>
         - if <def[player]> == none {
           - define message "Not a valid player trying to chat!"
           - goto finish
           }
-        - event "player chats" "context:message|<context.message.after[chat].replace[<&chr[000D]>]>" player:<def[player]>
+        - announce "<&lb>IRC<&rb><&pipe><&8><context.speaker><&co><&f> <def[args].get[2].to[500].space_separated||>"
       - case msg:
         - define from <def[speaker]>
         - define to <def[args].get[2]||none>
