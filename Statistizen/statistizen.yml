@@ -37,7 +37,7 @@ statistizen_reload_config:
       - yaml id:statistizen_config set data_logging.votifier_votes.depth_in_days:10
       - yaml id:statistizen_config set data_logging.votifier_votes.enabled:false
       - yaml id:statistizen_config set data_logging.first_time_logins.depth_in_days:10
-      - yaml id:statistizen_config set data_logging.first_time_logins.enabled:false
+      - yaml id:statistizen_config set data_logging.first_time_logins.enabled:true
       - yaml id:statistizen_config set web_page.port:10123
       - yaml id:statistizen_config set web_page.pagename:statistics
       - yaml id:statistizen_config "savefile:/statistizen/config/config.yml"
