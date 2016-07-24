@@ -3,28 +3,22 @@ IRCBOT_version:
   name: smallIRCbot
   id: 97
   description: a small IRC Bot
-  version: 3
+  version: 5
 IRCBOT:
   type: world
   debug: false
-  channels:
-    consoles:
-    - irc.mcmonkey.org#myfancychannel
-    active:
-    - irc.esper.net#myotherchannel
-  botname: 'bottymcbotface'
-  password: dickbutt
-  command: '>'
-  colour: 3
-  admins:
-  - BlackCoyote
   events:
     on server start:
+    - wait 1t
+    - inject locally path:check_config
     - inject locally path:IRC_connect
+    on reload scripts:
+    - wait 1t
+    - inject locally path:check_config
     on ircconnect command:
     - if <player.is_op.not> queue clear
     - determine fulfilled passively
-    - run ircbot_connect
+    - inject locally path:IRC_connect
     on player chats:
     - define message "<&7><player.name><&co> <context.message>"
     - run ircbot_message "def:consoles|<def[message].escaped>"
@@ -38,7 +32,7 @@ IRCBOT:
     - if <context.message.starts_with[<&lt>action]> queue clear
     - define speaker <context.speaker.escaped>
     - if <server.flag[ircbot.users].as_list||li@> !contains <def[speaker]> flag server ircbot.users:->:<def[speaker]>
-    - define colour <s@IRCBOT.yaml_key[colour]>
+    - define colour <yaml[small_irc_bot_config].read[config.colour]||3>
     - if <server.has_flag[ircbot.message_for_<def[speaker]>]> {
       - irc message <context.channel> "<&%colour%><def[speaker]>! I have messages for you!"
       - foreach "<server.flag[ircbot.message_for_<def[speaker]>].as_list>" {
@@ -46,9 +40,10 @@ IRCBOT:
         }
       - flag server ircbot.message_for_<def[speaker]>:!
       }
-    - if <context.message.starts_with[<s@IRCBOT.yaml_key[command]>].not> queue clear
+    - if <context.message.starts_with[<yaml[small_irc_bot_config].read[config.command]||<&lt>>].not> && <context.message.starts_with[<yaml[small_irc_bot_config].read[config.secondary_command]||<&lt>>].not> queue clear
     - define channel <context.channel>
-    - define args <context.message.after[<s@IRCBOT.yaml_key[command]>].replace[<&chr[000D]>].split_by[<&sp>]||none>
+    - define usedcommand <context.message.substring[1,1]||<&lt>>
+    - define args <context.message.after[<def[usedcommand]>].replace[<&chr[000D]>].split_by[<&sp>]||none>
     - choose <def[args].get[1]>:
       - case status:
         - define message "Status<&co> online - TPS<&co> <server.recent_tps.get[1].as_money> - Players<&co> <server.list_online_players.size||0>"
@@ -60,14 +55,14 @@ IRCBOT:
       - case online:
         - define message "<server.list_online_players.formatted>"
       - case drs:
-        - if <s@ircbot.yaml_key[admins]> !contains <context.speaker.replace[<&chr[000D]>]> {
+        - if <yaml[small_irc_bot_config].read[config.admins]||li@> !contains <context.speaker.replace[<&chr[000D]>]> {
           - define message "You can't do this! D<&co><&lt>"
           } else {
           - execute as_server "denizen reload scripts"
           - define message "Reloaded all denizen scripts."
           }
       - case ex:
-        - if <s@ircbot.yaml_key[admins]> !contains <context.speaker.replace[<&chr[000D]>]> {
+        - if <yaml[small_irc_bot_config].read[config.admins]||li@> !contains <context.speaker.replace[<&chr[000D]>]> {
           - define message "You can't do this!"
           } else {
           - execute as_server "<def[args].get[2].to[500].space_separated||null>" save:result
@@ -103,18 +98,33 @@ IRCBOT:
     - irc message %channel% "<&%colour%>%message%"
   irc_connect:
     - run IRCBOT_connect instantly
+  check_config:
+    - if <server.has_file[/small_irc_bot/config.yml]> {
+      - yaml load:/small_irc_bot/config.yml id:small_irc_bot_config
+      } else {
+      - yaml create id:small_irc_bot_config
+      - yaml id:small_irc_bot_config set config.channels.consoles:->:irc.mcmonkey.org#myfancychannel
+      - yaml id:small_irc_bot_config set config.channels.active:->:irc.esper.net#myotherchannel
+      - yaml id:small_irc_bot_config set config.admins:->:mrAdmin
+      - yaml id:small_irc_bot_config set config.botname:bottymcbotface
+      - yaml id:small_irc_bot_config set config.password:dickbutt
+      - yaml id:small_irc_bot_config set config.command:<&lt>
+      - yaml id:small_irc_bot_config set config.secondary_command:.
+      - yaml id:small_irc_bot_config set config.colour:3
+      - yaml savefile:/small_irc_bot/config.yml id:small_irc_bot_config
+      }
 IRCBOT_connect:
   type: task
   debug: false
   script:
-    - define list <parse:<s@ircbot.yaml_key[channels.consoles].include[<s@ircbot.yaml_key[channels.active]||li@>]>>
+    - define list <parse:<yaml[small_irc_bot_config].read[config.channels.consoles].include[<yaml[small_irc_bot_config].read[config.channels.active]||li@>]||li@>>
     - define servers <def[list].parse[before[<&ns>]].deduplicate>
     - foreach <def[servers]>:
       - ~irc quit ircserver@<def[value]>
       - ~irc connect ircserver@<def[value]>
-      - irc raw ircserver@<def[value]> "USER <s@IRCBOT.yaml_key[botname]> <s@IRCBOT.yaml_key[botname]>_ <s@IRCBOT.yaml_key[botname]>__ <s@IRCBOT.yaml_key[botname]>"
-      - irc raw ircserver@<def[value]> "NICK <s@IRCBOT.yaml_key[botname]>"
-      - irc raw ircserver@<def[value]> "msg nickserv identify <s@IRCBOT.yaml_key[password]>"
+      - irc raw ircserver@<def[value]> "USER <yaml[small_irc_bot_config].read[config.botname]||mcbotface> <yaml[small_irc_bot_config].read[config.botname]||mcbotface>_ <yaml[small_irc_bot_config].read[config.botname]||mcbotface>__ <yaml[small_irc_bot_config].read[config.botname]||mcbotface>"
+      - irc raw ircserver@<def[value]> "NICK <yaml[small_irc_bot_config].read[config.botname]||mcbotface>"
+      - irc raw ircserver@<def[value]> "msg nickserv identify <yaml[small_irc_bot_config].read[config.password]||mcbotface>"
     - foreach <def[list]>:
       - irc join ircchannel@<def[value]>
 IRCBOT_message:
@@ -132,11 +142,11 @@ IRCBOT_message:
   - define type <def[1]||consoles>
   - choose <def[type]>:
     - case all:
-      - define list <parse:<s@ircbot.yaml_key[channels.consoles].include[<s@ircbot.yaml_key[channels.active]||li@>]||li@>>
+      - define list <parse:<yaml[small_irc_bot_config].read[config.channels.consoles].include[<yaml[small_irc_bot_config].read[config.channels.active]||li@>]||li@>>
     - case consoles:
-      - define list <parse:<s@ircbot.yaml_key[channels.consoles]||li@>>
+      - define list <parse:<yaml[small_irc_bot_config].read[config.channels.consoles]||li@>>
     - case active:
-      - define list <parse:<s@ircbot.yaml_key[channels.active]||li@>>
+      - define list <parse:<yaml[small_irc_bot_config].read[config.channels.active]||li@>>
     - default:
       - debug error "No valid servers were specified to run <script> for."
       - queue clear
