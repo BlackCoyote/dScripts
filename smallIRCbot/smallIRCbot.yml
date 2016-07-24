@@ -94,7 +94,6 @@ IRCBOT:
         - define message "Your message has been saved."
     - mark finish
     - if <def[message].exists.not> queue clear
-    - define colour <s@IRCBOT.yaml_key[colour]>
     - irc message %channel% "<&%colour%>%message%"
   irc_connect:
     - run IRCBOT_connect instantly
@@ -132,7 +131,7 @@ IRCBOT_message:
   debug: false
   script:
   - if <server.has_flag[overlord_flood]> {
-    - define wait <server.flag[overlord_flood].as_int>t
+    - define wait <server.flag[overlord_flood].as_int||1>t
     - flag server overlord_flood:+:10 duration:2s
     - wait <def[wait]>
     }
