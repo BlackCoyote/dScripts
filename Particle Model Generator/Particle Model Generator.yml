@@ -1,0 +1,170 @@
+particle_model_generator_version:
+  type: version
+  name: particle model generator
+  id: 77
+  description: turns structures into particles
+  version: 2
+model_generator:
+  type: world
+  debug: false
+  events:
+    on system time hourly:
+    - webget "http://morphanone.space/webizen.aspx/tracker?script=77&version=<s@particle_model_generator_version.yaml_key[version]>&models_made=<server.flag[particle_models_made].as_int||0>"
+    - flag server particle_models_made:!
+    on model command:
+    - if <player.is_op.not> queue clear
+    - determine fulfilled passively
+    - inject locally path:model
+  model:
+    - choose <context.args.get[1]||none>:
+      - case pos1:
+        - inject locally path:pos1
+      - case pos2:
+        - inject locally path:pos2
+      - case base:
+        - inject locally path:base
+      - case save:
+        - inject locally path:save
+  pos1:
+    - flag <player> model_pos1:<pl.location.simple.as_location>
+    - narrate "pos1 set"
+    - determine fulfilled
+  pos2:
+    - flag <player> model_pos2:<pl.location.simple.as_location>
+    - narrate "pos2 set"
+    - determine fulfilled
+  base:
+    - flag <player> model_base:<player.location.cursor_on>
+    - narrate "base set"
+    - determine fulfilled
+  save:
+    - if <context.args.size> < 3 {
+      - narrate "<&c>Invalid parameters."
+      - queue clear
+      }
+    - if <context.args.get[4].as_int||none> == none {
+      - define increment 0.2
+      } else {
+      - define increment <context.args.get[4]>
+      }
+    - define name <context.args.get[2]>
+    - if <server.has_file[/models/%name%.yml]> && <context.args.contains[-o].not> {
+      - narrate "<&c><&dq>%name%<&dq> already exists. use -o to override."
+      - queue clear
+      }
+    - narrate "exporting model"
+    - define cuboid "cu@<player.flag[model_pos1]>|<player.flag[model_pos2]>"
+    - define blocks <def[cuboid].blocks.filter[material.is[==].to[m@air].not]>
+    - define size <def[blocks].size>
+    - foreach %blocks% {
+      - wait 1t
+      - adjust <player> "action_bar:model<&co> <def[loop_index].mul[100].div[%size%].as_int><&pc>"
+      - define relative "<def[value].sub[<player.flag[model_base]>]>"
+      - if <def[model].exists> {
+        - define model "<def[model]>|<&lt>def[base].add[<&lt>l@<def[relative].x.mul[%increment%]>,<def[relative].y.mul[%increment%]>,<def[relative].z.mul[%increment%]>.rotate_around_y[<&lt>def[yaw]<&gt>]<&gt>]<&gt>"
+        } else {
+        - define model "<&lt>def[base].add[<&lt>l@<def[relative].x.mul[%increment%]>,<def[relative].y.mul[%increment%]>,<def[relative].z.mul[%increment%]>.rotate_around_y[<&lt>def[yaw]<&gt>]<&gt>]<&gt>"
+        }
+      }
+    - yaml id:model_%name% create
+    - yaml id:model_%name% set "model:%model%"
+    - yaml id:model_%name% set "RGB:<context.args.get[3]||255,255,255>"
+    - yaml "savefile:/models/%name%.yml" id:model_%name%
+    - yaml unload id:model_%name%
+    - narrate "Model saved."
+    - flag server particle_models_made:++
+    - determine fulfilled
+call_locked_model:
+  type: task
+  debug: false
+  speed: 0
+  script:
+    - async:
+      - if <def[1].exists.not> {
+        - narrate "<&c>No model specified."
+        - queue clear
+        }
+      - if <server.has_file[/models/%1%.yml].not> {
+        - narrate "<&c><&dq>%1%<&dq> does not exist."
+        - queue clear
+        }
+      - yaml load:/models/%1%.yml id:playmodel_%1%
+      - define base <player.location.sub[<player.location.with_pose[0,<player.location.yaw>].direction.vector.div[2]>]>
+      - define yaw <player.location.yaw.mul[-1].to_radians>
+      - define model <yaml[playmodel_%1%].read[model]>
+      - define RGB <yaml[playmodel_%1%].read[RGB]||250,250,250>
+      - yaml unload id:playmodel_%1%
+      - repeat <def[2]||100>:
+        - playeffect <parse:%model%> effect:red_dust data:1 offset:<co@%RGB%.to_particle_offset> qty:0
+        - wait 1t
+call_tracing_model:
+  type: task
+  debug: false
+  speed: 0
+  script:
+    - async:
+      - if <def[1].exists.not> {
+        - narrate "<&c>No model specified."
+        - queue clear
+        }
+      - if <server.has_file[/models/%1%.yml].not> {
+        - narrate "<&c><&dq>%1%<&dq> does not exist."
+        - queue clear
+        }
+      - yaml load:/models/%1%.yml id:playmodel_%1%
+      - define model <yaml[playmodel_%1%].read[model]>
+      - define RGB <yaml[playmodel_%1%].read[RGB]||250,250,250>
+      - yaml unload id:playmodel_%1%
+      - repeat <def[2]||100>:
+        - define base <player.location.sub[<player.location.with_pose[0,<player.location.yaw>].direction.vector.div[2]>]>
+        - define yaw <player.location.yaw.mul[-1].to_radians>
+        - playeffect <parse:%model%> effect:red_dust data:1 offset:<co@%RGB%.to_particle_offset> qty:0
+        - wait 1t
+call_tracing_model_entity:
+  type: task
+  debug: false
+  speed: 0
+  script:
+    - async:
+      - if <def[1].exists.not> {
+        - narrate "<&c>No model specified."
+        - queue clear
+        }
+      - if <server.has_file[/models/%1%.yml].not> {
+        - narrate "<&c><&dq>%1%<&dq> does not exist."
+        - queue clear
+        }
+      - define target <player.target||<player>>
+      - yaml load:/models/%1%.yml id:playmodel_%1%
+      - define model <yaml[playmodel_%1%].read[model]>
+      - define RGB <yaml[playmodel_%1%].read[RGB]||250,250,250>
+      - yaml unload id:playmodel_%1%
+      - repeat <def[2]||100>:
+        - define base <%target%.location.sub[<%target%.location.with_pose[0,<%target%.location.yaw>].direction.vector.div[2]>].add[0,0.1,0]>
+        - define yaw <%target%.location.yaw.mul[-1].to_radians>
+        - playeffect <parse:%model%> effect:red_dust data:1 offset:<co@%RGB%.to_particle_offset> qty:0
+        - wait 1t
+call_gui_model:
+  type: task
+  debug: false
+  speed: 0
+  script:
+    - async:
+      - if <def[1].exists.not> {
+        - narrate "<&c>No model specified."
+        - queue clear
+        }
+      - if <server.has_file[/models/%1%.yml].not> {
+        - narrate "<&c><&dq>%1%<&dq> does not exist."
+        - queue clear
+        }
+      - define target <player>
+      - yaml load:/models/%1%.yml id:playmodel_%1%
+      - define model <yaml[playmodel_%1%].read[model]>
+      - define RGB <yaml[playmodel_%1%].read[RGB]||250,250,250>
+      - yaml unload id:playmodel_%1%
+      - repeat <def[2]||100>:
+        - define base <def[target].location.add[<pl.location.direction.vector.mul[<def[3]||6>]>]>
+        - define yaw <def[target].location.yaw.mul[-1].to_radians>
+        - playeffect <parse:%model%> effect:red_dust data:1 offset:<co@%RGB%.to_particle_offset> qty:0
+        - wait 1t
