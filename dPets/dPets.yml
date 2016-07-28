@@ -3,7 +3,7 @@ dpets:
   name: dPets
   id: 104
   description: providing highly unique cosmetic-only pets for your server.
-  version: 4
+  version: 5
 #
 #
 # constructor + script tracker
@@ -430,16 +430,10 @@ dpets_format3:
   format: <&6>[dPets] <&7><text>
 #
 #
-# pet list
-# all pets are listed below
+# templates
+# showing you how it's done!
 #
 # note: NEVER clear the queues of an ability!
-#
-#list of valid actions:
-# on spawn:
-# on left click:
-# on right click:
-# on call:
 #
 #####################
 # template pet
@@ -498,6 +492,13 @@ dpets_format3:
       # global_cooldown: 5s
       # script:
       # - narrate "hey you suck" format:dpets_format2
+#
+#
+# pet list
+# all pets are listed below
+#
+# note: NEVER clear the queues of an ability!
+#
 #####################
 # default wolf
 #####################
