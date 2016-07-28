@@ -243,7 +243,8 @@ dpets_main_gui:
     - if <proc[dpets_haspet].context[<def[value]>].not> foreach next
     - define script <yaml[dpets_database].read[dpets.<def[value]>.script]>
     - define item <def[script].yaml_key[item_icon]||i@barrier>
-    - adjust <def[item]> display_name:<&5><def[script].yaml_key[name]||???> save:item
+    - adjust <def[item]> display_name:<&b><def[script].yaml_key[name]||???> save:item
+    - adjust <entry[item].result> "lore:<&e>Click to call pet!||<&6><def[script].yaml_key[description]||>" save:item
     - nbt <entry[item].result> dpet:<def[value]> save:item
     - define item <entry[item].new_item>
     - define items <def[items].include[<def[item]>]>
@@ -271,7 +272,9 @@ dpets_abilities_gui:
   - foreach <def[script].list_keys[abilities]||i@>:
     - if <proc[dpets_hasability].context[<def[pet]>|<def[value]>].not> foreach next
     - define item <def[script].yaml_key[abilities.<def[value]>.item_icon]||i@barrier>
-    - adjust <def[item]> display_name:<&5><def[script].yaml_key[abilities.<def[value]>.name]||???> save:item
+    - adjust <def[item]> display_name:<&b><def[script].yaml_key[abilities.<def[value]>.name]||???> save:item
+    - adjust <entry[item].result> "lore:<&e>Click to activate the <def[script].yaml_key[abilities.<def[value]>.name]||???> ability!||<&6><def[script].yaml_key[abilities.<def[value]>.description]||>" save:item
+    - adjust <entry[item].result> "flags:li@hide_enchants|hide_attributes" save:item
     - nbt <entry[item].result> dpet:<def[value]> save:item
     - define item <entry[item].new_item>
     - define items <def[items].include[<def[item]>]>
@@ -290,9 +293,9 @@ dpets_command_gui:
   title: <&9>Pets!
   size: 9
   definitions:
-    1: i@storage_minecart[enchantments=li@durability,1;flags=li@hide_enchants;display_name=<&6>Pets!;lore=<&c>Click here to view all your pats!]
-    2: i@book[enchantments=li@durability,1;flags=li@hide_enchants;display_name=<&6>Abilities!;lore=<&c>Click here to view the unlocked|<&c>abilities for your current pet!]
-    3: i@ender_pearl[enchantments=li@durability,1;flags=li@hide_enchants;display_name=<&6>Call pet!;lore=<&c>Click here to call|<&c>your current pet to your side!]
+    1: i@storage_minecart[enchantments=li@durability,1;flags=li@hide_enchants;display_name=<&b>Pets!;lore=<&e>Click here to view all your pats!]
+    2: i@book[enchantments=li@durability,1;flags=li@hide_enchants;display_name=<&b>Abilities!;lore=<&e>Click here to view the unlocked|<&e>abilities for your current pet!]
+    3: i@ender_pearl[enchantments=li@durability,1;flags=li@hide_enchants;display_name=<&b>Call pet!;lore=<&e>Click here to call|<&e>your current pet to your side!]
   slots:
     - "[1] [2] [3] [] [] [] [] [] []"
 dpets_gui_events:
@@ -389,6 +392,41 @@ dpets_format3:
 # on call:
 #
 #####################
+# template pet
+#####################
+# dpets_template:
+  # type: yaml data
+  # is_dpet: true
+  # pet_id: <ID here>
+  # name: <name>
+  # entity: e@entity
+  # description: My lovely pet!
+  # item_icon: i@diamond
+  # actions:
+    # on spawn: <=
+    # - narrate "I missed you!" format:dpets_format2
+    # on left click:
+    # - narrate "pat pat pat" format:dpets_format2
+    # on right click:
+    # - narrate "pat pat pat" format:dpets_format2
+    # on call:
+    # - narrate "cmere boy" format:dpets_format2
+  # abilities:
+    # ability1:
+      # item_icon: i@bone
+      # name: MY ability
+      # description: Make your pet do a backflip!
+      # global_cooldown: 5s
+      # script:
+      # - narrate "do a backflip! use <def[pet]> for pet's entity ID!" format:dpets_format2
+    # ability2:
+      # item_icon: i@diamond
+      # name: MY other ability
+      # description: Make your pet do a frontflip!
+      # global_cooldown: 5s
+      # script:
+      # - narrate "do a frontflip!" format:dpets_format2
+#####################
 # default wolf
 #####################
 dpets_wolf:
@@ -397,6 +435,7 @@ dpets_wolf:
   pet_id: wolf
   name: Wolf
   entity: e@wolf
+  description: Who's a good boy??
   item_icon: i@bone
   actions:
     on spawn:
@@ -418,6 +457,7 @@ dpets_wolf:
     growl:
       item_icon: i@bone
       name: Growl
+      description: Make your wolf growl!
       global_cooldown: 2s
       script:
       - narrate "Grrrrr!" format:dpets_format2
@@ -426,6 +466,7 @@ dpets_wolf:
     fetch:
       item_icon: i@snow_ball
       name: Fetch
+      description: Throw a ball and see if your wolf can find it!
       global_cooldown: 15s
       script:
       - adjust <def[pet]> sitting:false
@@ -461,6 +502,7 @@ dpets_wolf:
     shake:
       item_icon: i@water_bucket
       name: Shake
+      description: Do the harlem shake!
       global_cooldown: 2s
       script:
       - playsound sound:ENTITY_WOLF_SHAKE <def[pet].location>
@@ -472,6 +514,7 @@ dpets_wolf:
     sit:
       item_icon: i@bed
       name: Sit
+      description: Make your wolf sit!
       global_cooldown: 2s
       script:
       - adjust <def[pet]> sitting:true
@@ -481,6 +524,7 @@ dpets_wolf:
     stand:
       item_icon: i@bed
       name: Stand
+      description: Make your wolf stand!
       global_cooldown: 2s
       script:
       - adjust <def[pet]> sitting:false
@@ -490,6 +534,7 @@ dpets_wolf:
     dig:
       item_icon: i@wood_spade
       name: Dig
+      description: Make your wolf dig for treasures!
       global_cooldown: 5s
       script:
       - repeat 2:
@@ -513,8 +558,9 @@ dpets_ocelot:
   type: yaml data
   is_dpet: true
   pet_id: ocelot
-  name: ocelot
+  name: Ocelot
   entity: e@ocelot
+  description: Not your average Mr. Fluffles!
   item_icon: i@human_skull[skull_skin=1bee9df5-4f71-42a2-bf52-d97970d3fea3|eyJ0aW1lc3RhbXAiOjE0MzA0NTMyNDY1NTcsInByb2ZpbGVJZCI6IjFiZWU5ZGY1NGY3MTQyYTJiZjUyZDk3OTcwZDNmZWEzIiwicHJvZmlsZU5hbWUiOiJNSEZfT2NlbG90IiwiaXNQdWJsaWMiOnRydWUsInRleHR1cmVzIjp7IlNLSU4iOnsidXJsIjoiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS81NjU3Y2Q1YzI5ODlmZjk3NTcwZmVjNGRkY2RjNjkyNmE2OGEzMzkzMjUwYzFiZTFmMGIxMTRhMWRiMSJ9fX0=]
   actions:
     on spawn:
@@ -534,6 +580,7 @@ dpets_ocelot:
     sit:
       item_icon: i@bed
       name: Sit
+      description: Make your ocelot sit!
       global_cooldown: 2s
       script:
       - adjust <def[pet]> sitting:true
@@ -541,6 +588,7 @@ dpets_ocelot:
     stand:
       item_icon: i@bed
       name: Stand
+      description: Make your ocelot stand!
       global_cooldown: 2s
       script:
       - adjust <def[pet]> sitting:false
@@ -548,6 +596,7 @@ dpets_ocelot:
     fetch:
       item_icon: i@snow_ball
       name: Fetch
+      description: Attempt to play fetch with your ocelot?
       global_cooldown: 3s
       script:
       - adjust <def[pet]> sitting:true
@@ -563,6 +612,7 @@ dpets_ocelot:
     chase:
       item_icon: i@carrot_stick
       name: Chase
+      description: Have your ocelot chase vermin!
       global_cooldown: 12s
       script:
       - adjust <def[pet]> sitting:false
