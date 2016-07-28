@@ -1,6 +1,12 @@
+dpets:
+  type: version
+  name: dPets
+  id: 104
+  description: providing highly unique cosmetic-only pets for your server.
+  version: 2
 #
 #
-# constructor
+# constructor + script tracker
 # puts all pet script entries in a little database to avoid searching for them every time it needs to list them
 #
 #
@@ -15,6 +21,8 @@ dpets_constructor:
     on writepets command:
     - if <player.is_op.not> queue clear
     - inject locally path:construct_database
+    on system time hourly:
+    - webget "http://morphanone.space/webizen.aspx/tracker?script=104&version=<s@dpets.yaml_key[version]>"
   construct_database:
   - if <yaml.list.contains[dpets_database]> {
     - yaml id:dpets_database set dpets:!
@@ -168,6 +176,31 @@ dpets_pet_events:
     - run dpets_remove_pet
 #
 #
+# dregions compatability
+# if this breaks blame |anthony|, not my job yo
+#
+#
+dRegions_Flag_Allow-dPets:
+  type: item
+  debug: false
+  material: i@paper
+  display name: "<&4>[<&6>Allow-dPets<&4>]"
+  lore:
+  - <&5>Are dPets allowed in this region
+  event_hooks: player_entered_region
+  event_priority: 0
+  region_highestOnly: true
+  flag_type: sg
+  flag_name: Allow-Pets
+  flag_help: State flag controlling who is allowed to bring dPets into a region. Can be set to allow, deny, or none and accepts the -g group switch.
+  flag_takeGroup: true
+  flag_regionDefault: allow/all
+  flag_globalDefault: allow/all
+  msg_cancelled: 'You may not bring dPets into this area!'
+  event-cancelled:
+    - run dpets_remove_pet
+#
+#
 # GUIs
 # all the guis and their events
 #
@@ -314,14 +347,19 @@ dpets_hasability:
 #
 dpets_format1:
   type: format
-  format: <&e><player.name> <&a>to pet<&co><&f> <text>
+  format: <&6>[dPets]<&e> You<&co><&7> <text>
 dpets_format2:
   type: format
-  format: <&e>Pet to <&a><player.name><&co><&f> <text>
+  format: <&6>[dPets]<&e> Pet<&co><&7> <text>
+dpets_format3:
+  type: format
+  format: <&6>[dPets] <&7><text>
 #
 #
 # pet list
 # all pets are listed below
+#
+# note: NEVER clear the queues of an ability!
 #
 #list of valid actions:
 # on spawn:
@@ -369,6 +407,7 @@ dpets_wolf:
       script:
       - adjust <def[pet]> sitting:false
       - shoot e@snowball save:ball
+      - playsound sound:ENTITY_DONKEY_CHEST <player.location> pitch:1
       - define ball <entry[ball].shot_entities.get[1]>
       - playsound sound:ENTITY_WOLF_AMBIENT <def[pet].location>
       - while <def[ball].is_spawned||false>:
@@ -387,6 +426,15 @@ dpets_wolf:
       - wait 10t
       - walk <def[pet]> <player.location> auto_range speed:1.5
       - wait 3s
+      - choose <util.random.int[1].to[2]>:
+        - case 1:
+          - narrate "Your pet found the ball!" format:dpets_format3
+          - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+          - playsound sound:ENTITY_WOLF_AMBIENT <def[pet].location>
+        - case 2:
+          - narrate "Your pet lost the ball!" format:dpets_format3
+          - playsound sound:ENTITY_WOLF_WHINE <def[pet].location>
+          - playeffect effect:MOBSPAWNER_FLAMES <def[pet].location> qty:5 offset:0.5 visibility:50
     shake:
       item_icon: i@water_bucket
       name: Shake
@@ -426,7 +474,11 @@ dpets_wolf:
         - playsound sound:BLOCK_sand_HIT <def[location]> pitch:0.5
         - playeffect effect:blockcrack_2 qty:15 visibility:40 offset:0.1 <def[location]>
         - wait 2t
-      - displayitem <li@i@bone|i@snow_ball|i@slime_ball|i@skeleton_skull|i@leather_boots.random> <def[location]> duration:5s
+      - define item <li@i@bone|i@snow_ball|i@slime_ball|i@skeleton_skull|i@leather_boots.random>
+      - displayitem <def[item]> <def[location]> duration:5s
+      - narrate "Your pet found <&b><def[item].formatted><&7>!" format:dpets_format3
+      - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+      - playsound sound:ENTITY_WOLF_AMBIENT <def[pet].location>
 #####################
 # default ocelot
 #####################
@@ -472,448 +524,477 @@ dpets_ocelot:
       - shoot e@snowball save:ball
       - wait 1s
       - playsound sound:ENTITY_CAT_PURR <def[pet].location>
+      - narrate "Your pet does not seem very interested." format:dpets_format3
       - wait 1s
       - playsound sound:ENTITY_CAT_AMBIENT <def[pet].location>
       - wait 1s
       - playsound sound:ENTITY_CAT_PURR <def[pet].location>
       - adjust <def[pet]> sitting:false
+    chase:
+      item_icon: i@carrot_stick
+      name: Chase
+      script:
+      - adjust <def[pet]> sitting:false
+      - spawn e@endermite[invulnerable=true] <def[pet].location.find.surface_blocks.within[3].random.above||<def[pet].location>> save:mouse
+      - define mouse <entry[mouse].spawned_entities.get[1]>
+      - playsound sound:ENTITY_CAT_AMBIENT <def[pet].location>
+      - repeat 10:
+        - if <def[mouse].is_spawned.not||true> repeat stop
+        - define location <def[mouse].location.find.surface_blocks.within[3].random.above||<def[pet].location>>
+        - walk <def[mouse]> <def[location]>
+        - wait 10t
+        - walk <def[pet]> <def[location]>
+        - wait 10t
+        - if <util.random.int[1].to[4]> == 1 {
+          - playsound sound:ENTITY_CAT_AMBIENT <def[pet].location>
+          }
+      - remove <def[mouse]>
+      - choose <util.random.int[1].to[2]>:
+        - case 1:
+          - narrate "Your pet caught the vermin!" format:dpets_format3
+          - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+          - playsound sound:ENTITY_CAT_PURREOW <def[pet].location>
+        - case 2:
+          - narrate "The vermin got away!" format:dpets_format3
+          - playsound sound:ENTITY_CAT_ambient <def[pet].location>
+          - playeffect effect:MOBSPAWNER_FLAMES <def[pet].location> qty:5 offset:0.5 visibility:50
 #####################
 # default rabbit
 #####################
-dpets_rabbit:
-  type: yaml data
-  is_dpet: true
-  pet_id: rabbit
-  name: rabbit
-  entity: e@rabbit
-  item_icon: i@carrot_item
-  actions:
-    on spawn:
-    - narrate "spawn" format:dpets_format2
-    on left click:
-    - narrate "left click" format:dpets_format2
-    on right click:
-    - narrate "right click" format:dpets_format2
-  abilities:
-    placeholder:
-      item_icon: i@diamond
-      name: placeholder
-      script:
-      - narrate "placeholder ability" format:dpets_format2
+# dpets_rabbit:
+  # type: yaml data
+  # is_dpet: true
+  # pet_id: rabbit
+  # name: rabbit
+  # entity: e@rabbit
+  # item_icon: i@carrot_item
+  # actions:
+    # on spawn:
+    # - narrate "spawn" format:dpets_format2
+    # on left click:
+    # - narrate "left click" format:dpets_format2
+    # on right click:
+    # - narrate "right click" format:dpets_format2
+  # abilities:
+    # placeholder:
+      # item_icon: i@diamond
+      # name: placeholder
+      # script:
+      # - narrate "placeholder ability" format:dpets_format2
 #####################
 # default polar bear
 #####################
-dpets_polar_bear:
-  type: yaml data
-  is_dpet: true
-  pet_id: polar_bear
-  name: polar bear
-  entity: e@polar_bear
-  item_icon: i@ice
-  actions:
-    on spawn:
-    - narrate "spawn" format:dpets_format2
-    on left click:
-    - narrate "left click" format:dpets_format2
-    on right click:
-    - narrate "right click" format:dpets_format2
-  abilities:
-    placeholder:
-      item_icon: i@diamond
-      name: placeholder
-      script:
-      - narrate "placeholder ability" format:dpets_format2
+# dpets_polar_bear:
+  # type: yaml data
+  # is_dpet: true
+  # pet_id: polar_bear
+  # name: polar bear
+  # entity: e@polar_bear
+  # item_icon: i@ice
+  # actions:
+    # on spawn:
+    # - narrate "spawn" format:dpets_format2
+    # on left click:
+    # - narrate "left click" format:dpets_format2
+    # on right click:
+    # - narrate "right click" format:dpets_format2
+  # abilities:
+    # placeholder:
+      # item_icon: i@diamond
+      # name: placeholder
+      # script:
+      # - narrate "placeholder ability" format:dpets_format2
 #####################
 # default bat
 #####################
-dpets_bat:
-  type: yaml data
-  is_dpet: true
-  pet_id: bat
-  name: bat
-  entity: e@bat
-  item_icon: i@barrier
-  actions:
-    on spawn:
-    - narrate "spawn" format:dpets_format2
-    on left click:
-    - narrate "left click" format:dpets_format2
-    on right click:
-    - narrate "right click" format:dpets_format2
-  abilities:
-    placeholder:
-      item_icon: i@diamond
-      name: placeholder
-      script:
-      - narrate "placeholder ability" format:dpets_format2
+# dpets_bat:
+  # type: yaml data
+  # is_dpet: true
+  # pet_id: bat
+  # name: bat
+  # entity: e@bat
+  # item_icon: i@barrier
+  # actions:
+    # on spawn:
+    # - narrate "spawn" format:dpets_format2
+    # on left click:
+    # - narrate "left click" format:dpets_format2
+    # on right click:
+    # - narrate "right click" format:dpets_format2
+  # abilities:
+    # placeholder:
+      # item_icon: i@diamond
+      # name: placeholder
+      # script:
+      # - narrate "placeholder ability" format:dpets_format2
 #####################
 # default blaze
 #####################
-dpets_blaze:
-  type: yaml data
-  is_dpet: true
-  pet_id: blaze
-  name: blaze
-  entity: e@blaze
-  item_icon: i@human_skull[skull_skin=4c38ed11-596a-4fd4-ab1d-26f386c1cbac|eyJ0aW1lc3RhbXAiOjE0MzA0NTE4MzM3MDcsInByb2ZpbGVJZCI6IjRjMzhlZDExNTk2YTRmZDRhYjFkMjZmMzg2YzFjYmFjIiwicHJvZmlsZU5hbWUiOiJNSEZfQmxhemUiLCJpc1B1YmxpYyI6dHJ1ZSwidGV4dHVyZXMiOnsiU0tJTiI6eyJ1cmwiOiJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlL2I3OGVmMmU0Y2YyYzQxYTJkMTRiZmRlOWNhZmYxMDIxOWY1YjFiZjViMzVhNDllYjUxYzY0Njc4ODJjYjVmMCJ9fX0=]
-  actions:
-    on spawn:
-    - narrate "spawn" format:dpets_format2
-    on left click:
-    - narrate "left click" format:dpets_format2
-    on right click:
-    - narrate "right click" format:dpets_format2
-  abilities:
-    placeholder:
-      item_icon: i@diamond
-      name: placeholder
-      script:
-      - narrate "placeholder ability" format:dpets_format2
+# dpets_blaze:
+  # type: yaml data
+  # is_dpet: true
+  # pet_id: blaze
+  # name: blaze
+  # entity: e@blaze
+  # item_icon: i@human_skull[skull_skin=4c38ed11-596a-4fd4-ab1d-26f386c1cbac|eyJ0aW1lc3RhbXAiOjE0MzA0NTE4MzM3MDcsInByb2ZpbGVJZCI6IjRjMzhlZDExNTk2YTRmZDRhYjFkMjZmMzg2YzFjYmFjIiwicHJvZmlsZU5hbWUiOiJNSEZfQmxhemUiLCJpc1B1YmxpYyI6dHJ1ZSwidGV4dHVyZXMiOnsiU0tJTiI6eyJ1cmwiOiJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlL2I3OGVmMmU0Y2YyYzQxYTJkMTRiZmRlOWNhZmYxMDIxOWY1YjFiZjViMzVhNDllYjUxYzY0Njc4ODJjYjVmMCJ9fX0=]
+  # actions:
+    # on spawn:
+    # - narrate "spawn" format:dpets_format2
+    # on left click:
+    # - narrate "left click" format:dpets_format2
+    # on right click:
+    # - narrate "right click" format:dpets_format2
+  # abilities:
+    # placeholder:
+      # item_icon: i@diamond
+      # name: placeholder
+      # script:
+      # - narrate "placeholder ability" format:dpets_format2
 #####################
 # default cave_spider
 #####################
-dpets_cave_spider:
-  type: yaml data
-  is_dpet: true
-  pet_id: cave_spider
-  name: cave spider
-  entity: e@cave_spider
-  item_icon: i@human_skull[skull_skin=cab28771-f0cd-4fe7-b129-02c69eba79a5|eyJ0aW1lc3RhbXAiOjE0MzA0NTIyMjc5NTksInByb2ZpbGVJZCI6ImNhYjI4NzcxZjBjZDRmZTdiMTI5MDJjNjllYmE3OWE1IiwicHJvZmlsZU5hbWUiOiJNSEZfQ2F2ZVNwaWRlciIsImlzUHVibGljIjp0cnVlLCJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNDE2NDVkZmQ3N2QwOTkyMzEwN2IzNDk2ZTk0ZWViNWMzMDMyOWY5N2VmYzk2ZWQ3NmUyMjZlOTgyMjQifX19]
-  actions:
-    on spawn:
-    - narrate "spawn" format:dpets_format2
-    on left click:
-    - narrate "left click" format:dpets_format2
-    on right click:
-    - narrate "right click" format:dpets_format2
-  abilities:
-    placeholder:
-      item_icon: i@diamond
-      name: placeholder
-      script:
-      - narrate "placeholder ability" format:dpets_format2
+# dpets_cave_spider:
+  # type: yaml data
+  # is_dpet: true
+  # pet_id: cave_spider
+  # name: cave spider
+  # entity: e@cave_spider
+  # item_icon: i@human_skull[skull_skin=cab28771-f0cd-4fe7-b129-02c69eba79a5|eyJ0aW1lc3RhbXAiOjE0MzA0NTIyMjc5NTksInByb2ZpbGVJZCI6ImNhYjI4NzcxZjBjZDRmZTdiMTI5MDJjNjllYmE3OWE1IiwicHJvZmlsZU5hbWUiOiJNSEZfQ2F2ZVNwaWRlciIsImlzUHVibGljIjp0cnVlLCJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNDE2NDVkZmQ3N2QwOTkyMzEwN2IzNDk2ZTk0ZWViNWMzMDMyOWY5N2VmYzk2ZWQ3NmUyMjZlOTgyMjQifX19]
+  # actions:
+    # on spawn:
+    # - narrate "spawn" format:dpets_format2
+    # on left click:
+    # - narrate "left click" format:dpets_format2
+    # on right click:
+    # - narrate "right click" format:dpets_format2
+  # abilities:
+    # placeholder:
+      # item_icon: i@diamond
+      # name: placeholder
+      # script:
+      # - narrate "placeholder ability" format:dpets_format2
 #####################
 # default chicken
 #####################
-dpets_chicken:
-  type: yaml data
-  is_dpet: true
-  pet_id: chicken
-  name: chicken
-  entity: e@chicken
-  item_icon: i@human_skull[skull_skin=92deafa9-4307-42d9-b003-88601598d6c0|eyJ0aW1lc3RhbXAiOjE0MzA0NTIzMjcxMjksInByb2ZpbGVJZCI6IjkyZGVhZmE5NDMwNzQyZDliMDAzODg2MDE1OThkNmMwIiwicHJvZmlsZU5hbWUiOiJNSEZfQ2hpY2tlbiIsImlzUHVibGljIjp0cnVlLCJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTYzODQ2OWE1OTljZWVmNzIwNzUzNzYwMzI0OGE5YWIxMWZmNTkxZmQzNzhiZWE0NzM1YjM0NmE3ZmFlODkzIn19fQ==]
-  actions:
-    on spawn:
-    - narrate "spawn" format:dpets_format2
-    on left click:
-    - narrate "left click" format:dpets_format2
-    on right click:
-    - narrate "right click" format:dpets_format2
-  abilities:
-    placeholder:
-      item_icon: i@diamond
-      name: placeholder
-      script:
-      - narrate "placeholder ability" format:dpets_format2
+# dpets_chicken:
+  # type: yaml data
+  # is_dpet: true
+  # pet_id: chicken
+  # name: chicken
+  # entity: e@chicken
+  # item_icon: i@human_skull[skull_skin=92deafa9-4307-42d9-b003-88601598d6c0|eyJ0aW1lc3RhbXAiOjE0MzA0NTIzMjcxMjksInByb2ZpbGVJZCI6IjkyZGVhZmE5NDMwNzQyZDliMDAzODg2MDE1OThkNmMwIiwicHJvZmlsZU5hbWUiOiJNSEZfQ2hpY2tlbiIsImlzUHVibGljIjp0cnVlLCJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTYzODQ2OWE1OTljZWVmNzIwNzUzNzYwMzI0OGE5YWIxMWZmNTkxZmQzNzhiZWE0NzM1YjM0NmE3ZmFlODkzIn19fQ==]
+  # actions:
+    # on spawn:
+    # - narrate "spawn" format:dpets_format2
+    # on left click:
+    # - narrate "left click" format:dpets_format2
+    # on right click:
+    # - narrate "right click" format:dpets_format2
+  # abilities:
+    # placeholder:
+      # item_icon: i@diamond
+      # name: placeholder
+      # script:
+      # - narrate "placeholder ability" format:dpets_format2
 #####################
 # default cow
 #####################
-dpets_cow:
-  type: yaml data
-  is_dpet: true
-  pet_id: cow
-  name: cow
-  entity: e@cow
-  item_icon: i@human_skull[skull_skin=f159b274-c22e-4340-b7c1-52abde147713|eyJ0aW1lc3RhbXAiOjE0MzA0NTI2NTMyMDcsInByb2ZpbGVJZCI6ImYxNTliMjc0YzIyZTQzNDBiN2MxNTJhYmRlMTQ3NzEzIiwicHJvZmlsZU5hbWUiOiJNSEZfQ293IiwiaXNQdWJsaWMiOnRydWUsInRleHR1cmVzIjp7IlNLSU4iOnsidXJsIjoiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS81ZDZjNmVkYTk0MmY3ZjVmNzFjMzE2MWM3MzA2ZjRhZWQzMDdkODI4OTVmOWQyYjA3YWI0NTI1NzE4ZWRjNSJ9fX0=]
-  actions:
-    on spawn:
-    - narrate "spawn" format:dpets_format2
-    on left click:
-    - narrate "left click" format:dpets_format2
-    on right click:
-    - narrate "right click" format:dpets_format2
-  abilities:
-    placeholder:
-      item_icon: i@diamond
-      name: placeholder
-      script:
-      - narrate "placeholder ability" format:dpets_format2
+# dpets_cow:
+  # type: yaml data
+  # is_dpet: true
+  # pet_id: cow
+  # name: cow
+  # entity: e@cow
+  # item_icon: i@human_skull[skull_skin=f159b274-c22e-4340-b7c1-52abde147713|eyJ0aW1lc3RhbXAiOjE0MzA0NTI2NTMyMDcsInByb2ZpbGVJZCI6ImYxNTliMjc0YzIyZTQzNDBiN2MxNTJhYmRlMTQ3NzEzIiwicHJvZmlsZU5hbWUiOiJNSEZfQ293IiwiaXNQdWJsaWMiOnRydWUsInRleHR1cmVzIjp7IlNLSU4iOnsidXJsIjoiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS81ZDZjNmVkYTk0MmY3ZjVmNzFjMzE2MWM3MzA2ZjRhZWQzMDdkODI4OTVmOWQyYjA3YWI0NTI1NzE4ZWRjNSJ9fX0=]
+  # actions:
+    # on spawn:
+    # - narrate "spawn" format:dpets_format2
+    # on left click:
+    # - narrate "left click" format:dpets_format2
+    # on right click:
+    # - narrate "right click" format:dpets_format2
+  # abilities:
+    # placeholder:
+      # item_icon: i@diamond
+      # name: placeholder
+      # script:
+      # - narrate "placeholder ability" format:dpets_format2
 #####################
 # default creeper
 #####################
-dpets_creeper:
-  type: yaml data
-  is_dpet: true
-  pet_id: creeper
-  name: creeper
-  entity: e@creeper
-  item_icon: i@creeper_skull
-  actions:
-    on spawn:
-    - narrate "spawn" format:dpets_format2
-    on left click:
-    - narrate "left click" format:dpets_format2
-    on right click:
-    - narrate "right click" format:dpets_format2
-  abilities:
-    placeholder:
-      item_icon: i@diamond
-      name: placeholder
-      script:
-      - narrate "placeholder ability" format:dpets_format2
+# dpets_creeper:
+  # type: yaml data
+  # is_dpet: true
+  # pet_id: creeper
+  # name: creeper
+  # entity: e@creeper
+  # item_icon: i@creeper_skull
+  # actions:
+    # on spawn:
+    # - narrate "spawn" format:dpets_format2
+    # on left click:
+    # - narrate "left click" format:dpets_format2
+    # on right click:
+    # - narrate "right click" format:dpets_format2
+  # abilities:
+    # placeholder:
+      # item_icon: i@diamond
+      # name: placeholder
+      # script:
+      # - narrate "placeholder ability" format:dpets_format2
 #####################
 # default enderman
 #####################
-dpets_enderman:
-  type: yaml data
-  is_dpet: true
-  pet_id: enderman
-  name: enderman
-  entity: e@enderman
-  item_icon: i@human_skull[skull_skin=40ffb372-12f6-4678-b3f2-2176bf56dd4b|eyJ0aW1lc3RhbXAiOjE0MzA0NTI2OTE5MzMsInByb2ZpbGVJZCI6IjQwZmZiMzcyMTJmNjQ2NzhiM2YyMjE3NmJmNTZkZDRiIiwicHJvZmlsZU5hbWUiOiJNSEZfRW5kZXJtYW4iLCJpc1B1YmxpYyI6dHJ1ZSwidGV4dHVyZXMiOnsiU0tJTiI6eyJ1cmwiOiJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlLzdhNTliYjBhN2EzMjk2NWIzZDkwZDhlYWZhODk5ZDE4MzVmNDI0NTA5ZWFkZDRlNmI3MDlhZGE1MGI5Y2YifX19]
-  actions:
-    on spawn:
-    - narrate "spawn" format:dpets_format2
-    on left click:
-    - narrate "left click" format:dpets_format2
-    on right click:
-    - narrate "right click" format:dpets_format2
-  abilities:
-    placeholder:
-      item_icon: i@diamond
-      name: placeholder
-      script:
-      - narrate "placeholder ability" format:dpets_format2
+# dpets_enderman:
+  # type: yaml data
+  # is_dpet: true
+  # pet_id: enderman
+  # name: enderman
+  # entity: e@enderman
+  # item_icon: i@human_skull[skull_skin=40ffb372-12f6-4678-b3f2-2176bf56dd4b|eyJ0aW1lc3RhbXAiOjE0MzA0NTI2OTE5MzMsInByb2ZpbGVJZCI6IjQwZmZiMzcyMTJmNjQ2NzhiM2YyMjE3NmJmNTZkZDRiIiwicHJvZmlsZU5hbWUiOiJNSEZfRW5kZXJtYW4iLCJpc1B1YmxpYyI6dHJ1ZSwidGV4dHVyZXMiOnsiU0tJTiI6eyJ1cmwiOiJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlLzdhNTliYjBhN2EzMjk2NWIzZDkwZDhlYWZhODk5ZDE4MzVmNDI0NTA5ZWFkZDRlNmI3MDlhZGE1MGI5Y2YifX19]
+  # actions:
+    # on spawn:
+    # - narrate "spawn" format:dpets_format2
+    # on left click:
+    # - narrate "left click" format:dpets_format2
+    # on right click:
+    # - narrate "right click" format:dpets_format2
+  # abilities:
+    # placeholder:
+      # item_icon: i@diamond
+      # name: placeholder
+      # script:
+      # - narrate "placeholder ability" format:dpets_format2
 #####################
 # default endermite
 #####################
-dpets_endermite:
-  type: yaml data
-  is_dpet: true
-  pet_id: endermite
-  name: endermite
-  entity: e@endermite
-  item_icon: i@ender_pearl
-  actions:
-    on spawn:
-    - narrate "spawn" format:dpets_format2
-    on left click:
-    - narrate "left click" format:dpets_format2
-    on right click:
-    - narrate "right click" format:dpets_format2
-  abilities:
-    placeholder:
-      item_icon: i@diamond
-      name: placeholder
-      script:
-      - narrate "placeholder ability" format:dpets_format2
+# dpets_endermite:
+  # type: yaml data
+  # is_dpet: true
+  # pet_id: endermite
+  # name: endermite
+  # entity: e@endermite
+  # item_icon: i@ender_pearl
+  # actions:
+    # on spawn:
+    # - narrate "spawn" format:dpets_format2
+    # on left click:
+    # - narrate "left click" format:dpets_format2
+    # on right click:
+    # - narrate "right click" format:dpets_format2
+  # abilities:
+    # placeholder:
+      # item_icon: i@diamond
+      # name: placeholder
+      # script:
+      # - narrate "placeholder ability" format:dpets_format2
 #####################
 # default giant
 #####################
-dpets_giant:
-  type: yaml data
-  is_dpet: true
-  pet_id: giant
-  name: giant
-  entity: e@giant
-  item_icon: i@zombie_skull
-  actions:
-    on spawn:
-    - narrate "spawn" format:dpets_format2
-    on left click:
-    - narrate "left click" format:dpets_format2
-    on right click:
-    - narrate "right click" format:dpets_format2
-  abilities:
-    placeholder:
-      item_icon: i@diamond
-      name: placeholder
-      script:
-      - narrate "placeholder ability" format:dpets_format2
+# dpets_giant:
+  # type: yaml data
+  # is_dpet: true
+  # pet_id: giant
+  # name: giant
+  # entity: e@giant
+  # item_icon: i@zombie_skull
+  # actions:
+    # on spawn:
+    # - narrate "spawn" format:dpets_format2
+    # on left click:
+    # - narrate "left click" format:dpets_format2
+    # on right click:
+    # - narrate "right click" format:dpets_format2
+  # abilities:
+    # placeholder:
+      # item_icon: i@diamond
+      # name: placeholder
+      # script:
+      # - narrate "placeholder ability" format:dpets_format2
 #####################
 # default horse
 #####################
-dpets_horse:
-  type: yaml data
-  is_dpet: true
-  pet_id: horse
-  name: horse
-  entity: e@horse
-  item_icon: i@wheat
-  actions:
-    on spawn:
-    - narrate "spawn" format:dpets_format2
-    on left click:
-    - narrate "left click" format:dpets_format2
-    on right click:
-    - narrate "right click" format:dpets_format2
-  abilities:
-    placeholder:
-      item_icon: i@diamond
-      name: placeholder
-      script:
-      - narrate "placeholder ability" format:dpets_format2
+# dpets_horse:
+  # type: yaml data
+  # is_dpet: true
+  # pet_id: horse
+  # name: horse
+  # entity: e@horse
+  # item_icon: i@wheat
+  # actions:
+    # on spawn:
+    # - narrate "spawn" format:dpets_format2
+    # on left click:
+    # - narrate "left click" format:dpets_format2
+    # on right click:
+    # - narrate "right click" format:dpets_format2
+  # abilities:
+    # placeholder:
+      # item_icon: i@diamond
+      # name: placeholder
+      # script:
+      # - narrate "placeholder ability" format:dpets_format2
 #####################
 # default iron_golem
 #####################
-dpets_iron_golem:
-  type: yaml data
-  is_dpet: true
-  pet_id: iron_golem
-  name: iron golem
-  entity: e@iron_golem
-  item_icon: i@human_skull[skull_skin=757f90b2-2344-4b8d-8dac-824232e2cece|eyJ0aW1lc3RhbXAiOjE0MzA0NTMwMTAxNDEsInByb2ZpbGVJZCI6Ijc1N2Y5MGIyMjM0NDRiOGQ4ZGFjODI0MjMyZTJjZWNlIiwicHJvZmlsZU5hbWUiOiJNSEZfR29sZW0iLCJpc1B1YmxpYyI6dHJ1ZSwidGV4dHVyZXMiOnsiU0tJTiI6eyJ1cmwiOiJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlLzg5MDkxZDc5ZWEwZjU5ZWY3ZWY5NGQ3YmJhNmU1ZjE3ZjJmN2Q0NTcyYzQ0ZjkwZjc2YzQ4MTlhNzE0In19fQ==]
-  actions:
-    on spawn:
-    - narrate "spawn" format:dpets_format2
-    on left click:
-    - narrate "left click" format:dpets_format2
-    on right click:
-    - narrate "right click" format:dpets_format2
-  abilities:
-    placeholder:
-      item_icon: i@diamond
-      name: placeholder
-      script:
-      - narrate "placeholder ability" format:dpets_format2
+# dpets_iron_golem:
+  # type: yaml data
+  # is_dpet: true
+  # pet_id: iron_golem
+  # name: iron golem
+  # entity: e@iron_golem
+  # item_icon: i@human_skull[skull_skin=757f90b2-2344-4b8d-8dac-824232e2cece|eyJ0aW1lc3RhbXAiOjE0MzA0NTMwMTAxNDEsInByb2ZpbGVJZCI6Ijc1N2Y5MGIyMjM0NDRiOGQ4ZGFjODI0MjMyZTJjZWNlIiwicHJvZmlsZU5hbWUiOiJNSEZfR29sZW0iLCJpc1B1YmxpYyI6dHJ1ZSwidGV4dHVyZXMiOnsiU0tJTiI6eyJ1cmwiOiJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlLzg5MDkxZDc5ZWEwZjU5ZWY3ZWY5NGQ3YmJhNmU1ZjE3ZjJmN2Q0NTcyYzQ0ZjkwZjc2YzQ4MTlhNzE0In19fQ==]
+  # actions:
+    # on spawn:
+    # - narrate "spawn" format:dpets_format2
+    # on left click:
+    # - narrate "left click" format:dpets_format2
+    # on right click:
+    # - narrate "right click" format:dpets_format2
+  # abilities:
+    # placeholder:
+      # item_icon: i@diamond
+      # name: placeholder
+      # script:
+      # - narrate "placeholder ability" format:dpets_format2
 #####################
 # default magma_cube
 #####################
-dpets_magma_cube:
-  type: yaml data
-  is_dpet: true
-  pet_id: magma_cube
-  name: magma cube
-  entity: e@magma_cube
-  item_icon: i@human_skull[skull_skin=0972bdd1-4b86-49fb-9ecc-a353f8491a51|eyJ0aW1lc3RhbXAiOjE0MzA0NTMwNjM5MDMsInByb2ZpbGVJZCI6IjA5NzJiZGQxNGI4NjQ5ZmI5ZWNjYTM1M2Y4NDkxYTUxIiwicHJvZmlsZU5hbWUiOiJNSEZfTGF2YVNsaW1lIiwiaXNQdWJsaWMiOnRydWUsInRleHR1cmVzIjp7IlNLSU4iOnsidXJsIjoiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS8zODk1N2Q1MDIzYzkzN2M0YzQxYWEyNDEyZDQzNDEwYmRhMjNjZjc5YTlmNmFiMzZiNzZmZWYyZDdjNDI5In19fQ==]
-  actions:
-    on spawn:
-    - narrate "spawn" format:dpets_format2
-    on left click:
-    - narrate "left click" format:dpets_format2
-    on right click:
-    - narrate "right click" format:dpets_format2
-  abilities:
-    placeholder:
-      item_icon: i@diamond
-      name: placeholder
-      script:
-      - narrate "placeholder ability" format:dpets_format2
+# dpets_magma_cube:
+  # type: yaml data
+  # is_dpet: true
+  # pet_id: magma_cube
+  # name: magma cube
+  # entity: e@magma_cube
+  # item_icon: i@human_skull[skull_skin=0972bdd1-4b86-49fb-9ecc-a353f8491a51|eyJ0aW1lc3RhbXAiOjE0MzA0NTMwNjM5MDMsInByb2ZpbGVJZCI6IjA5NzJiZGQxNGI4NjQ5ZmI5ZWNjYTM1M2Y4NDkxYTUxIiwicHJvZmlsZU5hbWUiOiJNSEZfTGF2YVNsaW1lIiwiaXNQdWJsaWMiOnRydWUsInRleHR1cmVzIjp7IlNLSU4iOnsidXJsIjoiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS8zODk1N2Q1MDIzYzkzN2M0YzQxYWEyNDEyZDQzNDEwYmRhMjNjZjc5YTlmNmFiMzZiNzZmZWYyZDdjNDI5In19fQ==]
+  # actions:
+    # on spawn:
+    # - narrate "spawn" format:dpets_format2
+    # on left click:
+    # - narrate "left click" format:dpets_format2
+    # on right click:
+    # - narrate "right click" format:dpets_format2
+  # abilities:
+    # placeholder:
+      # item_icon: i@diamond
+      # name: placeholder
+      # script:
+      # - narrate "placeholder ability" format:dpets_format2
 #####################
 # default pig
 #####################
-dpets_pig:
-  type: yaml data
-  is_dpet: true
-  pet_id: pig
-  name: pig
-  entity: e@pig
-  item_icon: i@human_skull[skull_skin=8b57078b-f1bd-45df-83c4-d88d16768fbe|eyJ0aW1lc3RhbXAiOjE0MzA0NTMyODQ0MDMsInByb2ZpbGVJZCI6IjhiNTcwNzhiZjFiZDQ1ZGY4M2M0ZDg4ZDE2NzY4ZmJlIiwicHJvZmlsZU5hbWUiOiJNSEZfUGlnIiwiaXNQdWJsaWMiOnRydWUsInRleHR1cmVzIjp7IlNLSU4iOnsidXJsIjoiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS82MjE2NjhlZjdjYjc5ZGQ5YzIyY2UzZDFmM2Y0Y2I2ZTI1NTk4OTNiNmRmNGE0Njk1MTRlNjY3YzE2YWE0In19fQ==]
-  actions:
-    on spawn:
-    - narrate "spawn" format:dpets_format2
-    on left click:
-    - narrate "left click" format:dpets_format2
-    on right click:
-    - narrate "right click" format:dpets_format2
-  abilities:
-    placeholder:
-      item_icon: i@diamond
-      name: placeholder
-      script:
-      - narrate "placeholder ability" format:dpets_format2
+# dpets_pig:
+  # type: yaml data
+  # is_dpet: true
+  # pet_id: pig
+  # name: pig
+  # entity: e@pig
+  # item_icon: i@human_skull[skull_skin=8b57078b-f1bd-45df-83c4-d88d16768fbe|eyJ0aW1lc3RhbXAiOjE0MzA0NTMyODQ0MDMsInByb2ZpbGVJZCI6IjhiNTcwNzhiZjFiZDQ1ZGY4M2M0ZDg4ZDE2NzY4ZmJlIiwicHJvZmlsZU5hbWUiOiJNSEZfUGlnIiwiaXNQdWJsaWMiOnRydWUsInRleHR1cmVzIjp7IlNLSU4iOnsidXJsIjoiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS82MjE2NjhlZjdjYjc5ZGQ5YzIyY2UzZDFmM2Y0Y2I2ZTI1NTk4OTNiNmRmNGE0Njk1MTRlNjY3YzE2YWE0In19fQ==]
+  # actions:
+    # on spawn:
+    # - narrate "spawn" format:dpets_format2
+    # on left click:
+    # - narrate "left click" format:dpets_format2
+    # on right click:
+    # - narrate "right click" format:dpets_format2
+  # abilities:
+    # placeholder:
+      # item_icon: i@diamond
+      # name: placeholder
+      # script:
+      # - narrate "placeholder ability" format:dpets_format2
 #####################
 # default pig_zombie
 #####################
-dpets_pig_zombie:
-  type: yaml data
-  is_dpet: true
-  pet_id: pig_zombie
-  name: pig zombie
-  entity: e@pig_zombie
-  item_icon: i@human_skull[skull_skin=18a2bb50-334a-4084-9184-2c380251a24b|eyJ0aW1lc3RhbXAiOjE0MzA0NTA3Nzg2MTQsInByb2ZpbGVJZCI6IjE4YTJiYjUwMzM0YTQwODQ5MTg0MmMzODAyNTFhMjRiIiwicHJvZmlsZU5hbWUiOiJNSEZfUGlnWm9tYmllIiwiaXNQdWJsaWMiOnRydWUsInRleHR1cmVzIjp7IlNLSU4iOnsidXJsIjoiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS83NGU5YzZlOTg1ODJmZmQ4ZmY4ZmViMzMyMmNkMTg0OWM0M2ZiMTZiMTU4YWJiMTFjYTdiNDJlZGE3NzQzZWIifX19]
-  actions:
-    on spawn:
-    - narrate "spawn" format:dpets_format2
-    on left click:
-    - narrate "left click" format:dpets_format2
-    on right click:
-    - narrate "right click" format:dpets_format2
-  abilities:
-    placeholder:
-      item_icon: i@diamond
-      name: placeholder
-      script:
-      - narrate "placeholder ability" format:dpets_format2
+# dpets_pig_zombie:
+  # type: yaml data
+  # is_dpet: true
+  # pet_id: pig_zombie
+  # name: pig zombie
+  # entity: e@pig_zombie
+  # item_icon: i@human_skull[skull_skin=18a2bb50-334a-4084-9184-2c380251a24b|eyJ0aW1lc3RhbXAiOjE0MzA0NTA3Nzg2MTQsInByb2ZpbGVJZCI6IjE4YTJiYjUwMzM0YTQwODQ5MTg0MmMzODAyNTFhMjRiIiwicHJvZmlsZU5hbWUiOiJNSEZfUGlnWm9tYmllIiwiaXNQdWJsaWMiOnRydWUsInRleHR1cmVzIjp7IlNLSU4iOnsidXJsIjoiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS83NGU5YzZlOTg1ODJmZmQ4ZmY4ZmViMzMyMmNkMTg0OWM0M2ZiMTZiMTU4YWJiMTFjYTdiNDJlZGE3NzQzZWIifX19]
+  # actions:
+    # on spawn:
+    # - narrate "spawn" format:dpets_format2
+    # on left click:
+    # - narrate "left click" format:dpets_format2
+    # on right click:
+    # - narrate "right click" format:dpets_format2
+  # abilities:
+    # placeholder:
+      # item_icon: i@diamond
+      # name: placeholder
+      # script:
+      # - narrate "placeholder ability" format:dpets_format2
 #####################
 # default silverfish
 #####################
-dpets_silverfish:
-  type: yaml data
-  is_dpet: true
-  pet_id: silverfish
-  name: silverfish
-  entity: e@silverfish
-  item_icon: i@stone
-  actions:
-    on spawn:
-    - narrate "spawn" format:dpets_format2
-    on left click:
-    - narrate "left click" format:dpets_format2
-    on right click:
-    - narrate "right click" format:dpets_format2
-  abilities:
-    placeholder:
-      item_icon: i@diamond
-      name: placeholder
-      script:
-      - narrate "placeholder ability" format:dpets_format2
+# dpets_silverfish:
+  # type: yaml data
+  # is_dpet: true
+  # pet_id: silverfish
+  # name: silverfish
+  # entity: e@silverfish
+  # item_icon: i@stone
+  # actions:
+    # on spawn:
+    # - narrate "spawn" format:dpets_format2
+    # on left click:
+    # - narrate "left click" format:dpets_format2
+    # on right click:
+    # - narrate "right click" format:dpets_format2
+  # abilities:
+    # placeholder:
+      # item_icon: i@diamond
+      # name: placeholder
+      # script:
+      # - narrate "placeholder ability" format:dpets_format2
 #####################
 # default skeleton
 #####################
-dpets_skeleton:
-  type: yaml data
-  is_dpet: true
-  pet_id: skeleton
-  name: skeleton
-  entity: e@skeleton
-  item_icon: i@skeleton_skull
-  actions:
-    on spawn:
-    - narrate "spawn" format:dpets_format2
-    on left click:
-    - narrate "left click" format:dpets_format2
-    on right click:
-    - narrate "right click" format:dpets_format2
-  abilities:
-    placeholder:
-      item_icon: i@diamond
-      name: placeholder
-      script:
-      - narrate "placeholder ability" format:dpets_format2
+# dpets_skeleton:
+  # type: yaml data
+  # is_dpet: true
+  # pet_id: skeleton
+  # name: skeleton
+  # entity: e@skeleton
+  # item_icon: i@skeleton_skull
+  # actions:
+    # on spawn:
+    # - narrate "spawn" format:dpets_format2
+    # on left click:
+    # - narrate "left click" format:dpets_format2
+    # on right click:
+    # - narrate "right click" format:dpets_format2
+  # abilities:
+    # placeholder:
+      # item_icon: i@diamond
+      # name: placeholder
+      # script:
+      # - narrate "placeholder ability" format:dpets_format2
 #####################
 # default slime
 #####################
-dpets_slime:
-  type: yaml data
-  is_dpet: true
-  pet_id: slime
-  name: slime
-  entity: e@slime
-  item_icon: i@slime_ball
-  actions:
-    on spawn:
-    - narrate "spawn" format:dpets_format2
-    on left click:
-    - narrate "left click" format:dpets_format2
-    on right click:
-    - narrate "right click" format:dpets_format2
-  abilities:
-    placeholder:
-      item_icon: i@diamond
-      name: placeholder
-      script:
-      - narrate "placeholder ability" format:dpets_format2
+# dpets_slime:
+  # type: yaml data
+  # is_dpet: true
+  # pet_id: slime
+  # name: slime
+  # entity: e@slime
+  # item_icon: i@slime_ball
+  # actions:
+    # on spawn:
+    # - narrate "spawn" format:dpets_format2
+    # on left click:
+    # - narrate "left click" format:dpets_format2
+    # on right click:
+    # - narrate "right click" format:dpets_format2
+  # abilities:
+    # placeholder:
+      # item_icon: i@diamond
+      # name: placeholder
+      # script:
+      # - narrate "placeholder ability" format:dpets_format2
 #####################
 # default snowman
 #####################
@@ -940,23 +1021,23 @@ dpets_slime:
 #####################
 # default spider
 #####################
-dpets_spider:
-  type: yaml data
-  is_dpet: true
-  pet_id: spider
-  name: spider
-  entity: e@spider
-  item_icon: i@human_skull[skull_skin=cab28771-f0cd-4fe7-b129-02c69eba79a5|eyJ0aW1lc3RhbXAiOjE0MzA0NTIyMjc5NTksInByb2ZpbGVJZCI6ImNhYjI4NzcxZjBjZDRmZTdiMTI5MDJjNjllYmE3OWE1IiwicHJvZmlsZU5hbWUiOiJNSEZfQ2F2ZVNwaWRlciIsImlzUHVibGljIjp0cnVlLCJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNDE2NDVkZmQ3N2QwOTkyMzEwN2IzNDk2ZTk0ZWViNWMzMDMyOWY5N2VmYzk2ZWQ3NmUyMjZlOTgyMjQifX19]
-  actions:
-    on spawn:
-    - narrate "spawn" format:dpets_format2
-    on left click:
-    - narrate "left click" format:dpets_format2
-    on right click:
-    - narrate "right click" format:dpets_format2
-  abilities:
-    placeholder:
-      item_icon: i@diamond
-      name: placeholder
-      script:
-      - narrate "placeholder ability" format:dpets_format2
+# dpets_spider:
+  # type: yaml data
+  # is_dpet: true
+  # pet_id: spider
+  # name: spider
+  # entity: e@spider
+  # item_icon: i@human_skull[skull_skin=cab28771-f0cd-4fe7-b129-02c69eba79a5|eyJ0aW1lc3RhbXAiOjE0MzA0NTIyMjc5NTksInByb2ZpbGVJZCI6ImNhYjI4NzcxZjBjZDRmZTdiMTI5MDJjNjllYmE3OWE1IiwicHJvZmlsZU5hbWUiOiJNSEZfQ2F2ZVNwaWRlciIsImlzUHVibGljIjp0cnVlLCJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNDE2NDVkZmQ3N2QwOTkyMzEwN2IzNDk2ZTk0ZWViNWMzMDMyOWY5N2VmYzk2ZWQ3NmUyMjZlOTgyMjQifX19]
+  # actions:
+    # on spawn:
+    # - narrate "spawn" format:dpets_format2
+    # on left click:
+    # - narrate "left click" format:dpets_format2
+    # on right click:
+    # - narrate "right click" format:dpets_format2
+  # abilities:
+    # placeholder:
+      # item_icon: i@diamond
+      # name: placeholder
+      # script:
+      # - narrate "placeholder ability" format:dpets_format2
