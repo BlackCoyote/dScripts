@@ -562,7 +562,9 @@ dpets_wolf:
       description: Howl to the moon with your wolf!
       global_cooldown: 5s
       script:
+      - playsound sound:ENTITY_WOLF_howl <def[pet].location> pitch:0.8
       - repeat 5:
+        - playeffect effect:CLOUD <def[pet].location> qty:5 offset:0.5 visibility:50
         - wait 5t
 #####################
 # default ocelot
