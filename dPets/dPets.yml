@@ -449,6 +449,11 @@ dpets_wolf:
     on right click:
     - playsound sound:ENTITY_WOLF_AMBIENT <def[pet].location>
     - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+    - if <def[pet].sitting||true> {
+      - adjust <def[pet]> sitting:false
+      } else {
+      - adjust <def[pet]> sitting:true
+      }
     on call:
     - adjust <def[pet]> sitting:false
     - narrate "Woof!" format:dpets_format2
@@ -551,6 +556,14 @@ dpets_wolf:
       - narrate "Your pet found <&b><def[item].formatted><&7>!" format:dpets_format3
       - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
       - playsound sound:ENTITY_WOLF_AMBIENT <def[pet].location>
+    howl:
+      item_icon: i@watch
+      name: Howl
+      description: Howl to the moon with your wolf!
+      global_cooldown: 5s
+      script:
+      - repeat 5:
+        - wait 5t
 #####################
 # default ocelot
 #####################
@@ -572,6 +585,11 @@ dpets_ocelot:
     on right click:
     - playsound sound:ENTITY_CAT_AMBIENT <def[pet].location>
     - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+    - if <def[pet].sitting||true> {
+      - adjust <def[pet]> sitting:false
+      } else {
+      - adjust <def[pet]> sitting:true
+      }
     on call:
     - adjust <def[pet]> sitting:false
     - narrate "Meow!" format:dpets_format2
