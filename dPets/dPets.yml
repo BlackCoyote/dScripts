@@ -46,9 +46,11 @@ dpets_constructor:
       - foreach next
       }
     - define pet_item_icon <def[value].yaml_key[item_icon].as_item||i@barrier>
-    - define abilities <def[value].list_keys[abilities]||li@>
     - yaml id:dpets_database set dpets.<def[pet_id]>.script:<def[value]>
-    - yaml id:dpets_database set dpets.<def[pet_id]>.abilities:|:<def[abilities]>
+    - foreach <server.list_scripts.filter[yaml_key[is_dpet_ability_pack]].filter[yaml_key[pet_id].is[==].to[<def[pet_id]>]].include[<def[value]>]||li@>:
+      - define script <def[value]>
+      - foreach <def[script].list_keys[abilities]||li@>:
+        - yaml id:dpets_database set dpets.<def[pet_id]>.abilities.<def[value]>.script:<def[script]>
 #
 #
 # command handler
@@ -98,14 +100,14 @@ dpets_command_handler:
       - narrate format:dpets_format3 "<&c>Loaded pets<&co>"
       - foreach <yaml[dpets_database].list_keys[dpets]||i@>:
         - narrate format:dpets_format3 "<&6><def[value]>"
-        - narrate format:dpets_format3 "<&e>abilities<&co> <&7><yaml[dpets_database].read[dpets.<def[value]>.abilities].formatted||>"
+        - narrate format:dpets_format3 "<&e>abilities<&co> <&7><yaml[dpets_database].list_keys[dpets.<def[value]>.abilities].formatted||>"
     - case help:
       - narrate format:dpets_format3 "/pet =<&gt> Opens the pet menu."
       - narrate format:dpets_format3 "/pet hide =<&gt> Toggles other pets their visibility."
       - narrate format:dpets_format3 "/pet help =<&gt> shows this info page."
       - if <player.is_op> {
         - narrate format:dpets_format3 "<&c>Op only commands<&co>"
-        - narrate format:dpets_format3 "<&c>/pet loaded =<&gt> shows all loaded dPets and their abilities."
+        - narrate format:dpets_format3 "<&c>/pet loaded =<&gt> shows all loaded dPets."
         }
     - default:
       - inventory open d:in@dpets_command_gui
@@ -208,9 +210,9 @@ dpets_do_ability:
         - queue clear
         }
       - define pet <player.flag[dpets.current_pet]||null>
-      - define script <yaml[dpets_database].read[dpets.<def[pet]>.script]>
       - define ability <def[1]>
       - if <def[ability]> == null queue clear
+      - define script <yaml[dpets_database].read[dpets.<def[pet]>.abilities.<def[ability]>.script]>
       - define duration <def[script].yaml_key[abilities.<def[ability]>.global_cooldown].as_duration||5s>
       - define pet <player.flag[dpets.current_pet_uuid]||null>
       - follow followers:<def[pet]> stop
@@ -316,8 +318,8 @@ dpets_abilities_gui:
   procedural items:
   - define pet <player.flag[dpets.current_pet]||null>
   - define items li@
-  - define script <yaml[dpets_database].read[dpets.<def[pet]>.script]>
-  - foreach <def[script].list_keys[abilities]||i@>:
+  - foreach <yaml[dpets_database].list_keys[dpets.<def[pet]>.abilities]||li@>:
+    - define script <yaml[dpets_database].read[dpets.<def[pet]>.abilities.<def[value]>.script]||null>
     - if <proc[dpets_hasability].context[<def[pet]>|<def[value]>].not> foreach next
     - define item <def[script].yaml_key[abilities.<def[value]>.item_icon].as_item||i@barrier>
     - adjust <def[item]> display_name:<&b><def[script].yaml_key[abilities.<def[value]>.name]||???> save:item
@@ -474,6 +476,28 @@ dpets_format3:
       # global_cooldown: 5s
       # script:
       # - narrate "do a frontflip!" format:dpets_format2
+#####################
+# template ability pack
+#####################
+# dpets_template_abilities:
+  # type: yaml data
+  # is_dpet_ability_pack: true
+  # pet_id: <ID here>
+  # abilities:
+    # ability3:
+      # item_icon: i@gold_ingot
+      # name: yet another ability
+      # description: Make your pet do a cartwheel!
+      # global_cooldown: 5s
+      # script:
+      # - narrate "do acartwheel!" format:dpets_format2
+    # ability4:
+      # item_icon: i@iron_ingot
+      # name: the last ability!
+      # description: Make your pet depressed!
+      # global_cooldown: 5s
+      # script:
+      # - narrate "hey you suck" format:dpets_format2
 #####################
 # default wolf
 #####################
