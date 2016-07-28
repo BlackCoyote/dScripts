@@ -78,7 +78,7 @@ dpets_command_handler:
       - run dpets_call_pet
     - case abilities:
       - if <player.flag[dpets.current_pet]||null> == null {
-        - narrate "<&c>You need to have a pet spawned for this."
+        - narrate "<&c>You need to have a pet spawned for this." format:dpets_format3
         - queue clear
         }
       - if <player.flag[dpets.current_pet_UUID].as_entity.is_spawned.not||true> {
@@ -226,6 +226,7 @@ dpets_pet_events:
   debug: false
   events:
     on player teleports:
+    - if <context.origin.distance_squared[<context.destination>]||true> < 25 queue clear
     - wait 1t
     - run dpets_call_pet
     on entity damaged:
