@@ -200,6 +200,8 @@ dpets_call_pet:
   - if "<def[script].list_keys[actions].contains[on call]||false>" {
     - inject <def[script]> "path:actions.on call"
     }
+  - wait 1t
+  - walk stop <def[pet]>
 dpets_do_ability:
   type: task
   debug: false
@@ -362,7 +364,7 @@ dpets_gui_events:
       - if <player.flag[dpets.current_pet]||null> != <def[pet_ID]> {
         - run dpets_initiate_pet def:<def[pet_ID]>
         } else {
-        - run dpets_call_pet
+        - run dpets_remove_pet
         }
       }
     on player clicks in dpets_abilities_gui:
