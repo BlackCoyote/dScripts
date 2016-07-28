@@ -791,7 +791,6 @@ dpets_bat:
         - define velocity l@<util.random.decimal[-0.5].to[0.5]>,<util.random.decimal[-1].to[2]>,<util.random.decimal[-0.5].to[0.5]>
         - look <def[pet]> <def[pet].location.add[<def[velocity]>]>
         - adjust <def[pet]> velocity:<def[velocity]>
-        - playsound sound:ENTITY_BAT_loop <def[pet].location> pitch:<util.random.decimal[1].to[1.5].round_to[1]>
         - repeat 10:
           - playeffect effect:town_aura <def[pet].location.sub[0,0.5,0]> qty:5 offset:0.05 visibility:50
           - playeffect effect:flame <def[pet].location.sub[0,0.5,0]> qty:5 offset:0.05 visibility:50
@@ -810,20 +809,33 @@ dpets_bat:
         - wait 1t
       - repeat 40:
         - teleport <def[pet]> <def[location]>
-        - if <def[value].mod[3]> == 0 playsound sound:ENTITY_BAT_loop <def[pet].location> pitch:<util.random.decimal[1].to[1.5].round_to[1]>
         - playeffect effect:cloud <def[pet].location.sub[0,0.5,0]> qty:5 offset:0.5 visibility:50
         - wait 5t
       - foreach <def[location].find.entities.within[25]||li@>:
         - playeffect effect:enchantment_table <def[value].location.points_between[<def[location]>].distance[0.2]||<def[location]>> qty:1 offset:0 visibility:100
         - teleport <def[pet]> <def[location]>
-        - if <def[loop_index].mod[3]> == 0 playsound sound:ENTITY_BAT_loop <def[pet].location> pitch:<util.random.decimal[1].to[1.5].round_to[1]>
         - playeffect effect:cloud <def[pet].location.sub[0,0.5,0]> qty:5 offset:0.5 visibility:50
         - wait 5t
       - repeat 10:
         - teleport <def[pet]> <def[location]>
-        - if <def[value].mod[3]> == 0 playsound sound:ENTITY_BAT_loop <def[pet].location> pitch:<util.random.decimal[1].to[1.5].round_to[1]>
         - playeffect effect:cloud <def[pet].location.sub[0,0.5,0]> qty:5 offset:0.5 visibility:50
         - wait 5t
+    orbit:
+      item_icon: i@shield
+      name: Orbit
+      description: Your bat will orbit you!
+      global_cooldown: 18s
+      script:
+      - define locations li@
+      - define interval <util.tau.div[20]>
+      - repeat 20:
+        - define locations <def[locations].include[<def[value].mul[<def[interval]>].cos>,0,<def[value].mul[<def[interval]>].sin>]>
+      - repeat 15:
+        - foreach <def[locations]>:
+          - define location <player.location.add[<def[value]>]>
+          - playeffect effect:flame <def[location]> qty:1 offset:0.05 visibility:50
+          - teleport <def[pet]> <def[location].above>
+          - wait 1t
 #####################
 # default polar bear
 #####################
