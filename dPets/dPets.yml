@@ -3,7 +3,7 @@ dpets:
   name: dPets
   id: 104
   description: providing highly unique cosmetic-only pets for your server.
-  version: 3
+  version: 4
 #
 #
 # constructor + script tracker
@@ -48,6 +48,7 @@ dpets_constructor:
     - define pet_item_icon <def[value].yaml_key[item_icon].as_item||i@barrier>
     - define abilities <def[value].list_keys[abilities]||li@>
     - yaml id:dpets_database set dpets.<def[pet_id]>.script:<def[value]>
+    - yaml id:dpets_database set dpets.<def[pet_id]>.abilities:|:<def[abilities]>
 #
 #
 # command handler
@@ -92,10 +93,20 @@ dpets_command_handler:
         - narrate format:dpets_format3 "All dPets besides your own will now be hidden from you."
         }
       - run dpets_update_hide_pets
+    - case loaded:
+      - if <player.is_op.not> queue clear
+      - narrate format:dpets_format3 "<&c>Loaded pets<&co>"
+      - foreach <yaml[dpets_database].list_keys[dpets]||i@>:
+        - narrate format:dpets_format3 "<&6><def[value]>"
+        - narrate format:dpets_format3 "<&e>abilities<&co> <&7><yaml[dpets_database].read[dpets.<def[value]>.abilities].formatted||>"
     - case help:
       - narrate format:dpets_format3 "/pet =<&gt> Opens the pet menu."
       - narrate format:dpets_format3 "/pet hide =<&gt> Toggles other pets their visibility."
       - narrate format:dpets_format3 "/pet help =<&gt> shows this info page."
+      - if <player.is_op> {
+        - narrate format:dpets_format3 "<&c>Op only commands<&co>"
+        - narrate format:dpets_format3 "<&c>/pet loaded =<&gt> shows all loaded dPets and their abilities."
+        }
     - default:
       - inventory open d:in@dpets_command_gui
 #
@@ -382,7 +393,7 @@ dpets_haspet:
   type: procedure
   debug: false
   script:
-  - if <player.has_permission[dpets.%1%]||false> ||<player.has_permission[dpets.*]||false> || <player.has_permission[dpets.%1%].global||false> || <player.has_permission[dpets.*].global||false> || <player.is_op||false> {
+  - if <player.has_permission[dpets.pet.%1%]||false> || <player.has_permission[dpets.pet.%1%].global||false> || <player.is_op||false> {
     - determine true
     } else {
     - determine false
@@ -391,7 +402,7 @@ dpets_hasability:
   type: procedure
   debug: false
   script:
-  - if <player.has_permission[dpets.%1%.abilities.%2%]||false> || <player.has_permission[dpets.*]||false> || <player.has_permission[dpets.%1%.abilities.*]||false> || <player.has_permission[dpets.%1%.abilities.%2%].global||false> || <player.has_permission[dpets.*].global||false> || <player.has_permission[dpets.%1%.abilities.*].global||false> || <player.is_op||false> {
+  - if <player.has_permission[dpets.pet.%1%.abilities.%2%]||false> || <player.has_permission[dpets.pet.%1%.abilities.%2%].global||false> || <player.is_op||false> {
     - determine true
     } else {
     - determine false
@@ -722,7 +733,7 @@ dpets_bunny:
   abilities:
     hop:
       item_icon: i@slime_block
-      name: Bunny hop
+      name: hop
       description: Make your bunny jump!
       global_cooldown: 12s
       script:
