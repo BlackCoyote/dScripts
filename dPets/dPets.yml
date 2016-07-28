@@ -115,7 +115,7 @@ dpets_initiate_pet:
   - if "<def[script].list_keys[actions].contains[on spawn]||false>" {
     - inject <def[script]> "path:actions.on spawn"
     }
-  - follow followers:<def[pet]> target:<player> speed:1
+  - follow followers:<def[pet]> target:<player> speed:1 allow_wander
 dpets_remove_pet:
   type: task
   debug: false
@@ -136,6 +136,10 @@ dpets_call_pet:
   script:
   - define pet <player.flag[dpets.current_pet_UUID]||null>
   - if <def[pet]> == null queue clear
+  - if <player.has_flag[dpets.generic_ability_cooldown]> {
+    - narrate format:dpets_format3 "Your pet is still busy!"
+    - queue clear
+    }
   - if <def[pet].is_spawned||false> {
     - teleport <def[pet]> <player.location.find.surface_blocks.within[3].random.above||<player.location>>
     - playeffect effect:cloud <def[pet].location> qty:25 offset:0.5 visibility:50
@@ -146,6 +150,25 @@ dpets_call_pet:
   - if "<def[script].list_keys[actions].contains[on call]||false>" {
     - inject <def[script]> "path:actions.on call"
     }
+dpets_do_ability:
+  type: task
+  debug: false
+  speed: 0
+  script:
+      - if <player.has_flag[dpets.generic_ability_cooldown]> {
+        - narrate format:dpets_format3 "Your pet is still busy!"
+        - queue clear
+        }
+      - define pet <player.flag[dpets.current_pet]||null>
+      - define script <yaml[dpets_database].read[dpets.<def[pet]>.script]>
+      - define ability <def[1]>
+      - if <def[ability]> == null queue clear
+      - define duration <def[script].yaml_key[abilities.<def[ability]>.global_cooldown].as_duration||5s>
+      - define pet <player.flag[dpets.current_pet_uuid]||null>
+      - follow followers:<def[pet]> stop
+      - flag <player> "dpets.generic_ability_cooldown:true" duration:<def[duration]>
+      - inject <def[script]> "path:abilities.<def[ability]>.script"
+      - follow followers:<def[pet]> target:<player> speed:1 allow_wander
 dpets_pet_events:
   type: world
   debug: false
@@ -293,15 +316,9 @@ dpets_gui_events:
     - playsound <player> sound:ITEM_ARMOR_EQUIP_LEATHER pitch:1
     - determine cancelled passively
     - if <context.raw_slot> < 46 && <context.item||i@air> != i@air {
-      - define pet <player.flag[dpets.current_pet]||null>
-      - define script <yaml[dpets_database].read[dpets.<def[pet]>.script]>
-      - define ability <context.item.nbt[dpet]||null>
-      - if <def[ability]> == null queue clear
       - inventory close
-      - define pet <player.flag[dpets.current_pet_uuid]||null>
-      - follow followers:<def[pet]> stop
-      - inject <def[script]> "path:abilities.<def[ability]>.script"
-      - follow followers:<def[pet]> target:<player> speed:1
+      - define ability <context.item.nbt[dpet]||null>
+      - run dpets_do_ability def:<def[ability]>
       }
     on player clicks in dpets_command_gui:
     - playsound <player> sound:ITEM_ARMOR_EQUIP_LEATHER pitch:1
@@ -339,7 +356,11 @@ dpets_hasability:
     } else {
     - determine false
     }
-#
+dpets_getpet:
+  type: procedure
+  debug: false
+  script:
+  - determine <player.flag[dpets.current_pet_UUID]||null>
 #
 # format scripts
 # human to pet, and pet to human
@@ -397,6 +418,7 @@ dpets_wolf:
     growl:
       item_icon: i@bone
       name: Growl
+      global_cooldown: 2s
       script:
       - narrate "Grrrrr!" format:dpets_format2
       - playsound sound:ENTITY_WOLF_growl <def[pet].location>
@@ -404,6 +426,7 @@ dpets_wolf:
     fetch:
       item_icon: i@snow_ball
       name: Fetch
+      global_cooldown: 15s
       script:
       - adjust <def[pet]> sitting:false
       - shoot e@snowball save:ball
@@ -438,6 +461,7 @@ dpets_wolf:
     shake:
       item_icon: i@water_bucket
       name: Shake
+      global_cooldown: 2s
       script:
       - playsound sound:ENTITY_WOLF_SHAKE <def[pet].location>
       - animate <def[pet]> animation:wolf_shake
@@ -448,6 +472,7 @@ dpets_wolf:
     sit:
       item_icon: i@bed
       name: Sit
+      global_cooldown: 2s
       script:
       - adjust <def[pet]> sitting:true
       - repeat 2:
@@ -456,6 +481,7 @@ dpets_wolf:
     stand:
       item_icon: i@bed
       name: Stand
+      global_cooldown: 2s
       script:
       - adjust <def[pet]> sitting:false
       - repeat 2:
@@ -464,6 +490,7 @@ dpets_wolf:
     dig:
       item_icon: i@wood_spade
       name: Dig
+      global_cooldown: 5s
       script:
       - repeat 2:
         - playsound sound:ENTITY_WOLF_ambient <def[pet].location>
@@ -507,18 +534,21 @@ dpets_ocelot:
     sit:
       item_icon: i@bed
       name: Sit
+      global_cooldown: 2s
       script:
       - adjust <def[pet]> sitting:true
       - playsound sound:ENTITY_CAT_AMBIENT <def[pet].location>
     stand:
       item_icon: i@bed
       name: Stand
+      global_cooldown: 2s
       script:
       - adjust <def[pet]> sitting:false
       - playsound sound:ENTITY_CAT_AMBIENT <def[pet].location>
     fetch:
       item_icon: i@snow_ball
       name: Fetch
+      global_cooldown: 3s
       script:
       - adjust <def[pet]> sitting:true
       - shoot e@snowball save:ball
@@ -533,6 +563,7 @@ dpets_ocelot:
     chase:
       item_icon: i@carrot_stick
       name: Chase
+      global_cooldown: 12s
       script:
       - adjust <def[pet]> sitting:false
       - spawn e@endermite[invulnerable=true] <def[pet].location.find.surface_blocks.within[3].random.above||<def[pet].location>> save:mouse
