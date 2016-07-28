@@ -792,7 +792,8 @@ dpets_bunny:
           - playeffect effect:blockcrack_2 qty:15 visibility:40 offset:0.1 <def[pet].location.below>
           - wait 2t
       - invisible <def[pet]> state:false
-      - playeffect effect:blockcrack_2 qty:30 visibility:40 offset:0.1 <def[pet].location.below>
+      - playeffect effect:blockcrack_2 <def[pet].location> qty:25 offset:0.5 visibility:50
+      - playsound sound:ENTITY_DONKEY_CHEST <def[pet].location> pitch:1
 #####################
 # default bat
 #####################
@@ -856,6 +857,18 @@ dpets_bat:
         - teleport <def[pet]> <def[location]>
         - playeffect effect:cloud <def[pet].location.sub[0,0.5,0]> qty:5 offset:0.5 visibility:50
         - wait 5t
+    point:
+      item_icon: i@compass
+      name: Point
+      description: Point where your bat should fly to!
+      global_cooldown: 15s
+      script:
+      - wait 10t
+      - repeat 200:
+        - teleport <def[pet]> <player.eye_location.precise_cursor_on[10]||<player.eye_location.add[<player.eye_location.direction.vector.mul[10]>]||<player.location>>>
+        - playeffect effect:town_aura <def[pet].location.sub[0,0.5,0]> qty:5 offset:0.05 visibility:50
+        - playeffect effect:flame <def[pet].location.sub[0,0.5,0]> qty:5 offset:0.05 visibility:50
+        - wait 1t
     orbit:
       item_icon: i@shield
       name: Orbit
