@@ -763,14 +763,14 @@ dpets_bunny:
       global_cooldown: 12s
       script:
       - repeat 10:
-        - define location <def[pet].location.find.surface_blocks.within[3].random.above||<def[pet].location>>
-        - walk <def[pet]> <def[location]>
-        - wait 10t
-        - adjust <def[pet]> velocity:<def[pet].velocity.add[0,0.5,0]>
+        - define velocity l@<util.random.decimal[-0.5].to[0.3]>,0.5,<util.random.decimal[-0.5].to[0.5]>
+        - look <def[pet]> <def[pet].location.add[<def[velocity]>]>
+        - adjust <def[pet]> velocity:<def[velocity]>
         - playsound sound:ENTITY_RABBIT_hurt <def[pet].location>
         - playsound sound:ENTITY_RABBIT_JUMP <def[pet].location> pitch:1.3
-        - playeffect effect:slime <def[pet].location> qty:5 offset:0.2 visibility:50
-        - wait 10t
+        - repeat 10:
+          - playeffect effect:flame <def[pet].location> qty:1 offset:0 visibility:50
+          - wait 1t
     burrow:
       item_icon: i@wood_spade
       name: Burrow
@@ -825,7 +825,7 @@ dpets_bat:
       global_cooldown: 10s
       script:
       - repeat 10:
-        - define velocity l@<util.random.decimal[0].to[0.5]>,<util.random.decimal[-1].to[2]>,<util.random.decimal[-0.5].to[0.5]>
+        - define velocity l@<util.random.decimal[-0.5].to[0.5]>,<util.random.decimal[0.2].to[2]>,<util.random.decimal[-0.5].to[0.5]>
         - look <def[pet]> <def[pet].location.add[<def[velocity]>]>
         - adjust <def[pet]> velocity:<def[velocity]>
         - repeat 10:
