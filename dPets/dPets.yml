@@ -3,7 +3,7 @@ dpets:
   name: dPets
   id: 104
   description: providing highly unique cosmetic-only pets for your server.
-  version: 5
+  version: 6
 #
 #
 # constructor + script tracker
@@ -824,7 +824,7 @@ dpets_bat:
       global_cooldown: 10s
       script:
       - repeat 10:
-        - define velocity l@<util.random.decimal[-0.5].to[0.5]>,<util.random.decimal[-1].to[2]>,<util.random.decimal[-0.5].to[0.5]>
+        - define velocity l@<util.random.decimal[0].to[0.5]>,<util.random.decimal[-1].to[2]>,<util.random.decimal[-0.5].to[0.5]>
         - look <def[pet]> <def[pet].location.add[<def[velocity]>]>
         - adjust <def[pet]> velocity:<def[velocity]>
         - repeat 10:
