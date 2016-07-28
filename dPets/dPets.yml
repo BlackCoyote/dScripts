@@ -64,7 +64,8 @@ dpets_command_handler:
   - pet
   - p
   tab complete: 
-  - determine li@abilities|list|call
+  - determine li@abilities|list|call||hide|help
+  # todo ^ make this filtered based on argument
   script: 
   - if <player.is_op.not> queue clear
   - choose <context.args.get[1]||null>:
@@ -82,6 +83,19 @@ dpets_command_handler:
         - queue clear
         }
       - inventory open d:in@dpets_abilities_gui
+    - case hide:
+      - if <player.has_flag[dpets.hide_pets]> {
+        - flag <player> dpets.hide_pets:!
+        - narrate format:dpets_format3 "All dPets will now be visible to you."
+        } else {
+        - flag <player> dpets.hide_pets
+        - narrate format:dpets_format3 "All dPets besides your own will now be hidden from you."
+        }
+      - run dpets_update_hide_pets
+    - case help:
+      - narrate format:dpets_format3 "/pet =<&gt> Opens the pet menu."
+      - narrate format:dpets_format3 "/pet hide =<&gt> Toggles other pets their visibility."
+      - narrate format:dpets_format3 "/pet help =<&gt> shows this info page."
     - default:
       - inventory open d:in@dpets_command_gui
 #
@@ -110,12 +124,17 @@ dpets_initiate_pet:
   - playeffect effect:cloud <def[pet].location> qty:25 offset:0.5 visibility:50
   - playsound sound:ENTITY_DONKEY_CHEST <def[pet].location> pitch:1
   - adjust <def[pet]> "custom_name:<&d><player.name>'s Pet"
-  - flag <def[pet]> pet_owner:<player>
+  - flag <def[pet]> dpets.pet_owner:<player>
   - flag <player> "dpets.current_pet_UUID:<def[pet]>"
+  - flag server "dpets.active_pets:->:<def[pet]>"
   - if "<def[script].list_keys[actions].contains[on spawn]||false>" {
     - inject <def[script]> "path:actions.on spawn"
     }
   - follow followers:<def[pet]> target:<player> speed:1 allow_wander
+  - foreach <server.list_online_players>:
+    - if <def[value].has_flag[dpets.hide_pets]> {
+      - run dpets_update_hide_pets player:<def[value]>
+      }
 dpets_remove_pet:
   type: task
   debug: false
@@ -124,11 +143,27 @@ dpets_remove_pet:
   - define pet <player.flag[dpets.current_pet_UUID]||null>
   - if <def[pet].is_spawned||false> {
     - playeffect effect:cloud <def[pet].location> qty:25 offset:0.5 visibility:50
-    # - playsound sound:ENTITY_DONKEY_CHEST <def[pet].location> pitch:1
     - remove <def[pet]>
     }
+  - flag server "dpets.active_pets:<-:<def[pet]>"
   - flag <player> dpets.current_pet_UUID:!
   - flag <player> dpets.current_pet:!
+dpets_update_hide_pets:
+  type: task
+  debug: false
+  speed: 0
+  script:
+  - if <player.has_flag[dpets.hide_pets]> {
+    - foreach <server.flag[dpets.active_pets].as_list||li@> {
+      - if <player> != <def[value].flag[dpets.pet_owner]||null> {
+        - adjust <player> hide_entity:<def[value]>
+        }
+      }
+    } else {
+    - foreach <server.flag[dpets.active_pets].as_list||li@> {
+      - adjust <player> show_entity:<def[value]>
+      }
+    }
 dpets_call_pet:
   type: task
   debug: false
@@ -144,6 +179,8 @@ dpets_call_pet:
     - teleport <def[pet]> <player.location.find.surface_blocks.within[3].random.above||<player.location>>
     - playeffect effect:cloud <def[pet].location> qty:25 offset:0.5 visibility:50
     - playsound sound:ENTITY_DONKEY_CHEST <def[pet].location> pitch:1
+    } else {
+    - ~run dpets_initiate_pet
     }
   - define pet_id <player.flag[dpets.current_pet]||null>
   - define script <yaml[dpets_database].read[dpets.<def[pet_id]>.script]||null>
@@ -177,17 +214,17 @@ dpets_pet_events:
     - wait 1t
     - run dpets_call_pet
     on entity damaged:
-    - if <context.entity.has_flag[pet_owner].not> queue clear
+    - if <context.entity.has_flag[dpets.pet_owner].not> queue clear
     - determine cancelled passively
     on player damages entity ignorecancelled:true:
-    - if <context.entity.flag[pet_owner]||null> != <player> queue clear
+    - if <context.entity.flag[dpets.pet_owner]||null> != <player> queue clear
     - define script <yaml[dpets_database].read[dpets.<player.flag[dpets.current_pet]||null>.script]||null>
     - define pet <player.flag[dpets.current_pet_uuid]||null>
     - if "<def[script].list_keys[actions].contains[on left click]||false>" {
       - inject <def[script]> "path:actions.on left click"
       }
     on player right clicks entity:
-    - if <context.entity.flag[pet_owner]||null> != <player> queue clear
+    - if <context.entity.flag[dpets.pet_owner]||null> != <player> queue clear
     - define script <yaml[dpets_database].read[dpets.<player.flag[dpets.current_pet]||null>.script]||null>
     - define pet <player.flag[dpets.current_pet_uuid]||null>
     - if "<def[script].list_keys[actions].contains[on right click]||false>" {
@@ -644,7 +681,7 @@ dpets_ocelot:
         - define location <def[mouse].location.find.surface_blocks.within[3].random.above||<def[pet].location>>
         - walk <def[mouse]> <def[location]>
         - wait 10t
-        - walk <def[pet]> <def[location]>
+        - walk <def[pet]> <def[location]> speed:1.5
         - wait 10t
         - if <util.random.int[1].to[4]> == 1 {
           - playsound sound:ENTITY_CAT_AMBIENT <def[pet].location>
@@ -763,7 +800,7 @@ dpets_bat:
       item_icon: i@eye_of_ender
       name: Recon
       description: Have your bat look around!
-      global_cooldown: 10s
+      global_cooldown: 15s
       script:
       - define location <def[pet].location.add[0,10,0]>
       - adjust <def[pet]> velocity:l@0,3,0
