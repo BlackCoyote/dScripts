@@ -70,7 +70,6 @@ dpets_command_handler:
   - determine li@abilities|list|call||hide|help
   # todo ^ make this filtered based on argument
   script: 
-  - if <player.is_op.not> queue clear
   - choose <context.args.get[1]||null>:
     - case list:
       - inventory open d:in@dpets_main_gui
@@ -82,10 +81,19 @@ dpets_command_handler:
         - queue clear
         }
       - if <player.flag[dpets.current_pet_UUID].as_entity.is_spawned.not||true> {
-        - narrate "<&c>Your pet is nowhere to be found!"
+        - narrate "<&c>Your pet is nowhere to be found!"  format:dpets_format3
         - queue clear
         }
-      - inventory open d:in@dpets_abilities_gui
+      - if <context.args.size> > 1 {
+        - if <yaml[dpets_database].list_keys[dpets.<player.flag[dpets.current_pet]||null>.abilities]||li@> contains <context.args.get[2]> {
+          - narrate "You activate the <context.args.get[2]> ability!"  format:dpets_format3
+          - run dpets_do_ability def:<context.args.get[2]>
+          } else {
+          - narrate "<&c>Your pet doesn't know this ability!"  format:dpets_format3
+          }
+        } else {
+        - inventory open d:in@dpets_abilities_gui
+        }
     - case hide:
       - if <player.has_flag[dpets.hide_pets]> {
         - flag <player> dpets.hide_pets:!
@@ -95,6 +103,20 @@ dpets_command_handler:
         - narrate format:dpets_format3 "All dPets besides your own will now be hidden from you."
         }
       - run dpets_update_hide_pets
+    - case play:
+      - if <player.flag[dpets.current_pet]||null> == null {
+        - narrate "<&c>You need to have a pet spawned for this." format:dpets_format3
+        - queue clear
+        }
+      - if <player.flag[dpets.current_pet_UUID].as_entity.is_spawned.not||true> {
+        - narrate "<&c>Your pet is nowhere to be found!"  format:dpets_format3
+        - queue clear
+        }
+      - if <player.has_flag[dpets.generic_ability_cooldown]> {
+        - narrate format:dpets_format3 "Your pet is still busy!"
+        - queue clear
+        }
+      - run dpet_doplay
     - case loaded:
       - if <player.is_op.not> queue clear
       - narrate format:dpets_format3 "<&c>Loaded pets<&co>"
@@ -202,31 +224,39 @@ dpets_call_pet:
     }
   - wait 1t
   - walk stop <def[pet]>
+  - follow followers:<def[pet]> target:<player> speed:1 allow_wander
 dpets_do_ability:
   type: task
   debug: false
   speed: 0
   script:
-      - if <player.has_flag[dpets.generic_ability_cooldown]> {
-        - narrate format:dpets_format3 "Your pet is still busy!"
-        - queue clear
-        }
-      - define pet <player.flag[dpets.current_pet]||null>
-      - define ability <def[1]>
-      - if <def[ability]> == null queue clear
-      - define script <yaml[dpets_database].read[dpets.<def[pet]>.abilities.<def[ability]>.script]>
-      - define duration <def[script].yaml_key[abilities.<def[ability]>.global_cooldown].as_duration||5s>
-      - define pet <player.flag[dpets.current_pet_uuid]||null>
-      - follow followers:<def[pet]> stop
-      - flag <player> "dpets.generic_ability_cooldown:true" duration:<def[duration]>
-      - inject <def[script]> "path:abilities.<def[ability]>.script"
-      - follow followers:<def[pet]> target:<player> speed:1 allow_wander
+  - if <player.has_flag[dpets.generic_ability_cooldown]> {
+    - narrate format:dpets_format3 "Your pet is still busy!"
+    - queue clear
+    }
+  - define pet <player.flag[dpets.current_pet]||null>
+  - define ability <def[1]||null>
+  - if <def[ability]> == null queue clear
+  - define script <yaml[dpets_database].read[dpets.<def[pet]>.abilities.<def[ability]>.script]>
+  - define duration <def[script].yaml_key[abilities.<def[ability]>.global_cooldown].as_duration||5s>
+  - define pet <player.flag[dpets.current_pet_uuid]||null>
+  - follow followers:<def[pet]> stop
+  - flag <player> "dpets.generic_ability_cooldown:true" duration:<def[duration]>
+  - inject <def[script]> "path:abilities.<def[ability]>.script"
+  - follow followers:<def[pet]> target:<player> speed:1 allow_wander
+dpet_doplay:
+  type: task
+  debug: false
+  speed: 0
+  script:
+  - define pet <player.flag[dpets.current_pet]||null>
+  - if <def[pet]> == null queue clear
 dpets_pet_events:
   type: world
   debug: false
   events:
     on player teleports:
-    - if <context.origin.distance_squared[<context.destination>]||true> < 25 queue clear
+    - if <context.origin.distance_squared[<context.destination>]||100> < 25 queue clear
     - wait 1t
     - run dpets_call_pet
     on entity damaged:
@@ -398,7 +428,7 @@ dpets_haspet:
   type: procedure
   debug: false
   script:
-  - if <player.has_permission[dpets.pet.%1%]||false> || <player.has_permission[dpets.pet.%1%].global||false> || <player.is_op||false> {
+  - if <player.has_flag[dpets.pet.%1%]||false> || <player.has_permission[dpets.pet.%1%]||false> || <player.has_permission[dpets.pet.%1%].global||false> || <player.is_op||false> || true {
     - determine true
     } else {
     - determine false
@@ -407,7 +437,7 @@ dpets_hasability:
   type: procedure
   debug: false
   script:
-  - if <player.has_permission[dpets.pet.%1%.abilities.%2%]||false> || <player.has_permission[dpets.pet.%1%.abilities.%2%].global||false> || <player.is_op||false> {
+  - if <player.has_flag[dpets.pet.%1%].abilities.%2%||false> || <player.has_flag[dpets.pet.%1%.abilities.*]||false> || <player.has_permission[dpets.pet.%1%.abilities.%2%]||false> || <player.has_permission[dpets.pet.%1%.abilities.%2%].global||false> || <player.is_op||false> || true {
     - determine true
     } else {
     - determine false
