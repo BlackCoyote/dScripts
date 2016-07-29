@@ -307,8 +307,9 @@ dpets_pet_events:
     - wait 1t
     - run dpets_call_pet
     on entity damaged:
-    - if <context.entity.has_flag[dpets.pet_owner].not> queue clear
-    - determine cancelled passively
+    - if <context.entity.has_flag[dpets.pet_owner]||false> {
+      - determine cancelled passively
+      }
     on player damages entity ignorecancelled:true:
     - if <context.entity.flag[dpets.pet_owner]||null> != <player> queue clear
     - define script <yaml[dpets_database].read[dpets.<player.flag[dpets.current_pet]||null>.script]||null>
