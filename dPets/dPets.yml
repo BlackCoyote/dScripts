@@ -1029,6 +1029,7 @@ dpets_polar_bear:
   name: Polar Bear
   entity: e@polar_bear[age=baby]
   item_icon: i@ice
+  description: A polar bear all the way from Antartica!
   actions:
     on spawn:
     - narrate "Rawrr!" format:dpets_format2
@@ -1059,6 +1060,7 @@ dpets_polar_bear:
       item_icon: i@stone_sword
       name: Roar
       global_cooldown: 2s
+      description: Hear me roar!
       script:
       - narrate "Grrrrr!" format:dpets_format2
       - playsound sound:ENTITY_POLAR_BEAR_WARNING <def[pet].location>
@@ -1069,6 +1071,7 @@ dpets_polar_bear:
       item_icon: i@potion
       name: Grow
       global_cooldown: 3s
+      description: Make your polar bear bigger!
       script:
       - playsound sound:ENTITY_POLAR_BEAR_WARNING <def[pet].location>
       - playsound sound:ENTITY_POLAR_BEAR_HURT <def[pet].location>
@@ -1080,6 +1083,7 @@ dpets_polar_bear:
       item_icon: i@potion
       name: Shrink
       global_cooldown: 3s
+      description: Make your polar bear smaller!
       script:
       - playsound sound:ENTITY_POLAR_BEAR_WARNING <def[pet].location>
       - playsound sound:ENTITY_POLAR_BEAR_HURT <def[pet].location>
@@ -1091,11 +1095,13 @@ dpets_polar_bear:
       item_icon: i@snow_ball
       name: Snow
       global_cooldown: 11s
+      description: Make your polar bear feel at home!
       script:
       - playsound sound:ENTITY_MINECART_inside pitch:1.5 <def[pet].location> volume:0.2
       - define cloudblob <def[pet].location.add[0,5,0].find.blocks.within[3].filter[y.is[==].to[<def[pet].location.add[0,5,0].y>]].parse[center]>
       - define snowcenter <def[pet].location.add[0,3,0]>
       - define snowcenter2 <def[pet].location.add[0,6,0]>
+      - showfake m@snow <def[snowcenter].find.surface_blocks.within[5].parse[above].random[10]> duration:10s
       - repeat 40:
         - playeffect effect:cloud <def[cloudblob]> qty:5 offset:0.4 visibility:100
         - playeffect effect:SNOW_SHOVEL <def[snowcenter]> qty:25 offset:1 visibility:100
