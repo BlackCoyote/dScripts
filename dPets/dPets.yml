@@ -3,7 +3,7 @@ dpets:
   name: dPets
   id: 104
   description: providing highly unique cosmetic-only pets for your server.
-  version: 7
+  version: 8
 #
 #
 # constructor + script tracker
@@ -120,7 +120,7 @@ dpets_command_handler:
       - if <player.has_flag[dpets.play_enabled].not> {
         - flag <player> "dpets.play_enabled"
         - narrate format:dpets_format3 "Your pet will look for potential friends and play with them!"
-        - run dpet_doplay id:<proc[dpets_queue_id_maker].context[dpets_<player>_do_play]>
+        - run dpets_doplay id:<proc[dpets_queue_id_maker].context[dpets_<player>_do_play]>
         } else {
         - flag <player> "dpets.play_enabled:!"
         - flag <def[pet]> "dpets.play_enabled:!"
@@ -259,7 +259,7 @@ dpets_do_ability:
   - flag <player> "dpets.generic_ability_cooldown:true" duration:<def[duration]>
   - inject <def[script]> "path:abilities.<def[ability]>.script"
   - follow followers:<def[pet]> target:<player> speed:1 allow_wander
-dpet_doplay:
+dpets_doplay:
   type: task
   debug: false
   speed: 0
