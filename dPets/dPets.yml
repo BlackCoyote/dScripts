@@ -87,7 +87,7 @@ dpets_command_handler:
       - if <context.args.size> > 1 {
         - if <yaml[dpets_database].list_keys[dpets.<player.flag[dpets.current_pet]||null>.abilities]||li@> contains <context.args.get[2]> {
           - narrate "You activate the <context.args.get[2]> ability!"  format:dpets_format3
-          - run dpets_do_ability def:<context.args.get[2]>
+          - run dpets_do_ability def:<context.args.get[2]> id:<proc[dpets_queue_id_maker].context[dpets_<player>_do_ability]>
           } else {
           - narrate "<&c>Your pet doesn't know this ability!"  format:dpets_format3
           }
@@ -104,11 +104,12 @@ dpets_command_handler:
         }
       - run dpets_update_hide_pets
     - case play:
+      - define pet <player.flag[dpets.current_pet_UUID].as_entity||null>
       - if <player.flag[dpets.current_pet]||null> == null {
         - narrate "<&c>You need to have a pet spawned for this." format:dpets_format3
         - queue clear
         }
-      - if <player.flag[dpets.current_pet_UUID].as_entity.is_spawned.not||true> {
+      - if <def[pet].is_spawned.not||true> {
         - narrate "<&c>Your pet is nowhere to be found!"  format:dpets_format3
         - queue clear
         }
@@ -116,7 +117,16 @@ dpets_command_handler:
         - narrate format:dpets_format3 "Your pet is still busy!"
         - queue clear
         }
-      - run dpet_doplay
+      - if <player.has_flag[dpets.play_enabled].not> {
+        - flag <player> "dpets.play_enabled"
+        - narrate format:dpets_format3 "Your pets will look for potential friends and play with them!"
+        - run dpet_doplay id:<proc[dpets_queue_id_maker].context[dpets_<player>_do_play]>
+        } else {
+        - flag <player> "dpets.play_enabled:!"
+        - flag <def[pet]> "dpets.play_enabled:!"
+        - narrate format:dpets_format3 "Your pets will no longer pay attention to potential friends."
+        - follow followers:<def[pet]> target:<player> speed:1 allow_wander
+        }
     - case loaded:
       - if <player.is_op.not> queue clear
       - narrate format:dpets_format3 "<&c>Loaded pets<&co>"
@@ -176,6 +186,10 @@ dpets_remove_pet:
   speed: 0
   script:
   - define pet <player.flag[dpets.current_pet_UUID]||null>
+  - foreach <queue.list.parse[id].filter[starts_with[dpets_<player>_do_ability]]>:
+    - queue clear <def[value].as_queue>
+  - foreach <queue.list.parse[id].filter[starts_with[dpets_<player>_do_play]]>:
+    - queue clear <def[value].as_queue>
   - if <def[pet].is_spawned||false> {
     - playeffect effect:cloud <def[pet].location> qty:25 offset:0.5 visibility:50
     - remove <def[pet]>
@@ -249,8 +263,30 @@ dpet_doplay:
   debug: false
   speed: 0
   script:
-  - define pet <player.flag[dpets.current_pet]||null>
-  - if <def[pet]> == null queue clear
+  - define pet_id <player.flag[dpets.current_pet]||null>
+  - define pet <player.flag[dpets.current_pet_uuid]||null>
+  - if <def[pet_id]> == null queue clear
+  - if <def[pet].is_spawned.not||true> queue clear
+  - flag <def[pet]> "dpets.play_enabled"
+  - foreach <queue.list.exclude[<queue>].parse[id].filter[starts_with[dpets_<player>_do_play]]>:
+    - queue clear <def[value].as_queue>
+  - while <player.has_flag[dpets.play_enabled].and[<server.entity_is_spawned[<def[pet]>]>].and[<player.is_online>]||false>:
+    - define nearby <server.flag[dpets.active_pets].as_list.exclude[<def[pet]>].filter[has_flag[dpets.play_enabled]].filter[location.distance_squared[<player.location>].is[less].than[100]]||li@>
+    - if <def[nearby].size> < 1 {
+      - if <def[last_follow_action]> != follow {
+        - follow followers:<def[pet]> target:<player> speed:1 allow_wander
+        - define last_follow_action follow
+        }
+      - wait 5s
+      - while next
+      }
+    - if <def[last_follow_action]> == follow {
+      - follow followers:<def[pet]> stop
+      - define last_follow_action no_follow
+      }
+    - walk <def[pet]> <def[nearby].random.location.add[<util.random.int[-1].to[1]>,0,<util.random.int[-1].to[1]>]||<player.location>>
+    - wait 5s
+    
 dpets_pet_events:
   type: world
   debug: false
@@ -404,7 +440,7 @@ dpets_gui_events:
     - if <context.raw_slot> < 46 && <context.item||i@air> != i@air {
       - inventory close
       - define ability <context.item.nbt[dpet]||null>
-      - run dpets_do_ability def:<def[ability]>
+      - run dpets_do_ability def:<def[ability]> id:<proc[dpets_queue_id_maker].context[dpets_<player>_do_ability]>
       }
     on player clicks in dpets_command_gui:
     - playsound <player> sound:ITEM_ARMOR_EQUIP_LEATHER pitch:1
@@ -447,6 +483,15 @@ dpets_getpet:
   debug: false
   script:
   - determine <player.flag[dpets.current_pet_UUID]||null>
+dpets_queue_id_maker:
+  type: procedure
+  debug: false
+  script:
+  - define prefix <def[1]||>
+  - define id <def[prefix]>_<util.random.duuid>
+  - while <queue.list.parse[id].contains[<def[id]>]>:
+    - define id <def[prefix]>_<util.random.duuid>
+  - determine <def[id]>
 #
 # format scripts
 # human to pet, and pet to human
