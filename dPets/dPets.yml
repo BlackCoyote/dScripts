@@ -74,6 +74,10 @@ dpets_command_handler:
     - case list:
       - inventory open d:in@dpets_main_gui
     - case call:
+      - if <player.has_flag[dpets.cooldowns.call]> {
+        - queue clear
+        }
+      - flag <player> "dpets.cooldowns.call:true" duration:2s
       - run dpets_call_pet
     - case abilities:
       - if <player.flag[dpets.current_pet]||null> == null {
@@ -309,6 +313,10 @@ dpets_pet_events:
     - if <context.entity.flag[dpets.pet_owner]||null> != <player> queue clear
     - define script <yaml[dpets_database].read[dpets.<player.flag[dpets.current_pet]||null>.script]||null>
     - define pet <player.flag[dpets.current_pet_uuid]||null>
+    - if <player.has_flag[dpets.cooldowns.left_click]> {
+      - queue clear
+      }
+    - flag <player> "dpets.cooldowns.left_click:true" duration:2s
     - if "<def[script].list_keys[actions].contains[on left click]||false>" {
       - inject <def[script]> "path:actions.on left click"
       }
@@ -316,6 +324,10 @@ dpets_pet_events:
     - if <context.entity.flag[dpets.pet_owner]||null> != <player> queue clear
     - define script <yaml[dpets_database].read[dpets.<player.flag[dpets.current_pet]||null>.script]||null>
     - define pet <player.flag[dpets.current_pet_uuid]||null>
+    - if <player.has_flag[dpets.cooldowns.right_click]> {
+      - queue clear
+      }
+    - flag <player> "dpets.cooldowns.right_click:true" duration:2s
     - if "<def[script].list_keys[actions].contains[on right click]||false>" {
       - inject <def[script]> "path:actions.on right click"
       }
