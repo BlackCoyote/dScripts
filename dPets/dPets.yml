@@ -1101,7 +1101,7 @@ dpets_polar_bear:
       - define cloudblob <def[pet].location.add[0,5,0].find.blocks.within[3].filter[y.is[==].to[<def[pet].location.add[0,5,0].y>]].parse[center]>
       - define snowcenter <def[pet].location.add[0,3,0]>
       - define snowcenter2 <def[pet].location.add[0,6,0]>
-      - showfake m@snow <def[snowcenter].find.surface_blocks.within[5].parse[above].random[10]> duration:10s targets:<def[pet].location.find.players.within[50]>
+      - showfake m@snow <def[snowcenter].find.surface_blocks.within[5].parse[above].random[10]> duration:10s players:<def[pet].location.find.players.within[50]>
       - repeat 40:
         - playeffect effect:cloud <def[cloudblob]> qty:5 offset:0.4 visibility:100
         - playeffect effect:SNOW_SHOVEL <def[snowcenter]> qty:25 offset:1 visibility:100
@@ -1192,7 +1192,7 @@ dpets_blaze:
       script:
       - repeat 4:
         - define cuboid cu@<def[pet].location.add[<def[value]>,0,<def[value]>]>|<def[pet].location.add[-<def[value]>,0,-<def[value]>]>
-        - showfake m@fire <def[cuboid].blocks> duration:5s targets:<def[pet].location.find.players.within[50]>
+        - showfake m@fire <def[cuboid].blocks> duration:5s players:<def[pet].location.find.players.within[50]>
         - playsound sound:ENTITY_BLAZE_SHOOT <def[pet].location>
         - wait 10t
       
