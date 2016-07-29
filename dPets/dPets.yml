@@ -3,7 +3,7 @@ dpets:
   name: dPets
   id: 104
   description: providing highly unique cosmetic-only pets for your server.
-  version: 6
+  version: 7
 #
 #
 # constructor + script tracker
@@ -949,7 +949,7 @@ dpets_bat:
         - playsound sound:ENTITY_BAT_AMBIENT <def[pet].location>
         - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
       - case 3:
-        - playsound sound:ENTITY_BAT_hurt <def[pet].location>
+        - playsound sound:ENTITY_BAT_takeoff <def[pet].location>
         - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
   abilities:
     flutter:
@@ -1022,26 +1022,86 @@ dpets_bat:
 #####################
 # default polar bear
 #####################
-# dpets_polar_bear:
-  # type: yaml data
-  # is_dpet: true
-  # pet_id: polar_bear
-  # name: polar bear
-  # entity: e@polar_bear
-  # item_icon: i@ice
-  # actions:
-    # on spawn:
-    # - narrate "spawn" format:dpets_format2
-    # on left click:
-    # - narrate "left click" format:dpets_format2
-    # on right click:
-    # - narrate "right click" format:dpets_format2
-  # abilities:
-    # placeholder:
-      # item_icon: i@diamond
-      # name: placeholder
-      # script:
-      # - narrate "placeholder ability" format:dpets_format2
+dpets_polar_bear:
+  type: yaml data
+  is_dpet: true
+  pet_id: polar_bear
+  name: Polar Bear
+  entity: e@polar_bear[age=baby]
+  item_icon: i@ice
+  actions:
+    on spawn:
+    - narrate "Rawrr!" format:dpets_format2
+    - playsound sound:ENTITY_POLAR_BEAR_WARNING <def[pet].location>
+    - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+    on left click:
+    - playsound sound:ENTITY_POLAR_BEAR_AMBIENT <def[pet].location>
+    - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+    on right click:
+    - playsound sound:ENTITY_POLAR_BEAR_BABY_AMBIENT <def[pet].location>
+    - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+    on call:
+    - playsound sound:ENTITY_POLAR_BEAR_WARNING <def[pet].location>
+    - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+    on friend:
+    - choose <util.random.int[1].to[3]>:
+      - case 1:
+        - playsound sound:ENTITY_POLAR_BEAR_AMBIENT <def[pet].location>
+        - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+      - case 2:
+        - playsound sound:ENTITY_POLAR_BEAR_BABY_AMBIENT <def[pet].location>
+        - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+      - case 3:
+        - playsound sound:ENTITY_POLAR_BEAR_WARNING <def[pet].location>
+        - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
+  abilities:
+    roar:
+      item_icon: i@stone_sword
+      name: Roar
+      global_cooldown: 2s
+      script:
+      - narrate "Grrrrr!" format:dpets_format2
+      - playsound sound:ENTITY_POLAR_BEAR_WARNING <def[pet].location>
+      - playsound sound:ENTITY_POLAR_BEAR_HURT <def[pet].location>
+      - playsound sound:ENTITY_POLAR_BEAR_death <def[pet].location>
+      - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
+    grow:
+      item_icon: i@potion
+      name: Grow
+      global_cooldown: 3s
+      script:
+      - playsound sound:ENTITY_POLAR_BEAR_WARNING <def[pet].location>
+      - playsound sound:ENTITY_POLAR_BEAR_HURT <def[pet].location>
+      - playsound sound:ENTITY_POLAR_BEAR_death <def[pet].location>
+      - playeffect effect:CLOUD <def[pet].location> qty:100 offset:0.6 visibility:50
+      - wait 1t
+      - adjust <def[pet]> age:adult
+    shrink:
+      item_icon: i@potion
+      name: Shrink
+      global_cooldown: 3s
+      script:
+      - playsound sound:ENTITY_POLAR_BEAR_WARNING <def[pet].location>
+      - playsound sound:ENTITY_POLAR_BEAR_HURT <def[pet].location>
+      - playsound sound:ENTITY_POLAR_BEAR_death <def[pet].location>
+      - playeffect effect:CLOUD <def[pet].location> qty:100 offset:0.6 visibility:50
+      - wait 1t
+      - adjust <def[pet]> age:baby
+    snow:
+      item_icon: i@snow_ball
+      name: Snow
+      global_cooldown: 11s
+      script:
+      - playsound sound:ENTITY_MINECART_inside pitch:1.5 <def[pet].location> volume:0.2
+      - define cloudblob <def[pet].location.add[0,5,0].find.blocks.within[3].filter[y.is[==].to[<def[pet].location.add[0,5,0].y>]].parse[center]>
+      - define snowcenter <def[pet].location.add[0,3,0]>
+      - define snowcenter2 <def[pet].location.add[0,6,0]>
+      - repeat 40:
+        - playeffect effect:cloud <def[cloudblob]> qty:5 offset:0.4 visibility:100
+        - playeffect effect:SNOW_SHOVEL <def[snowcenter]> qty:25 offset:1 visibility:100
+        - playeffect effect:SNOW_SHOVEL <def[snowcenter2]> qty:25 offset:1 visibility:100
+        - if <def[value].mod[13]> == 0 playsound sound:ENTITY_MINECART_inside pitch:1.5 <def[pet].location> volume:0.2
+        - wait 5t
 #####################
 # default blaze
 #####################
