@@ -1101,7 +1101,7 @@ dpets_polar_bear:
       - define cloudblob <def[pet].location.add[0,5,0].find.blocks.within[3].filter[y.is[==].to[<def[pet].location.add[0,5,0].y>]].parse[center]>
       - define snowcenter <def[pet].location.add[0,3,0]>
       - define snowcenter2 <def[pet].location.add[0,6,0]>
-      - showfake m@snow <def[snowcenter].find.surface_blocks.within[5].parse[above].random[10]> duration:10s
+      - showfake m@snow <def[snowcenter].find.surface_blocks.within[5].parse[above].random[10]> duration:10s targets:<def[pet].location.find.players.within[50]>
       - repeat 40:
         - playeffect effect:cloud <def[cloudblob]> qty:5 offset:0.4 visibility:100
         - playeffect effect:SNOW_SHOVEL <def[snowcenter]> qty:25 offset:1 visibility:100
@@ -1111,26 +1111,91 @@ dpets_polar_bear:
 #####################
 # default blaze
 #####################
-# dpets_blaze:
-  # type: yaml data
-  # is_dpet: true
-  # pet_id: blaze
-  # name: blaze
-  # entity: e@blaze
-  # item_icon: i@human_skull[skull_skin=4c38ed11-596a-4fd4-ab1d-26f386c1cbac|eyJ0aW1lc3RhbXAiOjE0MzA0NTE4MzM3MDcsInByb2ZpbGVJZCI6IjRjMzhlZDExNTk2YTRmZDRhYjFkMjZmMzg2YzFjYmFjIiwicHJvZmlsZU5hbWUiOiJNSEZfQmxhemUiLCJpc1B1YmxpYyI6dHJ1ZSwidGV4dHVyZXMiOnsiU0tJTiI6eyJ1cmwiOiJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlL2I3OGVmMmU0Y2YyYzQxYTJkMTRiZmRlOWNhZmYxMDIxOWY1YjFiZjViMzVhNDllYjUxYzY0Njc4ODJjYjVmMCJ9fX0=]
-  # actions:
-    # on spawn:
-    # - narrate "spawn" format:dpets_format2
-    # on left click:
-    # - narrate "left click" format:dpets_format2
-    # on right click:
-    # - narrate "right click" format:dpets_format2
-  # abilities:
-    # placeholder:
-      # item_icon: i@diamond
-      # name: placeholder
-      # script:
-      # - narrate "placeholder ability" format:dpets_format2
+dpets_blaze:
+  type: yaml data
+  is_dpet: true
+  pet_id: blaze
+  name: blaze
+  entity: e@blaze
+  description: A firy blaze!
+  item_icon: i@human_skull[skull_skin=4c38ed11-596a-4fd4-ab1d-26f386c1cbac|eyJ0aW1lc3RhbXAiOjE0MzA0NTE4MzM3MDcsInByb2ZpbGVJZCI6IjRjMzhlZDExNTk2YTRmZDRhYjFkMjZmMzg2YzFjYmFjIiwicHJvZmlsZU5hbWUiOiJNSEZfQmxhemUiLCJpc1B1YmxpYyI6dHJ1ZSwidGV4dHVyZXMiOnsiU0tJTiI6eyJ1cmwiOiJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlL2I3OGVmMmU0Y2YyYzQxYTJkMTRiZmRlOWNhZmYxMDIxOWY1YjFiZjViMzVhNDllYjUxYzY0Njc4ODJjYjVmMCJ9fX0=]
+  actions:
+    on spawn:
+    - playsound sound:ENTITY_BLAZE_SHOOT <def[pet].location>
+    - playeffect effect:smoke <def[pet].location> qty:5 offset:0.5 visibility:50
+    - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
+    on left click:
+    - playsound sound:ENTITY_BLAZE_BURN <def[pet].location>
+    - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+    on right click:
+    - playsound sound:ENTITY_BLAZE_AMBIENT <def[pet].location>
+    - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+    on call:
+    - playsound sound:ENTITY_BLAZE_HURT <def[pet].location>
+    - playeffect effect:smoke <def[pet].location> qty:5 offset:0.5 visibility:50
+    - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
+    on friend:
+    - choose <util.random.int[1].to[3]>:
+      - case 1:
+        - playsound sound:ENTITY_BLAZE_SHOOT <def[pet].location>
+        - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+      - case 2:
+        - playsound sound:ENTITY_BLAZE_AMBIENT <def[pet].location>
+        - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+      - case 3:
+        - playsound sound:ENTITY_BLAZE_HURT <def[pet].location>
+        - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
+  abilities:
+    Shoot:
+      item_icon: i@fireball
+      name: Shoot
+      description: Make your blaze shoot!
+      global_cooldown: 5s
+      script:
+        - async:
+          - define target <pl.target||null>
+          - if <def[target]> == <def[pet]> {
+            - define target <player.location.cursor_on[30]>
+            } else {
+            - define target <def[target].location||<player.location.cursor_on[30]>>
+            }
+          - repeat 3:
+            - define start <def[pet].location>
+            - define target <def[target].add[<util.random.int[-1].to[1]>,<util.random.int[-1].to[1]>,<util.random.int[-1].to[1]>]>
+            - look <def[pet]> <def[target]>
+            - define list <def[start].points_between[<def[target]>].distance[0.5]>
+            - foreach <def[list]>:
+              - playeffect <def[value]> effect:flame qty:5 offset:0.05 visibility:50
+              - if <def[loop_index].mod[5]> == 0 {
+                - wait 1t
+                - playsound sound:ENTITY_BLAZE_SHOOT <def[value]>
+                }
+            - wait 5t
+    buzz:
+      item_icon: i@blaze_rod
+      name: Buzz
+      description: Make your blaze buzz around!
+      global_cooldown: 5s
+      script:
+      - repeat 10:
+        - define target <def[pet].location.add[<util.random.int[-4].to[4]>,<util.random.int[0].to[4]>,<util.random.int[-4].to[4]>]>
+        - define trail <def[pet].location.points_between[<def[target]>]>
+        - playeffect effect:flame qty:2 offset:0.05 <def[trail]> visibility:100
+        - teleport <def[pet]> <def[target]>
+        - playsound sound:ENTITY_BLAZE_SHOOT <def[target]>
+        - wait 10t
+    ignite:
+      item_icon: i@flint_and_steel
+      name: Ignite
+      description: Set the world on fire!
+      global_cooldown: 5s
+      script:
+      - repeat 4:
+        - define cuboid cu@<def[pet].location.add[<def[value]>,0,<def[value]>]>|<def[pet].location.add[-<def[value]>,0,-<def[value]>]>
+        - showfake m@fire <def[cuboid].blocks> duration:5s targets:<def[pet].location.find.players.within[50]>
+        - playsound sound:ENTITY_BLAZE_SHOOT <def[pet].location>
+        - wait 10t
+      
 #####################
 # default cave_spider
 #####################
