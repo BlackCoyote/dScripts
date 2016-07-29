@@ -119,12 +119,12 @@ dpets_command_handler:
         }
       - if <player.has_flag[dpets.play_enabled].not> {
         - flag <player> "dpets.play_enabled"
-        - narrate format:dpets_format3 "Your pets will look for potential friends and play with them!"
+        - narrate format:dpets_format3 "Your pet will look for potential friends and play with them!"
         - run dpet_doplay id:<proc[dpets_queue_id_maker].context[dpets_<player>_do_play]>
         } else {
         - flag <player> "dpets.play_enabled:!"
         - flag <def[pet]> "dpets.play_enabled:!"
-        - narrate format:dpets_format3 "Your pets will no longer pay attention to potential friends."
+        - narrate format:dpets_format3 "Your pet will no longer pay attention to potential friends."
         - follow followers:<def[pet]> target:<player> speed:1 allow_wander
         }
     - case loaded:
@@ -197,6 +197,7 @@ dpets_remove_pet:
   - flag server "dpets.active_pets:<-:<def[pet]>"
   - flag <player> dpets.current_pet_UUID:!
   - flag <player> dpets.current_pet:!
+  - flag <player> "dpets.play_enabled:!"
 dpets_update_hide_pets:
   type: task
   debug: false
@@ -265,6 +266,7 @@ dpet_doplay:
   script:
   - define pet_id <player.flag[dpets.current_pet]||null>
   - define pet <player.flag[dpets.current_pet_uuid]||null>
+  - define script <yaml[dpets_database].read[dpets.<def[pet_id]>.script]||null>
   - if <def[pet_id]> == null queue clear
   - if <def[pet].is_spawned.not||true> queue clear
   - flag <def[pet]> "dpets.play_enabled"
@@ -273,20 +275,27 @@ dpet_doplay:
   - while <player.has_flag[dpets.play_enabled].and[<server.entity_is_spawned[<def[pet]>]>].and[<player.is_online>]||false>:
     - define nearby <server.flag[dpets.active_pets].as_list.exclude[<def[pet]>].filter[has_flag[dpets.play_enabled]].filter[location.distance_squared[<player.location>].is[less].than[100]]||li@>
     - if <def[nearby].size> < 1 {
-      - if <def[last_follow_action]> != follow {
+      - if <def[last_follow_action]||follow> != follow {
         - follow followers:<def[pet]> target:<player> speed:1 allow_wander
         - define last_follow_action follow
         }
       - wait 5s
       - while next
       }
-    - if <def[last_follow_action]> == follow {
+    - if <def[last_follow_action]||follow> == follow {
       - follow followers:<def[pet]> stop
       - define last_follow_action no_follow
       }
-    - walk <def[pet]> <def[nearby].random.location.add[<util.random.int[-1].to[1]>,0,<util.random.int[-1].to[1]>]||<player.location>>
-    - wait 5s
-    
+    - define friend <def[nearby].random>
+    - ~walk <def[pet]> <def[friend].location.add[<util.random.int[-2].to[2]>,0,<util.random.int[-2].to[2]>].find.surface_blocks.within[3].get[1]||<player.location>>
+    - wait 2t
+    - look <def[pet]> <def[friend].location>
+    - if <util.random.int[1].to[5]> == 1 {
+      - if "<def[script].list_keys[actions].contains[on friend]>" {
+        - inject <def[script]> "path:actions.on friend"
+        }
+      }
+    - wait <util.random.int[3].to[7]>s
 dpets_pet_events:
   type: world
   debug: false
@@ -533,6 +542,8 @@ dpets_format3:
     # - narrate "pat pat pat" format:dpets_format2
     # on call:
     # - narrate "cmere boy" format:dpets_format2
+    # on friend:
+    # - narrate "EY DAR BUDDY I AM DOG NIC TO MEET U" format:dpets_format1
   # abilities:
     # ability1:
       # item_icon: i@bone
@@ -609,6 +620,18 @@ dpets_wolf:
     - adjust <def[pet]> sitting:false
     - narrate "Woof!" format:dpets_format2
     - playsound sound:ENTITY_WOLF_AMBIENT <def[pet].location>
+    on friend:
+    - choose <util.random.int[1].to[3]>:
+      - case 1:
+        - narrate "Woof woof!" format:dpets_format1
+        - playsound sound:ENTITY_WOLF_AMBIENT <def[pet].location>
+        - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+      - case 2:
+        - playsound sound:ENTITY_WOLF_pant <def[pet].location>
+        - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+      - case 3:
+        - playsound sound:ENTITY_WOLF_growl <def[pet].location>
+        - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
   abilities:
     growl:
       item_icon: i@bone
