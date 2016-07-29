@@ -67,7 +67,7 @@ dpets_command_handler:
   - pet
   - p
   tab complete: 
-  - determine li@abilities|list|call||hide|help
+  - determine li@abilities|list|call||hide|help|play
   # todo ^ make this filtered based on argument
   script: 
   - choose <context.args.get[1]||null>:
@@ -97,10 +97,10 @@ dpets_command_handler:
     - case hide:
       - if <player.has_flag[dpets.hide_pets]> {
         - flag <player> dpets.hide_pets:!
-        - narrate format:dpets_format3 "All dPets will now be visible to you."
+        - narrate format:dpets_format3 "All pets will now be visible to you."
         } else {
         - flag <player> dpets.hide_pets
-        - narrate format:dpets_format3 "All dPets besides your own will now be hidden from you."
+        - narrate format:dpets_format3 "All pets besides your own will now be hidden from you."
         }
       - run dpets_update_hide_pets
     - case play:
@@ -282,10 +282,8 @@ dpet_doplay:
       - wait 5s
       - while next
       }
-    - if <def[last_follow_action]||follow> == follow {
-      - follow followers:<def[pet]> stop
-      - define last_follow_action no_follow
-      }
+    - follow followers:<def[pet]> stop
+    - define last_follow_action no_follow
     - define friend <def[nearby].random>
     - ~walk <def[pet]> <def[friend].location.add[<util.random.int[-2].to[2]>,0,<util.random.int[-2].to[2]>].find.surface_blocks.within[3].get[1]||<player.location>>
     - wait 2t
@@ -424,8 +422,9 @@ dpets_command_gui:
     1: i@storage_minecart[enchantments=li@durability,1;flags=li@hide_enchants;display_name=<&b>Pets!;lore=<&e>Click here to view all your pats!]
     2: i@book[enchantments=li@durability,1;flags=li@hide_enchants;display_name=<&b>Abilities!;lore=<&e>Click here to view the unlocked|<&e>abilities for your current pet!]
     3: i@ender_pearl[enchantments=li@durability,1;flags=li@hide_enchants;display_name=<&b>Call pet!;lore=<&e>Click here to call|<&e>your current pet to your side!]
+    4: i@feather[enchantments=li@durability,1;flags=li@hide_enchants;display_name=<&b>Play with friends!;lore=<&e>Click here to let your|<&e>pet search for friends to play with!]
   slots:
-    - "[1] [2] [3] [] [] [] [] [] []"
+    - "[1] [2] [3] [4] [] [] [] [] []"
 dpets_gui_events:
   type: world
   debug: false
@@ -463,6 +462,8 @@ dpets_gui_events:
         - execute as_player "pet abilities"
       - case 3:
         - execute as_player "pet call"
+      - case 4:
+        - execute as_player "pet play"
 #
 #
 # tags
@@ -508,13 +509,13 @@ dpets_queue_id_maker:
 #
 dpets_format1:
   type: format
-  format: <&6>[dPets]<&e> You<&co><&7> <text>
+  format: <&8>[<&6>Pets<&8>]<&e> You<&co><&7> <text>
 dpets_format2:
   type: format
-  format: <&6>[dPets]<&e> Pet<&co><&7> <text>
+  format: <&8>[<&6>Pets<&8>]<&e> Pet<&co><&7> <text>
 dpets_format3:
   type: format
-  format: <&6>[dPets] <&7><text>
+  format: <&8>[<&6>Pets<&8>] <&7><text>
 #
 #
 # templates
@@ -623,8 +624,7 @@ dpets_wolf:
     on friend:
     - choose <util.random.int[1].to[3]>:
       - case 1:
-        - narrate "Woof woof!" format:dpets_format1
-        - playsound sound:ENTITY_WOLF_AMBIENT <def[pet].location>
+        - playsound sound:ENTITY_WOLF_whine <def[pet].location>
         - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
       - case 2:
         - playsound sound:ENTITY_WOLF_pant <def[pet].location>
@@ -770,6 +770,17 @@ dpets_ocelot:
     - adjust <def[pet]> sitting:false
     - narrate "Meow!" format:dpets_format2
     - playsound sound:ENTITY_CAT_AMBIENT <def[pet].location>
+    on friend:
+    - choose <util.random.int[1].to[3]>:
+      - case 1:
+        - playsound sound:ENTITY_CAT_AMBIENT <def[pet].location>
+        - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+      - case 2:
+        - playsound sound:ENTITY_CAT_PURREOW <def[pet].location>
+        - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+      - case 3:
+        - playsound sound:ENTITY_CAT_HISS <def[pet].location>
+        - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
   abilities:
     sit:
       item_icon: i@bed
@@ -856,6 +867,17 @@ dpets_bunny:
     - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
     on call:
     - narrate "Squeak!" format:dpets_format2
+    on friend:
+    - choose <util.random.int[1].to[3]>:
+      - case 1:
+        - playsound sound:ENTITY_rabbit_ambient <def[pet].location>
+        - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+      - case 2:
+        - playsound sound:ENTITY_WOLF_hurt <def[pet].location>
+        - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+      - case 3:
+        - playsound sound:ENTITY_WOLF_ATTACK <def[pet].location>
+        - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
   abilities:
     hop:
       item_icon: i@slime_block
@@ -918,6 +940,17 @@ dpets_bat:
     - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
     on call:
     - narrate "Eep!" format:dpets_format2
+    on friend:
+    - choose <util.random.int[1].to[3]>:
+      - case 1:
+        - playsound sound:ENTITY_BAT_AMBIENT <def[pet].location>
+        - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+      - case 2:
+        - playsound sound:ENTITY_BAT_AMBIENT <def[pet].location>
+        - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+      - case 3:
+        - playsound sound:ENTITY_BAT_hurt <def[pet].location>
+        - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
   abilities:
     flutter:
       item_icon: i@elytra
