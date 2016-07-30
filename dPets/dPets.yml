@@ -24,6 +24,7 @@ dpets_constructor:
     on system time hourly:
     - webget "http://morphanone.space/webizen.aspx/tracker?script=104&version=<s@dpets.yaml_key[version]>"
   construct_database:
+  - inject locally path:check_config
   - if <yaml.list.contains[dpets_database]> {
     - yaml id:dpets_database set dpets:!
     } else {
@@ -51,6 +52,16 @@ dpets_constructor:
       - define script <def[value]>
       - foreach <def[script].list_keys[abilities]||li@>:
         - yaml id:dpets_database set dpets.<def[pet_id]>.abilities.<def[value]>.script:<def[script]>
+  check_config:
+  - if <server.has_file[/dpets/config.yml]> {
+    - yaml load:/dpets/config.yml id:dpets_config
+    } else {
+    - yaml create id:dpets_config
+    - yaml id:dpets_config set pets.stats.attention.color:4
+    - yaml id:dpets_config set pets.stats.friends.color:a
+    - yaml id:dpets_config set pets.stats.energy.color:e
+    - yaml savefile:/dpets/config.yml id:dpets_config
+    }
 #
 #
 # command handler
@@ -99,6 +110,10 @@ dpets_command_handler:
         - inventory open d:in@dpets_abilities_gui
         }
     - case hide:
+      - if <player.has_flag[dpets.play_enabled]> {
+        - narrate "<&c>You can't use this when pet play is enabled." format:dpets_format3
+        - queue clear
+        }
       - if <player.has_flag[dpets.hide_pets]> {
         - flag <player> dpets.hide_pets:!
         - narrate format:dpets_format3 "All pets will now be visible to you."
@@ -108,6 +123,10 @@ dpets_command_handler:
         }
       - run dpets_update_hide_pets
     - case play:
+      - if <player.has_flag[dpets.hide_pets]> {
+        - narrate "<&c>You can't use this when other pets are set to hidden." format:dpets_format3
+        - queue clear
+        }
       - define pet <player.flag[dpets.current_pet_UUID].as_entity||null>
       - if <player.flag[dpets.current_pet]||null> == null {
         - narrate "<&c>You need to have a pet spawned for this." format:dpets_format3
@@ -131,6 +150,18 @@ dpets_command_handler:
         - narrate format:dpets_format3 "Your pet will no longer pay attention to potential friends."
         - follow followers:<def[pet]> target:<player> speed:1 allow_wander
         }
+    - case stats:
+      - define pet <player.flag[dpets.current_pet]||null>
+      - if <def[pet]> == null {
+        - narrate "<&c>You need to have a pet spawned for this." format:dpets_format3
+        - queue clear
+        }
+      - define colA &<yaml[dpets_config].read[pets.stats.attention.color]||4>
+      - define colB &<yaml[dpets_config].read[pets.stats.friends.color]||a>
+      - define colC &<yaml[dpets_config].read[pets.stats.energy.color]||e>
+      - narrate format:dpets_format3 "<def[colA].parse_color>Attention<&co> <proc[dpets_util_progress_bar].context[<player.flag[dpets.<def[pet]>.stats.attention]||0>|20|<&hrt>|<def[colA]>|&0]>"
+      - narrate format:dpets_format3 "<def[colB].parse_color>Friends<&co>  <proc[dpets_util_progress_bar].context[<player.flag[dpets.<def[pet]>.stats.friends]||0>|20|<&hrt>|<def[colB]>|&0]>"
+      - narrate format:dpets_format3 "<def[colC].parse_color>Energy<&co>  <proc[dpets_util_progress_bar].context[<player.flag[dpets.<def[pet]>.stats.energy]||0>|20|<&hrt>|<def[colC]>|&0]>"
     - case loaded:
       - if <player.is_op.not> queue clear
       - narrate format:dpets_format3 "<&c>Loaded pets<&co>"
@@ -180,6 +211,9 @@ dpets_initiate_pet:
     - inject <def[script]> "path:actions.on spawn"
     }
   - follow followers:<def[pet]> target:<player> speed:1 allow_wander
+  - flag <player> dpets.<def[pet_id]>.stats.attention:100
+  - flag <player> dpets.<def[pet_id]>.stats.friends:100
+  - flag <player> dpets.<def[pet_id]>.stats.energy:100
   - foreach <server.list_online_players>:
     - if <def[value].has_flag[dpets.hide_pets]> {
       - run dpets_update_hide_pets player:<def[value]>
@@ -259,8 +293,15 @@ dpets_do_ability:
   - define script <yaml[dpets_database].read[dpets.<def[pet]>.abilities.<def[ability]>.script]>
   - define duration <def[script].yaml_key[abilities.<def[ability]>.global_cooldown].as_duration||5s>
   - define pet <player.flag[dpets.current_pet_uuid]||null>
+  - define energy <def[script].yaml_key[abilities.<def[ability]>.energy].mul[-1]||-5>
+  - if <proc[dpets_stat].context[energy].add[<def[energy]>]> < 0 {
+    - narrate "Your pet does not have the energy to do this." format:dpets_format3
+    - queue clear
+    }
   - follow followers:<def[pet]> stop
   - flag <player> "dpets.generic_ability_cooldown:true" duration:<def[duration]>
+  - run dpets_improveStat def:attention|5
+  - run dpets_improveStat "def:energy|<def[energy]>"
   - inject <def[script]> "path:abilities.<def[ability]>.script"
   - follow followers:<def[pet]> target:<player> speed:1 allow_wander
 dpets_doplay:
@@ -293,11 +334,36 @@ dpets_doplay:
     - wait 2t
     - look <def[pet]> <def[friend].location>
     - if <util.random.int[1].to[5]> == 1 {
+      - run dpets_improveStat def:friends|<util.random.int[3].to[7]>
       - if "<def[script].list_keys[actions].contains[on friend]>" {
         - inject <def[script]> "path:actions.on friend"
         }
       }
     - wait <util.random.int[3].to[7]>s
+dpets_doStatDrain:
+  type: task
+  debug: false
+  speed: 2t
+  script:
+  - if <def[1].exists.not> define 1 <player||null>
+  - if <def[1].is_online.not||true> queue clear
+  - define pet <player.flag[dpets.current_pet]||null>
+  - if <def[pet]> == null queue clear
+  - flag <player> dpets.<def[pet]>.stats.attention:<player.flag[dpets.<def[pet]>.stats.attention].sub[1].max[0]||0>
+  - flag <player> dpets.<def[pet]>.stats.friends:<player.flag[dpets.<def[pet]>.stats.friends].sub[1].max[0]||0>
+  - flag <player> dpets.<def[pet]>.stats.energy:<player.flag[dpets.<def[pet]>.stats.energy].add[1].min[100]||0>
+dpets_improveStat:
+  type: task
+  debug: true
+  speed: 0
+  script:
+  - define pet <player.flag[dpets.current_pet]||null>
+  - if <def[pet]> == null queue clear
+  - if li@attention|friends|energy !contains <def[1]||null> queue clear
+  - if <def[2]||null> !matches number queue clear
+  - flag <player> dpets.<def[pet]>.stats.<def[1]>:<player.flag[dpets.<def[pet]>.stats.<def[1]>].add[<def[2]>].max[0].min[100]||0>
+  - define color &<yaml[dpets_config].read[pets.stats.<def[1]>.color]||4>
+  - actionbar "<def[color].parse_color><def[1].to_titlecase><&co>  <proc[dpets_util_progress_bar].context[<player.flag[dpets.<def[pet]>.stats.<def[1]>]||0>|20|<&hrt>|<def[color]>|&0]>" format:dpets_format3
 dpets_pet_events:
   type: world
   debug: false
@@ -314,10 +380,12 @@ dpets_pet_events:
     - if <context.entity.flag[dpets.pet_owner]||null> != <player> queue clear
     - define script <yaml[dpets_database].read[dpets.<player.flag[dpets.current_pet]||null>.script]||null>
     - define pet <player.flag[dpets.current_pet_uuid]||null>
+    - define pet_id <player.flag[dpets.current_pet]||null>
     - if <player.has_flag[dpets.cooldowns.left_click]> {
       - queue clear
       }
     - flag <player> "dpets.cooldowns.left_click:true" duration:2s
+    - run dpets_improveStat def:attention|1
     - if "<def[script].list_keys[actions].contains[on left click]||false>" {
       - inject <def[script]> "path:actions.on left click"
       }
@@ -329,6 +397,7 @@ dpets_pet_events:
       - queue clear
       }
     - flag <player> "dpets.cooldowns.right_click:true" duration:2s
+    - run dpets_improveStat def:attention|1
     - if "<def[script].list_keys[actions].contains[on right click]||false>" {
       - inject <def[script]> "path:actions.on right click"
       }
@@ -336,6 +405,11 @@ dpets_pet_events:
     - run dpets_remove_pet
     on player joins:
     - run dpets_remove_pet
+    on system time minutely:
+    - repeat 5:
+      - foreach <server.flag[dpets.active_pets].as_list.filter[is_spawned]>:
+        - run dpets_doStatDrain player:<def[value].flag[dpets.pet_owner]||null>
+      - wait 10s
 #
 #
 # dregions compatability
@@ -515,6 +589,45 @@ dpets_queue_id_maker:
   - while <queue.list.parse[id].contains[<def[id]>]>:
     - define id <def[prefix]>_<util.random.duuid>
   - determine <def[id]>
+dpets_stat:
+  type: procedure
+  debug: false
+  script:
+  - define stat <def[1]>
+  - define pet <player.flag[dpets.current_pet]||null>
+  - determine <player.flag[dpets.<def[pet]>.stats.<def[stat]>]||0>
+dpets_util_progress_bar:
+  type: procedure
+  debug: false
+  script:
+  - define percentage <def[1]||0>
+  - if <def[percentage].as_int||none> == none {
+    - define percentage 0
+    }
+  - if <def[2].exists> {
+    - define max <def[2]>
+    }
+  - if <def[max].as_int||none> == none {
+    - define max 10
+    }
+  - if <def[3].exists> {
+    - define char <def[3].substring[1,1]||=>
+    } else {
+    - define char =
+    }
+  - if <def[4].exists> {
+    - define col1 <def[4]>
+    } else {
+    - define col1 &a
+    }
+  - if <def[5].exists> {
+    - define col2 <def[5]>
+    } else {
+    - define col2 &7
+    }
+  - define string <el@.pad_right[<def[max]>].with[<def[char]>]>
+  - define split <def[max].div[100].mul[<def[percentage]>].as_int>
+  - determine "<def[col1].parse_colors><def[string].substring[1,<def[split]>]><def[col2].parse_colors><def[string].substring[<def[split].add[1].as_int>,<def[max]>]>"
 #
 # format scripts
 # human to pet, and pet to human
@@ -564,6 +677,7 @@ dpets_format3:
       # name: MY ability
       # description: Make your pet do a backflip!
       # global_cooldown: 5s
+      # energy: 10
       # script:
       # - narrate "do a backflip! use <def[pet]> for pet's entity ID!" format:dpets_format2
     # ability2:
@@ -571,6 +685,7 @@ dpets_format3:
       # name: MY other ability
       # description: Make your pet do a frontflip!
       # global_cooldown: 5s
+      # energy: 5
       # script:
       # - narrate "do a frontflip!" format:dpets_format2
 #####################
@@ -586,6 +701,7 @@ dpets_format3:
       # name: yet another ability
       # description: Make your pet do a cartwheel!
       # global_cooldown: 5s
+      # energy: 2
       # script:
       # - narrate "do acartwheel!" format:dpets_format2
     # ability4:
@@ -593,6 +709,7 @@ dpets_format3:
       # name: the last ability!
       # description: Make your pet depressed!
       # global_cooldown: 5s
+      # energy: 5
       # script:
       # - narrate "hey you suck" format:dpets_format2
 #
@@ -651,6 +768,7 @@ dpets_wolf:
       name: Growl
       description: Make your wolf growl!
       global_cooldown: 2s
+      energy: 2
       script:
       - narrate "Grrrrr!" format:dpets_format2
       - playsound sound:ENTITY_WOLF_growl <def[pet].location>
@@ -660,6 +778,7 @@ dpets_wolf:
       name: Fetch
       description: Throw a ball and see if your wolf can find it!
       global_cooldown: 15s
+      energy: 10
       script:
       - adjust <def[pet]> sitting:false
       - shoot e@snowball save:ball
@@ -696,6 +815,7 @@ dpets_wolf:
       name: Shake
       description: Do the harlem shake!
       global_cooldown: 2s
+      energy: 2
       script:
       - playsound sound:ENTITY_WOLF_SHAKE <def[pet].location>
       - animate <def[pet]> animation:wolf_shake
@@ -708,6 +828,7 @@ dpets_wolf:
       name: Sit
       description: Make your wolf sit!
       global_cooldown: 2s
+      energy: -1
       script:
       - adjust <def[pet]> sitting:true
       - repeat 2:
@@ -718,6 +839,7 @@ dpets_wolf:
       name: Stand
       description: Make your wolf stand!
       global_cooldown: 2s
+      energy: 1
       script:
       - adjust <def[pet]> sitting:false
       - repeat 2:
@@ -728,6 +850,7 @@ dpets_wolf:
       name: Dig
       description: Make your wolf dig for treasures!
       global_cooldown: 5s
+      energy: 5
       script:
       - repeat 2:
         - playsound sound:ENTITY_WOLF_ambient <def[pet].location>
@@ -748,6 +871,7 @@ dpets_wolf:
       name: Howl
       description: Howl to the moon with your wolf!
       global_cooldown: 5s
+      energy: 2
       script:
       - playsound sound:ENTITY_WOLF_howl <def[pet].location> pitch:0.8
       - repeat 5:
@@ -800,6 +924,7 @@ dpets_ocelot:
       name: Sit
       description: Make your ocelot sit!
       global_cooldown: 2s
+      energy: -1
       script:
       - adjust <def[pet]> sitting:true
       - playsound sound:ENTITY_CAT_AMBIENT <def[pet].location>
@@ -808,6 +933,7 @@ dpets_ocelot:
       name: Stand
       description: Make your ocelot stand!
       global_cooldown: 2s
+      energy: 1
       script:
       - adjust <def[pet]> sitting:false
       - playsound sound:ENTITY_CAT_AMBIENT <def[pet].location>
@@ -816,6 +942,7 @@ dpets_ocelot:
       name: Fetch
       description: Attempt to play fetch with your ocelot?
       global_cooldown: 3s
+      energy: -2
       script:
       - adjust <def[pet]> sitting:true
       - shoot e@snowball save:ball
@@ -832,6 +959,7 @@ dpets_ocelot:
       name: Chase
       description: Have your ocelot chase vermin!
       global_cooldown: 12s
+      energy: 10
       script:
       - adjust <def[pet]> sitting:false
       - spawn e@endermite[invulnerable=true] <def[pet].location.find.surface_blocks.within[3].random.above||<def[pet].location>> save:mouse
@@ -897,6 +1025,7 @@ dpets_bunny:
       name: hop
       description: Make your bunny jump!
       global_cooldown: 12s
+      energy: 5
       script:
       - repeat 10:
         - define velocity l@<util.random.decimal[-0.5].to[0.3]>,0.5,<util.random.decimal[-0.5].to[0.5]>
@@ -912,6 +1041,7 @@ dpets_bunny:
       name: Burrow
       description: Let your bunny dig a burrow!
       global_cooldown: 12s
+      energy: 5
       script:
       - define location <def[pet].location.below>
       - repeat 20:
@@ -970,6 +1100,7 @@ dpets_bat:
       name: Flutter
       description: Make your bat fly around!
       global_cooldown: 10s
+      energy: 5
       script:
       - repeat 10:
         - define velocity l@<util.random.decimal[-0.5].to[0.5]>,<util.random.decimal[0.2].to[2]>,<util.random.decimal[-0.5].to[0.5]>
@@ -984,6 +1115,7 @@ dpets_bat:
       name: Recon
       description: Have your bat look around!
       global_cooldown: 15s
+      energy: 5
       script:
       - define location <def[pet].location.add[0,10,0]>
       - adjust <def[pet]> velocity:l@0,3,0
@@ -1009,6 +1141,7 @@ dpets_bat:
       name: Point
       description: Point where your bat should fly to!
       global_cooldown: 15s
+      energy: 10
       script:
       - wait 10t
       - repeat 200:
@@ -1021,6 +1154,7 @@ dpets_bat:
       name: Orbit
       description: Your bat will orbit you!
       global_cooldown: 18s
+      energy: 10
       script:
       - define locations li@
       - define interval <util.tau.div[20]>
@@ -1074,6 +1208,7 @@ dpets_polar_bear:
       name: Roar
       global_cooldown: 2s
       description: Hear me roar!
+      energy: 3
       script:
       - narrate "Grrrrr!" format:dpets_format2
       - playsound sound:ENTITY_POLAR_BEAR_WARNING <def[pet].location>
@@ -1085,6 +1220,7 @@ dpets_polar_bear:
       name: Grow
       global_cooldown: 3s
       description: Make your polar bear bigger!
+      energy: 15
       script:
       - playsound sound:ENTITY_POLAR_BEAR_WARNING <def[pet].location>
       - playsound sound:ENTITY_POLAR_BEAR_HURT <def[pet].location>
@@ -1097,6 +1233,7 @@ dpets_polar_bear:
       name: Shrink
       global_cooldown: 3s
       description: Make your polar bear smaller!
+      energy: 15
       script:
       - playsound sound:ENTITY_POLAR_BEAR_WARNING <def[pet].location>
       - playsound sound:ENTITY_POLAR_BEAR_HURT <def[pet].location>
@@ -1109,6 +1246,7 @@ dpets_polar_bear:
       name: Snow
       global_cooldown: 11s
       description: Make your polar bear feel at home!
+      energy: -2
       script:
       - playsound sound:ENTITY_MINECART_inside pitch:1.5 <def[pet].location> volume:0.2
       - define cloudblob <def[pet].location.add[0,5,0].find.blocks.within[3].filter[y.is[==].to[<def[pet].location.add[0,5,0].y>]].parse[center]>
@@ -1164,6 +1302,7 @@ dpets_blaze:
       name: Shoot
       description: Make your blaze shoot!
       global_cooldown: 5s
+      energy: 10
       script:
         - async:
           - define target <pl.target||null>
@@ -1189,6 +1328,7 @@ dpets_blaze:
       name: Buzz
       description: Make your blaze buzz around!
       global_cooldown: 5s
+      energy: 10
       script:
       - repeat 10:
         - define target <def[pet].location.add[<util.random.int[-4].to[4]>,<util.random.int[0].to[4]>,<util.random.int[-4].to[4]>]>
@@ -1202,6 +1342,7 @@ dpets_blaze:
       name: Ignite
       description: Set the world on fire!
       global_cooldown: 5s
+      energy: 15
       script:
       - repeat 4:
         - define cuboid cu@<def[pet].location.add[<def[value]>,0,<def[value]>]>|<def[pet].location.add[-<def[value]>,0,-<def[value]>]>
