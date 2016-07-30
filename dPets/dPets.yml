@@ -6,7 +6,7 @@ dpets:
   version: 8
 #
 #
-# constructor + script tracker
+# constructor + script tracker + config
 # puts all pet script entries in a little database to avoid searching for them every time it needs to list them
 #
 #
@@ -58,8 +58,11 @@ dpets_constructor:
     } else {
     - yaml create id:dpets_config
     - yaml id:dpets_config set pets.stats.attention.color:4
+    - yaml id:dpets_config set pets.stats.attention.background_drain:-1
     - yaml id:dpets_config set pets.stats.friends.color:3
+    - yaml id:dpets_config set pets.stats.friends.background_drain:-1
     - yaml id:dpets_config set pets.stats.energy.color:a
+    - yaml id:dpets_config set pets.stats.energy.background_drain:5
     - yaml savefile:/dpets/config.yml id:dpets_config
     }
 #
@@ -206,9 +209,12 @@ dpets_initiate_pet:
     - inject <def[script]> "path:actions.on spawn"
     }
   - follow followers:<def[pet]> target:<player> speed:1 allow_wander
-  - flag <player> dpets.<def[pet_id]>.stats.attention:100
-  - flag <player> dpets.<def[pet_id]>.stats.friends:100
-  - flag <player> dpets.<def[pet_id]>.stats.energy:100
+  - if <player.has_flag[dpets.<def[pet_id]>.stat_reset_cooldown].not> {
+    - flag <player> dpets.<def[pet_id]>.stats.attention:100
+    - flag <player> dpets.<def[pet_id]>.stats.friends:100
+    - flag <player> dpets.<def[pet_id]>.stats.energy:100
+    - flag <player> "dpets.<def[pet_id]>.stat_reset_cooldown:true duration:30m"
+    }
   - foreach <server.list_online_players>:
     - if <def[value].has_flag[dpets.hide_pets]> {
       - run dpets_update_hide_pets player:<def[value]>
@@ -329,10 +335,12 @@ dpets_doplay:
     - wait 2t
     - look <def[pet]> <def[friend].location>
     - if <util.random.int[1].to[5]> == 1 {
-      - run dpets_improveStat def:friends|<util.random.int[3].to[7]>
+      - run dpets_improveStat def:friends|<util.random.int[10].to[25]>
       - if "<def[script].list_keys[actions].contains[on friend]>" {
         - inject <def[script]> "path:actions.on friend"
         }
+      - wait 1s
+      - run dpets_improveStat def:energy|-5
       }
     - wait <util.random.int[3].to[7]>s
 dpets_doStatDrain:
@@ -344,9 +352,12 @@ dpets_doStatDrain:
   - if <def[1].is_online.not||true> queue clear
   - define pet <player.flag[dpets.current_pet]||null>
   - if <def[pet]> == null queue clear
-  - flag <player> dpets.<def[pet]>.stats.attention:<player.flag[dpets.<def[pet]>.stats.attention].sub[1].max[0]||0>
-  - flag <player> dpets.<def[pet]>.stats.friends:<player.flag[dpets.<def[pet]>.stats.friends].sub[1].max[0]||0>
-  - flag <player> dpets.<def[pet]>.stats.energy:<player.flag[dpets.<def[pet]>.stats.energy].add[1].min[100]||0>
+  - define a_fx <yaml[dpets_config].read[pets.stats.attention.background_drain]||-1>
+  - define b_fx <yaml[dpets_config].read[pets.stats.friends.background_drain]||-1>
+  - define c_fx <yaml[dpets_config].read[pets.stats.energy.background_drain]||5>
+  - flag <player> dpets.<def[pet]>.stats.attention:<player.flag[dpets.<def[pet]>.stats.attention].add[<def[a_fx]>].max[0]||0>
+  - flag <player> dpets.<def[pet]>.stats.friends:<player.flag[dpets.<def[pet]>.stats.friends].add[<def[b_fx]>].max[0]||0>
+  - flag <player> dpets.<def[pet]>.stats.energy:<player.flag[dpets.<def[pet]>.stats.energy].add[<def[c_fx]>].min[100]||0>
 dpets_improveStat:
   type: task
   debug: true
@@ -359,6 +370,30 @@ dpets_improveStat:
   - flag <player> dpets.<def[pet]>.stats.<def[1]>:<player.flag[dpets.<def[pet]>.stats.<def[1]>].add[<def[2]>].max[0].min[100]||0>
   - define color &<yaml[dpets_config].read[pets.stats.<def[1]>.color]||4>
   - actionbar "<def[color].parse_color><def[1].to_titlecase><&co>  <proc[dpets_util_progress_bar].context[<player.flag[dpets.<def[pet]>.stats.<def[1]>]||0>|20|<&hrt>|<def[color]>|&0]> <def[color].parse_color><tern[<def[2].is[more].than[0]>]:+<def[2]>||<def[2]>>" format:dpets_format3
+dpets_doStatEffect:
+  type: task
+  debug: false
+  speed: 0
+  script:
+  - define pet <player.flag[dpets.current_pet]||null>
+  - if <def[pet]> == null queue clear
+  - if <player.flag[dpets.<def[pet]>.stats.attention]||0> < 1 {
+    - if <util.random.int[1].to[5]> {
+      - narrate format:dpets_format3 "Your pet was feeling neglected and has gone to sleep."
+      - run dpets_remove_pet
+      } else {
+      - narrate format:dpets_format3 "(!) Your pet is feeling neglected."
+      }
+    - queue clear
+    }
+  - if <player.flag[dpets.<def[pet]>.stats.friends]||0> < 1 {
+    - if <util.random.int[1].to[10]> {
+      - narrate format:dpets_format3 "Your pet was feeling lonely and has gone to sleep."
+      - run dpets_remove_pet
+      } else {
+      - narrate format:dpets_format3 "(!) Your pet is feeling lonely."
+      }
+    }
 dpets_showInfo:
   type: task
   debug: false
@@ -418,6 +453,9 @@ dpets_pet_events:
       - foreach <server.flag[dpets.active_pets].as_list.filter[is_spawned]>:
         - run dpets_doStatDrain player:<def[value].flag[dpets.pet_owner]||null>
       - wait 10s
+    - if <util.random.int[1].to[10]> != 1 queue clear
+    - foreach <server.flag[dpets.active_pets].as_list.filter[is_spawned]>:
+      - run dpets_doStatEffect player:<def[value].flag[dpets.pet_owner]||null>
 #
 #
 # dregions compatability
