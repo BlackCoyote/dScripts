@@ -450,11 +450,11 @@ dpets_pet_events:
     - run dpets_remove_pet
     on system time minutely:
     - repeat 5:
-      - foreach <server.flag[dpets.active_pets].as_list.filter[is_spawned]>:
+      - foreach <server.flag[dpets.active_pets].as_list.filter[is_spawned]||li@>:
         - run dpets_doStatDrain player:<def[value].flag[dpets.pet_owner]||null>
       - wait 10s
     - if <util.random.int[1].to[10]> != 1 queue clear
-    - foreach <server.flag[dpets.active_pets].as_list.filter[is_spawned]>:
+    - foreach <server.flag[dpets.active_pets].as_list.filter[is_spawned]||li@>:
       - run dpets_doStatEffect player:<def[value].flag[dpets.pet_owner]||null>
 #
 #
