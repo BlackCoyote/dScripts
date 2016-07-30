@@ -304,7 +304,7 @@ dpets_do_ability:
   - run dpets_improveStat "def:energy|<def[energy]>"
   - inject <def[script]> "path:abilities.<def[ability]>.script"
   - follow followers:<def[pet]> target:<player> speed:1 allow_wander
-  - run dpets_improveStat def:attention|5
+  - run dpets_improveStat def:attention|<util.random.int[5].to[15]>
 dpets_doplay:
   type: task
   debug: false
