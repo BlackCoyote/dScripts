@@ -58,8 +58,8 @@ dpets_constructor:
     } else {
     - yaml create id:dpets_config
     - yaml id:dpets_config set pets.stats.attention.color:4
-    - yaml id:dpets_config set pets.stats.friends.color:a
-    - yaml id:dpets_config set pets.stats.energy.color:e
+    - yaml id:dpets_config set pets.stats.friends.color:3
+    - yaml id:dpets_config set pets.stats.energy.color:a
     - yaml savefile:/dpets/config.yml id:dpets_config
     }
 #
@@ -78,7 +78,7 @@ dpets_command_handler:
   - pet
   - p
   tab complete: 
-  - determine li@abilities|list|call||hide|help|play
+  - determine li@abilities|list|call|info|hide|help|play
   # todo ^ make this filtered based on argument
   script: 
   - choose <context.args.get[1]||null>:
@@ -150,18 +150,13 @@ dpets_command_handler:
         - narrate format:dpets_format3 "Your pet will no longer pay attention to potential friends."
         - follow followers:<def[pet]> target:<player> speed:1 allow_wander
         }
-    - case stats:
+    - case info:
       - define pet <player.flag[dpets.current_pet]||null>
       - if <def[pet]> == null {
         - narrate "<&c>You need to have a pet spawned for this." format:dpets_format3
         - queue clear
         }
-      - define colA &<yaml[dpets_config].read[pets.stats.attention.color]||4>
-      - define colB &<yaml[dpets_config].read[pets.stats.friends.color]||a>
-      - define colC &<yaml[dpets_config].read[pets.stats.energy.color]||e>
-      - narrate format:dpets_format3 "<def[colA].parse_color>Attention<&co> <proc[dpets_util_progress_bar].context[<player.flag[dpets.<def[pet]>.stats.attention]||0>|20|<&hrt>|<def[colA]>|&0]>"
-      - narrate format:dpets_format3 "<def[colB].parse_color>Friends<&co>  <proc[dpets_util_progress_bar].context[<player.flag[dpets.<def[pet]>.stats.friends]||0>|20|<&hrt>|<def[colB]>|&0]>"
-      - narrate format:dpets_format3 "<def[colC].parse_color>Energy<&co>  <proc[dpets_util_progress_bar].context[<player.flag[dpets.<def[pet]>.stats.energy]||0>|20|<&hrt>|<def[colC]>|&0]>"
+      - run dpets_showInfo
     - case loaded:
       - if <player.is_op.not> queue clear
       - narrate format:dpets_format3 "<&c>Loaded pets<&co>"
@@ -300,10 +295,10 @@ dpets_do_ability:
     }
   - follow followers:<def[pet]> stop
   - flag <player> "dpets.generic_ability_cooldown:true" duration:<def[duration]>
-  - run dpets_improveStat def:attention|5
   - run dpets_improveStat "def:energy|<def[energy]>"
   - inject <def[script]> "path:abilities.<def[ability]>.script"
   - follow followers:<def[pet]> target:<player> speed:1 allow_wander
+  - run dpets_improveStat def:attention|5
 dpets_doplay:
   type: task
   debug: false
@@ -363,7 +358,20 @@ dpets_improveStat:
   - if <def[2]||null> !matches number queue clear
   - flag <player> dpets.<def[pet]>.stats.<def[1]>:<player.flag[dpets.<def[pet]>.stats.<def[1]>].add[<def[2]>].max[0].min[100]||0>
   - define color &<yaml[dpets_config].read[pets.stats.<def[1]>.color]||4>
-  - actionbar "<def[color].parse_color><def[1].to_titlecase><&co>  <proc[dpets_util_progress_bar].context[<player.flag[dpets.<def[pet]>.stats.<def[1]>]||0>|20|<&hrt>|<def[color]>|&0]>" format:dpets_format3
+  - actionbar "<def[color].parse_color><def[1].to_titlecase><&co>  <proc[dpets_util_progress_bar].context[<player.flag[dpets.<def[pet]>.stats.<def[1]>]||0>|20|<&hrt>|<def[color]>|&0]> <def[color].parse_color><tern[<def[2].is[more].than[0]>]:+<def[2]>||<def[2]>>" format:dpets_format3
+dpets_showInfo:
+  type: task
+  debug: false
+  speed: 0
+  script:
+  - define pet <player.flag[dpets.current_pet]||null>
+  - if <def[pet]> == null queue clear
+  - define colA &<yaml[dpets_config].read[pets.stats.attention.color]||4>
+  - define colB &<yaml[dpets_config].read[pets.stats.friends.color]||2>
+  - define colC &<yaml[dpets_config].read[pets.stats.energy.color]||6>
+  - define book "i@written_book[book=author|Pets|title|Pet info|pages|<def[colA].parse_color>Attention<&co> &nl<proc[dpets_util_progress_bar].context[<player.flag[dpets.<def[pet]>.stats.attention]||0>|20|<&hrt>|<def[colA]>|&0]>&nl<def[colB].parse_color>Friends<&co>&nl<proc[dpets_util_progress_bar].context[<player.flag[dpets.<def[pet]>.stats.friends]||0>|20|<&hrt>|<def[colB]>|&0]>&nl<def[colC].parse_color>Energy<&co>&nl<proc[dpets_util_progress_bar].context[<player.flag[dpets.<def[pet]>.stats.energy]||0>|20|<&hrt>|<def[colC]>|&0]>]"
+  - fakeitem <def[book]> slot:<player.item_in_hand.slot> duration:1t
+  - adjust <player> open_book
 dpets_pet_events:
   type: world
   debug: false
@@ -509,9 +517,10 @@ dpets_command_gui:
     1: i@storage_minecart[enchantments=li@durability,1;flags=li@hide_enchants;display_name=<&b>Pets!;lore=<&e>Click here to view all your pats!]
     2: i@book[enchantments=li@durability,1;flags=li@hide_enchants;display_name=<&b>Abilities!;lore=<&e>Click here to view the unlocked|<&e>abilities for your current pet!]
     3: i@ender_pearl[enchantments=li@durability,1;flags=li@hide_enchants;display_name=<&b>Call pet!;lore=<&e>Click here to call|<&e>your current pet to your side!]
-    4: i@feather[enchantments=li@durability,1;flags=li@hide_enchants;display_name=<&b>Play with friends!;lore=<&e>Click here to let your|<&e>pet search for friends to play with!]
+    4: i@book_and_quill[enchantments=li@durability,1;flags=li@hide_enchants;display_name=<&b>Pet info!;lore=<&e>Click here to check|<&e>how your pet is doing!]
+    5: i@feather[enchantments=li@durability,1;flags=li@hide_enchants;display_name=<&b>Play with friends!;lore=<&e>Click here to let your|<&e>pet search for friends to play with!]
   slots:
-    - "[1] [2] [3] [4] [] [] [] [] []"
+    - "[1] [2] [3] [4] [5] [] [] [] []"
 dpets_gui_events:
   type: world
   debug: false
@@ -550,6 +559,8 @@ dpets_gui_events:
       - case 3:
         - execute as_player "pet call"
       - case 4:
+        - execute as_player "pet info"
+      - case 5:
         - execute as_player "pet play"
 #
 #
