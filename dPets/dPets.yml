@@ -1190,10 +1190,22 @@ dpets_bat:
         - teleport <def[pet]> <def[location]>
         - playeffect effect:cloud <def[pet].location.sub[0,0.5,0]> qty:5 offset:0.5 visibility:50
         - wait 5t
-      - foreach <def[location].find.entities.within[25]||li@>:
-        - playeffect effect:enchantment_table <def[value].location.points_between[<def[location]>].distance[0.2]||<def[location]>> qty:1 offset:0 visibility:100
-        - teleport <def[pet]> <def[location]>
-        - playeffect effect:cloud <def[pet].location.sub[0,0.5,0]> qty:5 offset:0.5 visibility:50
+      - async:
+        - foreach <def[location].find.entities.within[25].exclude[<def[pet]>].random[5]||li@>:
+          - teleport <def[pet]> <def[location]>
+          - playeffect effect:cloud <def[pet].location.sub[0,0.5,0]> qty:5 offset:0.5 visibility:50
+          - define start <def[pet].location.face[<def[value].location>]>
+          - define dir <def[start].direction.vector>
+          - define width 0.5
+          - define count 5
+          - define ring 16
+          - repeat <def[count]>:
+            - define start <def[start].add[<def[dir].mul[2]>]>
+            - repeat <def[ring].mul[<def[value]>].as_int>:
+              - playeffect effect:red_dust <def[start].add[<location[<def[value].cos.mul[<def[width]>]>,0,<def[value].sin.mul[<def[width]>]>].rotate_around_x[<def[start].pitch.add[90].to_radians>].rotate_around_y[<def[start].yaw.mul[-1].to_radians>]>]> offset:<co@255,255,255.to_particle_offset> qty:0 data:1 visibility:100
+            - define width <def[width].mul[1.5]>
+            - teleport <def[pet]> <def[location]>
+            - wait 1t
         - wait 5t
       - repeat 10:
         - teleport <def[pet]> <def[location]>
@@ -1229,6 +1241,27 @@ dpets_bat:
           - playeffect effect:flame <def[location]> qty:1 offset:0.05 visibility:50
           - teleport <def[pet]> <def[location].above>
           - wait 1t
+coneblast_task:
+    type: task
+    speed: 1t
+    debug: false
+    script:
+    - define start <player.location>
+    - define dir <player.location.direction.vector>
+    # Starting width of circle. DO NOT SET TO 0!
+    - define width 0.5
+    # number of circles to appear
+    - define count 5
+    # number of effects in each ring
+    - define ring 16
+    - repeat <def[count]>:
+      # 2 = distance between rings
+      - define start <def[start].add[<def[dir].mul[2]>]>
+      - repeat <def[ring]>:
+        - playeffect effect:heart <def[start].add[<location[<def[value].cos.mul[<def[width]>]>,0,<def[value].sin.mul[<def[width]>]>].rotate_around_x[<player.location.pitch.add[-90].to_radians>].rotate_around_y[<player.location.yaw.to_radians>]>]> offset:0
+      # 2 = how rapidly the ring grows
+      - define width <def[width].mul[1.5]>
+      - wait 2t
 #####################
 # default polar bear
 #####################
