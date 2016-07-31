@@ -169,7 +169,7 @@ dpets_command_handler:
         - narrate "<&c>You need to have a pet spawned for this." format:dpets_format3
         - queue clear
         }
-      - run dpets_showInfo
+      - run dpets_showInfo instantly
     - case loaded:
       - if <player.is_op.not> queue clear
       - narrate format:dpets_format3 "<&c>Loaded pets<&co>"
@@ -1241,27 +1241,7 @@ dpets_bat:
           - playeffect effect:flame <def[location]> qty:1 offset:0.05 visibility:50
           - teleport <def[pet]> <def[location].above>
           - wait 1t
-coneblast_task:
-    type: task
-    speed: 1t
-    debug: false
-    script:
-    - define start <player.location>
-    - define dir <player.location.direction.vector>
-    # Starting width of circle. DO NOT SET TO 0!
-    - define width 0.5
-    # number of circles to appear
-    - define count 5
-    # number of effects in each ring
-    - define ring 16
-    - repeat <def[count]>:
-      # 2 = distance between rings
-      - define start <def[start].add[<def[dir].mul[2]>]>
-      - repeat <def[ring]>:
-        - playeffect effect:heart <def[start].add[<location[<def[value].cos.mul[<def[width]>]>,0,<def[value].sin.mul[<def[width]>]>].rotate_around_x[<player.location.pitch.add[-90].to_radians>].rotate_around_y[<player.location.yaw.to_radians>]>]> offset:0
-      # 2 = how rapidly the ring grows
-      - define width <def[width].mul[1.5]>
-      - wait 2t
+
 #####################
 # default polar bear
 #####################
