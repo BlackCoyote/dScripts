@@ -1463,7 +1463,7 @@ dpets_chicken:
       name: Eggs
       description: Make it rain eggs!
       global_cooldown: 10s
-      energy: 20
+      energy: 15
       script:
       - define locations <def[pet].location.add[0,10,0].find.blocks.within[3]>
       - repeat 50:
@@ -1477,7 +1477,7 @@ dpets_chicken:
       item_icon: i@egg
       name: Shoot
       description: Make your chicken shoot eggs!
-      global_cooldown: 5s
+      global_cooldown: 2s
       energy: 10
       script:
       - define target <pl.target||null>
