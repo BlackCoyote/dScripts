@@ -3,7 +3,7 @@ dpets:
   name: dPets
   id: 104
   description: providing highly unique cosmetic-only pets for your server.
-  version: 9
+  version: 10
 #
 #
 # constructor + script tracker + config
@@ -63,6 +63,7 @@ dpets_constructor:
     - yaml id:dpets_config set pets.stats.friends.background_drain:-1
     - yaml id:dpets_config set pets.stats.energy.color:a
     - yaml id:dpets_config set pets.stats.energy.background_drain:5
+    - yaml id:dpets_config set pets.use_stats:true
     - yaml savefile:/dpets/config.yml id:dpets_config
     }
 #
@@ -91,7 +92,16 @@ dpets_command_handler:
       - if <player.has_flag[dpets.cooldowns.call]> {
         - queue clear
         }
+      - if <player.has_flag[dpets.generic_ability_cooldown]> {
+        - narrate format:dpets_format3 "Your pet is still busy!"
+        - queue clear
+        }
+      - if <proc[dpets_stat].context[energy]> < 26 && <proc[dpets_usestats]> {
+        - narrate "Your pet does not have the energy to do this." format:dpets_format3
+        - queue clear
+        }
       - flag <player> "dpets.cooldowns.call:true" duration:2s
+      - run dpets_improveStat def:energy|-25
       - run dpets_call_pet
     - case abilities:
       - if <player.flag[dpets.current_pet]||null> == null {
@@ -260,10 +270,6 @@ dpets_call_pet:
   script:
   - define pet <player.flag[dpets.current_pet_UUID]||null>
   - if <def[pet]> == null queue clear
-  - if <player.has_flag[dpets.generic_ability_cooldown]> {
-    - narrate format:dpets_format3 "Your pet is still busy!"
-    - queue clear
-    }
   - if <def[pet].is_spawned||false> {
     - teleport <def[pet]> <player.location.find.surface_blocks.within[3].random.above||<player.location>>
     - playeffect effect:cloud <def[pet].location> qty:25 offset:0.5 visibility:50
@@ -295,7 +301,7 @@ dpets_do_ability:
   - define duration <def[script].yaml_key[abilities.<def[ability]>.global_cooldown].as_duration||5s>
   - define pet <player.flag[dpets.current_pet_uuid]||null>
   - define energy <def[script].yaml_key[abilities.<def[ability]>.energy].mul[-1]||-5>
-  - if <proc[dpets_stat].context[energy].add[<def[energy]>]> < 0 {
+  - if <proc[dpets_stat].context[energy].add[<def[energy]>]> < 0 && <proc[dpets_usestats]> {
     - narrate "Your pet does not have the energy to do this." format:dpets_format3
     - queue clear
     }
@@ -334,13 +340,12 @@ dpets_doplay:
     - ~walk <def[pet]> <def[friend].location.add[<util.random.int[-2].to[2]>,0,<util.random.int[-2].to[2]>].find.surface_blocks.within[3].get[1]||<player.location>>
     - wait 2t
     - look <def[pet]> <def[friend].location>
-    - if <util.random.int[1].to[5]> == 1 {
-      - run dpets_improveStat def:friends|<util.random.int[10].to[25]>
-      - if "<def[script].list_keys[actions].contains[on friend]>" {
-        - inject <def[script]> "path:actions.on friend"
-        }
-      - wait 1s
+    - if <util.random.int[1].to[5]> == 1 && <proc[dpets_stat].context[energy]> > 4 {
       - run dpets_improveStat def:energy|-5
+      - run dpets_improveStat def:friends|<util.random.int[10].to[25]>
+      - if "<def[script].list_keys[actions].contains[on happy]>" {
+        - inject <def[script]> "path:actions.on happy"
+        }
       }
     - wait <util.random.int[3].to[7]>s
 dpets_doStatDrain:
@@ -363,6 +368,7 @@ dpets_improveStat:
   debug: true
   speed: 0
   script:
+  - if <proc[dpets_usestats].not> queue clear
   - define pet <player.flag[dpets.current_pet]||null>
   - if <def[pet]> == null queue clear
   - if li@attention|friends|energy !contains <def[1]||null> queue clear
@@ -373,25 +379,34 @@ dpets_improveStat:
 dpets_doStatEffect:
   type: task
   debug: false
-  speed: 0
+  speed: 2t
   script:
-  - define pet <player.flag[dpets.current_pet]||null>
+  - if <proc[dpets_usestats].not> queue clear
+  - define pet_id <player.flag[dpets.current_pet]||null>
+  - define pet <player.flag[dpets.current_pet_uuid]||null>
   - if <def[pet]> == null queue clear
-  - if <player.flag[dpets.<def[pet]>.stats.attention]||0> < 1 {
+  - define script <yaml[dpets_database].read[dpets.<def[pet_id]>.script]>
+  - if <player.flag[dpets.<def[pet_id]>.stats.attention]||0> < 1 {
     - if <util.random.int[1].to[5]> {
       - narrate format:dpets_format3 "Your pet was feeling neglected and has gone to sleep."
       - run dpets_remove_pet
       } else {
       - narrate format:dpets_format3 "(!) Your pet is feeling neglected."
+      - if "<def[script].list_keys[actions].contains[on sad]>" {
+        - inject <def[script]> "path:actions.on sad"
+        }
       }
     - queue clear
     }
-  - if <player.flag[dpets.<def[pet]>.stats.friends]||0> < 1 {
+  - if <player.flag[dpets.<def[pet_id]>.stats.friends]||0> < 1 {
     - if <util.random.int[1].to[10]> {
       - narrate format:dpets_format3 "Your pet was feeling lonely and has gone to sleep."
       - run dpets_remove_pet
       } else {
       - narrate format:dpets_format3 "(!) Your pet is feeling lonely."
+      - if "<def[script].list_keys[actions].contains[on sad]>" {
+        - inject <def[script]> "path:actions.on sad"
+        }
       }
     }
 dpets_showInfo:
@@ -449,6 +464,7 @@ dpets_pet_events:
     on player joins:
     - run dpets_remove_pet
     on system time minutely:
+    - if <proc[dpets_usestats].not> queue clear
     - repeat 5:
       - foreach <server.flag[dpets.active_pets].as_list.filter[is_spawned]||li@>:
         - run dpets_doStatDrain player:<def[value].flag[dpets.pet_owner]||null>
@@ -645,6 +661,11 @@ dpets_stat:
   - define stat <def[1]>
   - define pet <player.flag[dpets.current_pet]||null>
   - determine <player.flag[dpets.<def[pet]>.stats.<def[stat]>]||0>
+dpets_usestats:
+  type: procedure
+  debug: false
+  script:
+  - determine <yaml[dpets_config].read[pets.use_stats]||true>
 dpets_util_progress_bar:
   type: procedure
   debug: false
@@ -718,8 +739,10 @@ dpets_format3:
     # - narrate "pat pat pat" format:dpets_format2
     # on call:
     # - narrate "cmere boy" format:dpets_format2
-    # on friend:
-    # - narrate "EY DAR BUDDY I AM DOG NIC TO MEET U" format:dpets_format1
+    # on happy:
+    # - narrate " im happy yo" format:dpets_format2
+    # on sad:
+    # - narrate " im sad yo" format:dpets_format2
   # abilities:
     # ability1:
       # item_icon: i@bone
@@ -767,6 +790,7 @@ dpets_format3:
 # all pets are listed below
 #
 # note: NEVER clear the queues of an ability!
+# note: dpets may clear the queue of any ability at any time! Do not spawn in things/modify things that have to be cleaned up! (or if you do, immediately run a delayed task that cleans them up seperately)
 #
 #####################
 # default wolf
@@ -800,15 +824,20 @@ dpets_wolf:
     - adjust <def[pet]> sitting:false
     - narrate "Woof!" format:dpets_format2
     - playsound sound:ENTITY_WOLF_AMBIENT <def[pet].location>
-    on friend:
-    - choose <util.random.int[1].to[3]>:
+    on happy:
+    - choose <util.random.int[1].to[2]>:
       - case 1:
-        - playsound sound:ENTITY_WOLF_whine <def[pet].location>
+        - playsound sound:ENTITY_WOLF_ambient <def[pet].location>
         - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
       - case 2:
         - playsound sound:ENTITY_WOLF_pant <def[pet].location>
         - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
-      - case 3:
+    on sad:
+    - choose <util.random.int[1].to[2]>:
+      - case 1:
+        - playsound sound:ENTITY_WOLF_whine <def[pet].location>
+        - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
+      - case 2:
         - playsound sound:ENTITY_WOLF_growl <def[pet].location>
         - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
   abilities:
@@ -956,17 +985,12 @@ dpets_ocelot:
     - adjust <def[pet]> sitting:false
     - narrate "Meow!" format:dpets_format2
     - playsound sound:ENTITY_CAT_AMBIENT <def[pet].location>
-    on friend:
-    - choose <util.random.int[1].to[3]>:
-      - case 1:
-        - playsound sound:ENTITY_CAT_AMBIENT <def[pet].location>
-        - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
-      - case 2:
-        - playsound sound:ENTITY_CAT_PURREOW <def[pet].location>
-        - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
-      - case 3:
-        - playsound sound:ENTITY_CAT_HISS <def[pet].location>
-        - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
+    on happy:
+    - playsound sound:ENTITY_CAT_PURREOW <def[pet].location>
+    - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+    on sad:
+    - playsound sound:ENTITY_CAT_HISS <def[pet].location>
+    - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
   abilities:
     sit:
       item_icon: i@bed
@@ -1057,17 +1081,12 @@ dpets_bunny:
     - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
     on call:
     - narrate "Squeak!" format:dpets_format2
-    on friend:
-    - choose <util.random.int[1].to[3]>:
-      - case 1:
-        - playsound sound:ENTITY_rabbit_ambient <def[pet].location>
-        - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
-      - case 2:
-        - playsound sound:ENTITY_WOLF_hurt <def[pet].location>
-        - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
-      - case 3:
-        - playsound sound:ENTITY_WOLF_ATTACK <def[pet].location>
-        - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
+    on happy:
+    - playsound sound:ENTITY_rabbit_ambient <def[pet].location>
+    - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+    on sad:
+    - playsound sound:ENTITY_rabbit_hurt <def[pet].location>
+    - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
   abilities:
     hop:
       item_icon: i@slime_block
@@ -1132,17 +1151,12 @@ dpets_bat:
     - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
     on call:
     - narrate "Eep!" format:dpets_format2
-    on friend:
-    - choose <util.random.int[1].to[3]>:
-      - case 1:
-        - playsound sound:ENTITY_BAT_AMBIENT <def[pet].location>
-        - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
-      - case 2:
-        - playsound sound:ENTITY_BAT_AMBIENT <def[pet].location>
-        - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
-      - case 3:
-        - playsound sound:ENTITY_BAT_takeoff <def[pet].location>
-        - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
+    on happy:
+    - playsound sound:ENTITY_BAT_AMBIENT <def[pet].location>
+    - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+    on sad:
+    - playsound sound:ENTITY_BAT_hurt <def[pet].location>
+    - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
   abilities:
     flutter:
       item_icon: i@elytra
@@ -1240,17 +1254,12 @@ dpets_polar_bear:
     on call:
     - playsound sound:ENTITY_POLAR_BEAR_WARNING <def[pet].location>
     - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
-    on friend:
-    - choose <util.random.int[1].to[3]>:
-      - case 1:
-        - playsound sound:ENTITY_POLAR_BEAR_AMBIENT <def[pet].location>
-        - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
-      - case 2:
-        - playsound sound:ENTITY_POLAR_BEAR_BABY_AMBIENT <def[pet].location>
-        - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
-      - case 3:
-        - playsound sound:ENTITY_POLAR_BEAR_WARNING <def[pet].location>
-        - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
+    on happy:
+    - playsound sound:ENTITY_POLAR_BEAR_AMBIENT <def[pet].location>
+    - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+    on sad:
+    - playsound sound:ENTITY_POLAR_BEAR_HURT <def[pet].location>
+    - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
   abilities:
     roar:
       item_icon: i@stone_sword
@@ -1334,17 +1343,12 @@ dpets_blaze:
     - playsound sound:ENTITY_BLAZE_HURT <def[pet].location>
     - playeffect effect:smoke <def[pet].location> qty:5 offset:0.5 visibility:50
     - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
-    on friend:
-    - choose <util.random.int[1].to[3]>:
-      - case 1:
-        - playsound sound:ENTITY_BLAZE_SHOOT <def[pet].location>
-        - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
-      - case 2:
-        - playsound sound:ENTITY_BLAZE_AMBIENT <def[pet].location>
-        - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
-      - case 3:
-        - playsound sound:ENTITY_BLAZE_HURT <def[pet].location>
-        - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
+    on happy:
+    - playsound sound:ENTITY_BLAZE_AMBIENT <def[pet].location>
+    - playeffect effect:heart <def[pet].location> qty:5 offset:0.5 visibility:50
+    on sad:
+    - playsound sound:ENTITY_BLAZE_HURT <def[pet].location>
+    - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
   abilities:
     Shoot:
       item_icon: i@fireball
