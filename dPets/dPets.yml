@@ -1454,7 +1454,7 @@ dpets_blaze:
             - define start <def[pet].location>
             - define target <def[target].add[<util.random.int[-1].to[1]>,<util.random.int[-1].to[1]>,<util.random.int[-1].to[1]>]>
             - look <def[pet]> <def[target]>
-            - define list <def[start].points_between[<def[target]>].distance[0.5]>
+            - define list <def[start].points_between[<def[target]>].distance[0.5].get[1].to[50]>
             - foreach <def[list]>:
               - playeffect <def[value]> effect:flame qty:5 offset:0.05 visibility:50
               - if <def[loop_index].mod[5]> == 0 {
@@ -1970,7 +1970,7 @@ dpets_spider:
         } else {
         - define target <def[target].location||<player.location.cursor_on[30]>>
         }
-      - define line <def[location].points_between[<def[target].above>].distance[1]||li@>
+      - define line <def[location].points_between[<def[target].above>].distance[1].get[1].to[50]||li@>
       - define players <def[location].world.players>
       - foreach <def[line]>:
         - if <def[value].material.is_occluding||false> foreach stop
