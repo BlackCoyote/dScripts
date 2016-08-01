@@ -432,7 +432,7 @@ dpets_pet_events:
     - if context.origin.world> != <context.destination.world> {
       - run dpets_remove_pet instantly
       - wait 1t
-      - run dpets_initiate_pet def:<def[pet]>
+      - if <def[pet]> != null run dpets_initiate_pet def:<def[pet]>
       } else {
       - wait 1t
       - run dpets_call_pet
@@ -1957,7 +1957,7 @@ dpets_spider:
         - wait 1t
       - playsound sound:ENTITY_SPIDER_AMBIENT <def[pet].location>
     shoot:
-      item_icon: i@web
+      item_icon: i@string
       name: Shoot
       description: Make your spider shoot a string of web!
       global_cooldown: 5s
