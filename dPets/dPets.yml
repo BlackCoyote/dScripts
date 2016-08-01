@@ -568,7 +568,7 @@ dpets_command_gui:
   title: <&9>Pets!
   size: 9
   definitions:
-    1: i@storage_minecart[enchantments=li@durability,1;flags=li@hide_enchants;display_name=<&b>Pets!;lore=<&e>Click here to view all your pats!]
+    1: i@storage_minecart[enchantments=li@durability,1;flags=li@hide_enchants;display_name=<&b>Pets!;lore=<&e>Click here to view all your pets!]
     2: i@book[enchantments=li@durability,1;flags=li@hide_enchants;display_name=<&b>Abilities!;lore=<&e>Click here to view the unlocked|<&e>abilities for your current pet!]
     3: i@ender_pearl[enchantments=li@durability,1;flags=li@hide_enchants;display_name=<&b>Call pet!;lore=<&e>Click here to call|<&e>your current pet to your side!]
     4: i@book_and_quill[enchantments=li@durability,1;flags=li@hide_enchants;display_name=<&b>Pet info!;lore=<&e>Click here to check|<&e>how your pet is doing!]
@@ -800,7 +800,7 @@ dpets_wolf:
   is_dpet: true
   pet_id: wolf
   name: Wolf
-  entity: e@wolf
+  entity: e@wolf[age=baby]
   description: Who's a good boy??
   item_icon: i@bone
   actions:
@@ -864,7 +864,7 @@ dpets_wolf:
       - define ball <entry[ball].shot_entities.get[1]>
       - playsound sound:ENTITY_WOLF_AMBIENT <def[pet].location>
       - while <def[ball].is_spawned||false>:
-        - define location <def[ball].location>
+        - define location <def[ball].location||<player.location>>
         - wait 5t
       - repeat 2:
         - playsound sound:ENTITY_WOLF_AMBIENT <def[pet].location>
@@ -955,6 +955,28 @@ dpets_wolf:
       - repeat 5:
         - playeffect effect:CLOUD <def[pet].location> qty:5 offset:0.5 visibility:50
         - wait 5t
+    grow:
+      item_icon: i@potion
+      name: Grow
+      global_cooldown: 3s
+      description: Make your wolf bigger!
+      energy: 15
+      script:
+      - playsound sound:ENTITY_WOLF_AMBIENT <def[pet].location>
+      - playeffect effect:CLOUD <def[pet].location> qty:100 offset:0.6 visibility:50
+      - wait 1t
+      - adjust <def[pet]> age:adult
+    shrink:
+      item_icon: i@potion
+      name: Shrink
+      global_cooldown: 3s
+      description: Make your wolf smaller!
+      energy: 15
+      script:
+      - playsound sound:ENTITY_WOLF_AMBIENT <def[pet].location>
+      - playeffect effect:CLOUD <def[pet].location> qty:100 offset:0.6 visibility:50
+      - wait 1t
+      - adjust <def[pet]> age:baby
 #####################
 # default ocelot
 #####################
@@ -963,7 +985,7 @@ dpets_ocelot:
   is_dpet: true
   pet_id: ocelot
   name: Ocelot
-  entity: e@ocelot
+  entity: e@ocelot[age=baby]
   description: Not your average Mr. Fluffles!
   item_icon: i@human_skull[skull_skin=1bee9df5-4f71-42a2-bf52-d97970d3fea3|eyJ0aW1lc3RhbXAiOjE0MzA0NTMyNDY1NTcsInByb2ZpbGVJZCI6IjFiZWU5ZGY1NGY3MTQyYTJiZjUyZDk3OTcwZDNmZWEzIiwicHJvZmlsZU5hbWUiOiJNSEZfT2NlbG90IiwiaXNQdWJsaWMiOnRydWUsInRleHR1cmVzIjp7IlNLSU4iOnsidXJsIjoiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS81NjU3Y2Q1YzI5ODlmZjk3NTcwZmVjNGRkY2RjNjkyNmE2OGEzMzkzMjUwYzFiZTFmMGIxMTRhMWRiMSJ9fX0=]
   actions:
@@ -1035,7 +1057,7 @@ dpets_ocelot:
       energy: 10
       script:
       - adjust <def[pet]> sitting:false
-      - spawn e@endermite[invulnerable=true] <def[pet].location.find.surface_blocks.within[3].random.above||<def[pet].location>> save:mouse
+      - spawn e@endermite[invulnerable=true;has_ai=false] <def[pet].location.find.surface_blocks.within[3].random.above||<def[pet].location>> save:mouse
       - define mouse <entry[mouse].spawned_entities.get[1]>
       - playsound sound:ENTITY_CAT_AMBIENT <def[pet].location>
       - repeat 10:
@@ -1058,6 +1080,28 @@ dpets_ocelot:
           - narrate "The vermin got away!" format:dpets_format3
           - playsound sound:ENTITY_CAT_ambient <def[pet].location>
           - playeffect effect:MOBSPAWNER_FLAMES <def[pet].location> qty:5 offset:0.5 visibility:50
+    grow:
+      item_icon: i@potion
+      name: Grow
+      global_cooldown: 3s
+      description: Make your ocelot bigger!
+      energy: 15
+      script:
+      - playsound sound:ENTITY_CAT_PURREOW <def[pet].location>
+      - playeffect effect:CLOUD <def[pet].location> qty:100 offset:0.6 visibility:50
+      - wait 1t
+      - adjust <def[pet]> age:adult
+    shrink:
+      item_icon: i@potion
+      name: Shrink
+      global_cooldown: 3s
+      description: Make your ocelot smaller!
+      energy: 15
+      script:
+      - playsound sound:ENTITY_CAT_PURREOW <def[pet].location>
+      - playeffect effect:CLOUD <def[pet].location> qty:100 offset:0.6 visibility:50
+      - wait 1t
+      - adjust <def[pet]> age:baby
 #####################
 # default rabbit
 #####################
@@ -1066,7 +1110,7 @@ dpets_bunny:
   is_dpet: true
   pet_id: bunny
   name: Bunny
-  entity: e@rabbit
+  entity: e@rabbit[age=baby]
   description: What a cute playful bunny!
   item_icon: i@carrot_item
   actions:
@@ -1128,6 +1172,28 @@ dpets_bunny:
       - invisible <def[pet]> state:false
       - playeffect effect:blockcrack_2 <def[pet].location> qty:25 offset:0.5 visibility:50
       - playsound sound:ENTITY_DONKEY_CHEST <def[pet].location> pitch:1
+    grow:
+      item_icon: i@potion
+      name: Grow
+      global_cooldown: 3s
+      description: Make your bunny bigger!
+      energy: 15
+      script:
+      - playsound sound:ENTITY_rabbit_hurt <def[pet].location>
+      - playeffect effect:CLOUD <def[pet].location> qty:100 offset:0.6 visibility:50
+      - wait 1t
+      - adjust <def[pet]> age:adult
+    shrink:
+      item_icon: i@potion
+      name: Shrink
+      global_cooldown: 3s
+      description: Make your bunny smaller!
+      energy: 15
+      script:
+      - playsound sound:ENTITY_rabbit_hurt <def[pet].location>
+      - playeffect effect:CLOUD <def[pet].location> qty:100 offset:0.6 visibility:50
+      - wait 1t
+      - adjust <def[pet]> age:baby
 #####################
 # default bat
 #####################
@@ -1338,7 +1404,7 @@ dpets_blaze:
   is_dpet: true
   pet_id: blaze
   name: blaze
-  entity: e@blaze
+  entity: e@blaze[silent=true]
   description: A firy blaze!
   item_icon: i@human_skull[skull_skin=4c38ed11-596a-4fd4-ab1d-26f386c1cbac|eyJ0aW1lc3RhbXAiOjE0MzA0NTE4MzM3MDcsInByb2ZpbGVJZCI6IjRjMzhlZDExNTk2YTRmZDRhYjFkMjZmMzg2YzFjYmFjIiwicHJvZmlsZU5hbWUiOiJNSEZfQmxhemUiLCJpc1B1YmxpYyI6dHJ1ZSwidGV4dHVyZXMiOnsiU0tJTiI6eyJ1cmwiOiJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlL2I3OGVmMmU0Y2YyYzQxYTJkMTRiZmRlOWNhZmYxMDIxOWY1YjFiZjViMzVhNDllYjUxYzY0Njc4ODJjYjVmMCJ9fX0=]
   actions:
@@ -1471,7 +1537,7 @@ dpets_chicken:
     - playsound sound:ENTITY_CHICKEN_HURT <def[pet].location>
     - playeffect effect:flame <def[pet].location> qty:5 offset:0.5 visibility:50
   abilities:
-    ability1:
+    eggs:
       item_icon: i@egg
       name: Eggs
       description: Make it rain eggs!
@@ -1481,30 +1547,11 @@ dpets_chicken:
       - define locations <def[pet].location.add[0,10,0].find.blocks.within[3]>
       - repeat 50:
         - define location <def[locations].random>
-        - spawn e@egg <def[location]>
+        - displayitem i@egg <def[location]> duration:10s
         - playsound sound:ENTITY_CHICKEN_egg <def[location]>
         - playeffect effect:cloud <def[location]> offset:1 qty:50 visibility:50
         - wait 2t
         - if <def[value].mod[5]> == 0 playsound sound:ENTITY_CHICKEN_ambient <def[pet].location> pitch:<util.random.decimal[1].to[1.3].round_to[1]>
-    Shoot:
-      item_icon: i@egg
-      name: Shoot
-      description: Make your chicken shoot eggs!
-      global_cooldown: 2s
-      energy: 10
-      script:
-      - define target <pl.target||null>
-      - if <def[target]> == <def[pet]> {
-        - define target <player.location.cursor_on[30]>
-        } else {
-        - define target <def[target].location||<player.location.cursor_on[30]>>
-        }
-      - repeat 3:
-        - define target <def[target].add[<util.random.int[-1].to[1]>,<util.random.int[-1].to[1]>,<util.random.int[-1].to[1]>]>
-        - look <def[pet]> <def[target]>
-        - shoot e@egg origin:<def[pet]> destination:<def[target]>
-        - playsound sound:ENTITY_CHICKEN_egg <def[pet].location> pitch:<util.random.decimal[1].to[1.3].round_to[1]>
-        - wait 5t
     grow:
       item_icon: i@potion
       name: Grow
