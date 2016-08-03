@@ -3,7 +3,7 @@ dpets:
   name: dPets
   id: 104
   description: providing highly unique cosmetic-only pets for your server.
-  version: 11
+  version: 12
 #
 #
 # constructor + script tracker + config
