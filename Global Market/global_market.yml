@@ -37,6 +37,7 @@ market_event_handlers:
     - if <yaml[MARKETSAVES].read[live_offers.%path%.type]||none> == sell {
       - run market_set_offer_item_buying instantly def:<yaml[MARKETSAVES].read[live_offers.%path%.item]||none>
       - run market_set_offer_price_buying instantly def:<yaml[MARKETSAVES].read[live_offers.%path%.price]||0>
+      - run market_set_offer_quantity_buying instantly def:<yaml[MARKETSAVES].read[live_offers.%path%.quantity].as_int.sub[<yaml[MARKETSAVES].read[live_offers.%path%.progress].as_int||0>].as_int||0>
       } else {
       - adjust <yaml[MARKETSAVES].read[live_offers.%path%.item]||none> quantity:1 save:item
       - yaml id:MARKETSAVES set offer_constructor.<player>.<player.flag[market_slot_used]>.item:<entry[item].result>
@@ -103,6 +104,7 @@ market_event_handlers:
     on player drops item:
     - if <player.has_flag[market_sell_item_drop]> determine cancelled
   market_collect:
+    - if <yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.type]||null> == buy {
       - if <yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.progress]||0> > <yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.collected]||0> {
         - give <yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.item]||0> qty:<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.progress].sub[<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.collected]||0>]||0>
         - narrate "<&A>You collected <yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.progress].sub[<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.collected]||0>].as_int||0> of <yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.item].display||<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.item].as_item.formatted||0>>."
