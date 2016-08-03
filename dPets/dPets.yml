@@ -1951,7 +1951,6 @@ dpets_spider:
       - playsound sound:ENTITY_SPIDER_AMBIENT <def[pet].location>
       - repeat 20:
         - define newloc <def[location].add[<util.random.int[-5].to[5]>,0,<util.random.int[-5].to[5]>]>
-        - showfake m@web <def[newloc]> duration:5s players:<def[players]>
         - playeffect effect:cloud <def[newloc]> visibility:50 offset:1.5 qty:25
         - playsound sound:BLOCK_STONE_BREAK <def[newloc]>
         - wait 1t
@@ -1974,10 +1973,9 @@ dpets_spider:
       - define players <def[location].world.players>
       - foreach <def[line]>:
         - if <def[value].material.is_occluding||false> foreach stop
-        - showfake m@web <def[value]> duration:2s players:<def[players]>
         - playeffect effect:cloud <def[value].below> visibility:50 offset:0.7 qty:25
         - playsound sound:BLOCK_STONE_BREAK <def[value]>
         - wait 1t
       - define location <def[value]>
       - repeat 10:
-        - showfake m@web <def[location].add[<util.random.int[-2].to[2]>,<util.random.int[-2].to[2]>,<util.random.int[-2].to[2]>]> duration:3s players:<def[players]>
+        - playeffect effect:cloud <def[location].add[<util.random.int[-2].to[2]>,<util.random.int[-2].to[2]>,<util.random.int[-2].to[2]>]> visibility:50 offset:0.7 qty:25
