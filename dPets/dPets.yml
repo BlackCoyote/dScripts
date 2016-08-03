@@ -1070,7 +1070,7 @@ dpets_ocelot:
       - repeat 10:
         - if <def[mouse].is_spawned.not||true> repeat stop
         - define location <def[mouse].location.find.surface_blocks.within[3].random.above||<def[pet].location>>
-        - walk <def[mouse]> <def[location]>
+        - adjust <def[mouse]> velocity:<def[mouse].location.face[<def[location]>].direction.vector.mul[1]>
         - wait 10t
         - walk <def[pet]> <def[location]> speed:1.5
         - wait 10t
@@ -1520,7 +1520,7 @@ dpets_chicken:
   is_dpet: true
   pet_id: chicken
   name: chicken
-  entity: e@chicken
+  entity: e@chicken[age=baby]
   item_icon: i@human_skull[skull_skin=92deafa9-4307-42d9-b003-88601598d6c0|eyJ0aW1lc3RhbXAiOjE0MzA0NTIzMjcxMjksInByb2ZpbGVJZCI6IjkyZGVhZmE5NDMwNzQyZDliMDAzODg2MDE1OThkNmMwIiwicHJvZmlsZU5hbWUiOiJNSEZfQ2hpY2tlbiIsImlzUHVibGljIjp0cnVlLCJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTYzODQ2OWE1OTljZWVmNzIwNzUzNzYwMzI0OGE5YWIxMWZmNTkxZmQzNzhiZWE0NzM1YjM0NmE3ZmFlODkzIn19fQ==]
   description: Bwuk!
   actions:
