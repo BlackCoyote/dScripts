@@ -16,7 +16,7 @@ market_event_handlers:
     - if <player.has_flag[give_market_update]> {
       - flag give_market_update:!
       - narrate "<&2>One of your global market offers updated."
-      - playsound sound:level_up %value% pitch:0.6
+      - playsound sound:ENTITY_PLAYER_LEVELUP <player> pitch:0.6
       }
     on player clicks in market_offer_listing:
     - determine cancelled passively
@@ -58,7 +58,7 @@ market_event_handlers:
           - inject locally path:market_collect
           }
         } else {
-        - if true && <context.raw_slot> > 17 {
+        - if false && <context.raw_slot> > 17 {
           - narrate "<&c>You need to be a premium player to use this slot."
           - queue clear
           } 
@@ -115,7 +115,7 @@ market_event_handlers:
       } else {
       - if <yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.progress]||0> > <yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.collected]||0> {
         - give money qty:<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.progress].sub[<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.collected]||0>].mul[<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.price]||0>].add[<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.excess]||0>]||0>
-        - narrate "<&A>You collected <yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.progress].sub[<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.collected]||0>].mul[<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.price]||0>].add[<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.excess]||0>].as_int||0> gold coins."
+        - narrate "<&A>You collected <yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.progress].sub[<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.collected]||0>].mul[<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.price]||0>].add[<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.excess]||0>].as_int||0> dollar."
         - yaml id:MARKETSAVES set live_offers.<player>.<context.raw_slot>.collected:<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.progress]||0>
         - yaml id:MARKETSAVES set live_offers.<player>.<context.raw_slot>.excess:0
         } else {
@@ -231,6 +231,10 @@ market_set_offer_quantity_selling:
     - narrate "<&c>Please specify a valid quantity."
     - queue clear
     }
+  - if <def[1]> <= 0 {
+    - narrate "<&c>Quantity has to be more than 0."
+    - queue clear
+    }
   - narrate "<&a>Set new quantity to %1%"
   - yaml id:MARKETSAVES set offer_constructor.<player>.<player.flag[market_slot_used]>.quantity:%1%
   - inventory open d:in@market_selling_interface
@@ -241,6 +245,10 @@ market_set_offer_price_selling:
   script:
   - if <def[1].is[matches].to[number].not> {
     - narrate "<&c>Please specify a valid price."
+    - queue clear
+    }
+  - if <def[1]> <= 0 {
+    - narrate "<&c>Price has to be more than 0."
     - queue clear
     }
   - narrate "<&a>Set new price to %1%"
@@ -255,6 +263,10 @@ market_set_offer_quantity_buying:
     - narrate "<&c>Please specify a valid quantity."
     - queue clear
     }
+  - if <def[1]> <= 0 {
+    - narrate "<&c>Quantity has to be more than 0."
+    - queue clear
+    }
   - narrate "<&a>Set new quantity to %1%"
   - yaml id:MARKETSAVES set offer_constructor.<player>.<player.flag[market_slot_used]>.quantity:%1%
   - inventory open d:in@market_buying_interface
@@ -265,6 +277,10 @@ market_set_offer_price_buying:
   script:
   - if <def[1].is[matches].to[number].not> {
     - narrate "<&c>Please specify a valid price."
+    - queue clear
+    }
+  - if <def[1]> <= 0 {
+    - narrate "<&c>Price has to be more than 0."
     - queue clear
     }
   - narrate "<&a>Set new price to %1%"
@@ -470,7 +486,7 @@ market_offer_completer:
                     - foreach li@%player%|%player2% {
                       - if <def[value].is_online> {
                         - narrate "<&2>One of your global market offers updated." target:%value%
-                        - playsound sound:level_up %value% pitch:0.6
+                        - playsound sound:ENTITY_PLAYER_LEVELUP %value% pitch:0.6
                         - if <def[value].open_inventory.title||none> == "<&2>Your Offers" {
                           - flag %value% market_sell_item_drop duration:5t
                           - inventory open d:in@market_interface player:%value%
