@@ -69,15 +69,18 @@ IRCBOT:
           - define message "<entry[result].output>"
           }
       - case chat:
+        - if <yaml[small_irc_bot_config].read[config.chat_command.allow_use].not||false> {
+          - queue clear
+          }
         - define player <server.match_offline_player[<def[speaker].unescaped>]||none>
         - if <def[player]> == none {
           - define message "Not a valid player trying to chat!"
           - goto finish
           }
         - if <yaml[small_irc_bot_config].read[config.chat_command.trigger_event]||false> {
-          - announce "<&lb>IRC<&rb><&pipe><&8><def[player].name><&co><&f> <def[args].get[2].to[500].space_separated||>"
-          } else {
           - event "player chats" "context:message|<def[args].get[2].to[500].space_separated||>" player:<def[player]>
+          } else {
+          - announce "<&lb>IRC<&rb><&pipe><&8><def[player].name><&co><&f> <def[args].get[2].to[500].space_separated||>"
           }
       - case msg:
         - define from <def[speaker]>
@@ -115,6 +118,7 @@ IRCBOT:
       - yaml id:small_irc_bot_config set config.secondary_command:.
       - yaml id:small_irc_bot_config set config.colour:3
       - yaml id:small_irc_bot_config set config.chat_command.trigger_event:false
+      - yaml id:small_irc_bot_config set config.chat_command.allow_use:true
       - yaml savefile:/small_irc_bot/config.yml id:small_irc_bot_config
       }
 IRCBOT_connect:
