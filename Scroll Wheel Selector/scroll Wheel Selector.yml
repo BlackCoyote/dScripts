@@ -1,0 +1,88 @@
+scroller_version:
+  type: version
+  name: Scroll Wheel Selector
+  id: 84
+  description: A menu that uses the mouse scroll wheel to select.
+  version: 2
+scroller:
+  type: task
+  debug: false
+  speed: 0
+  script:
+  - flag player scroller_responses:!
+  - foreach <queue.definitions.exclude[1]> {
+    - flag player "scroller_responses:->:<&sp><def[%value%]>"
+    }
+  - flag <player> scroller_responses_counter:0
+  - flag <player> scroller_responses_return_script:<def[1]||none>
+  - define list "<player.flag[scroller_responses].as_list||none>"
+  - sidebar set title:<&6>Options "values:<def[list]>"
+scroller_events:
+  type: world
+  debug: false
+  events:
+    on system time hourly:
+    - webget "http://morphanone.space/webizen.aspx/tracker?script=84&version=<s@scroller_version.yaml_key[version]>
+    on player scrolls their hotbar:
+    - if <player.has_flag[scroller_responses].not> queue clear
+    - if <context.previous_slot> == 9 && <context.new_slot> == 1 {
+      - define mode down
+      } else if <context.previous_slot> == 1 && <context.new_slot> == 9 {
+      - define mode up
+      } else if <context.previous_slot> < <context.new_slot> {
+      - define mode down
+      } else {
+      - define mode up
+      }
+    - if %mode% == down {
+      - if <player.flag[scroller_responses_counter]||0> >= <player.flag[scroller_responses].as_list.size> {
+        - flag <player> scroller_responses_counter:1
+        } else {
+        - flag <player> scroller_responses_counter:++
+        }
+      } else {
+      - if <player.flag[scroller_responses_counter]||0> <= 1 {
+      - flag <player> scroller_responses_counter:<player.flag[scroller_responses].as_list.size>
+        } else {
+        - flag <player> scroller_responses_counter:--
+        }
+      }
+    - define selected "<player.flag[scroller_responses].as_list.get[<player.flag[scroller_responses_counter].as_int||0>]>"
+    - define low <player.flag[scroller_responses_counter].sub[7].min[<player.flag[scroller_responses].as_list.size.sub[14]>].max[1].as_int>
+    - define high <def[low].add[14].min[<player.flag[scroller_responses].as_list.size>].as_int>
+    - define list "<player.flag[scroller_responses].as_list.get[%low%].to[%high%].replace[%selected%].with[<&e><&gt><&f><def[selected].substring[2]>]||none>"
+    - sidebar set title:<&6>Options "values:<def[list]>"
+    on player clicks:
+    - if <player.has_flag[scroller_responses].not> queue clear
+    - run "<player.flag[scroller_responses_return_script]||scroller_responses_no_script_fallback>" "def:<player.flag[scroller_responses].as_list.get[<player.flag[scroller_responses_counter].as_int||0>].after[<&sp>].strip_color>"
+    - flag <player> scroller_responses:!
+    - flag <player> scroller_responses_counter:!
+    - flag <player> scroller_responses_return_script:!
+    - sidebar remove
+#
+#
+#usage example
+#
+scroller_responses_tester:
+  type: world
+  debug: false
+  events:
+    on test_scroller command:
+    - determine fulfilled passively
+    - narrate "<&6>What is your favourite letter?"
+    - run scroller def:scroller_responses_tester_replies|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z
+scroller_responses_tester_replies:
+  type: task
+  debug: false
+  script:
+  - choose <def[1]>:
+    - case A:
+      - narrate "<&2>A"
+    - case b:
+      - narrate "<&2>b"
+    - case c:
+      - narrate "<&2>c"
+    - case u:
+      - narrate "<&2>U are my favourite!! haha geddit??"
+    - default:
+      - narrate "<&2><def[1]>? Nice choice!"
