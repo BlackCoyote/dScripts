@@ -3,7 +3,7 @@ IRCBOT_version:
   name: smallIRCbot
   id: 97
   description: a small IRC Bot
-  version: 5
+  version: 6
 IRCBOT:
   type: world
   debug: false
@@ -44,7 +44,7 @@ IRCBOT:
     - define channel <context.channel>
     - define usedcommand <context.message.substring[1,1]||<&lt>>
     - define args <context.message.after[<def[usedcommand]>].replace[<&chr[000D]>].split_by[<&sp>]||none>
-    - choose <def[args].get[1]>:
+    - choose <def[args].get[1]||null>:
       - case status:
         - define message "Status<&co> online - TPS<&co> <server.recent_tps.get[1].as_money> - Players<&co> <server.list_online_players.size||0>"
       - case version:
@@ -74,7 +74,11 @@ IRCBOT:
           - define message "Not a valid player trying to chat!"
           - goto finish
           }
-        - announce "<&lb>IRC<&rb><&pipe><&8><context.speaker><&co><&f> <def[args].get[2].to[500].space_separated||>"
+        - if <yaml[small_irc_bot_config].read[config.chat_command.trigger_event]||false> {
+          - announce "<&lb>IRC<&rb><&pipe><&8><def[player].name><&co><&f> <def[args].get[2].to[500].space_separated||>"
+          } else {
+          - event "player chats" "context:message|<def[args].get[2].to[500].space_separated||>" player:<def[player]>
+          }
       - case msg:
         - define from <def[speaker]>
         - define to <def[args].get[2]||none>
@@ -110,6 +114,7 @@ IRCBOT:
       - yaml id:small_irc_bot_config set config.command:<&lt>
       - yaml id:small_irc_bot_config set config.secondary_command:.
       - yaml id:small_irc_bot_config set config.colour:3
+      - yaml id:small_irc_bot_config set config.chat_command.trigger_event:false
       - yaml savefile:/small_irc_bot/config.yml id:small_irc_bot_config
       }
 IRCBOT_connect:
