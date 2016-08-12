@@ -5,6 +5,7 @@ market_assignment:
     - if <player.is_sneaking.not> {
       - inventory open d:in@market_interface
       } else {
+      - flag <player> global_parket_listings_page:1
       - run market_get_offers instantly
       }
 market_event_handlers:
@@ -18,9 +19,10 @@ market_event_handlers:
       - narrate "<&2>One of your global market offers updated."
       - playsound sound:ENTITY_PLAYER_LEVELUP <player> pitch:0.6
       }
-    on player clicks in market_offer_listing:
+    on player clicks in market_offer_listing_inventory:
     - determine cancelled passively
     - if <context.item||i@air> == i@air queue clear
+    - if <context.raw_slot||1000> > 45 queue clear
     - foreach <li@11|13|15|17|29|31|33|35.reverse> {
       - if !<yaml[MARKETSAVES].contains[live_offers.<player>.%value%]||false> {
         - define slot %value%
@@ -129,11 +131,11 @@ market_event_handlers:
     - inventory open d:in@market_interface
   market_abort:
     - inject locally path:market_collect
-    - if <yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.type]> == sell {
+    - if <yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.type]||null> == sell {
       - give <yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.item]||0> qty:<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.quantity].sub[<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.progress]||0>]||0>
       - yaml id:MARKETSAVES set live_offers.<player>.<context.raw_slot>:!
       } else {
-      - give money qty:<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.quantity].mul[<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.price]||0>].sub[<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.progress].mul[<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.price]||0>]>]||0>
+      - give money qty:<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.quantity].mul[<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.price]||0>].sub[<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.progress].mul[<yaml[MARKETSAVES].read[live_offers.<player>.<context.raw_slot>.price]||0>]||0>]||0>
       - yaml id:MARKETSAVES set live_offers.<player>.<context.raw_slot>:!
       }
     - narrate "<&c>You aborted the rest of your offer."
@@ -144,16 +146,26 @@ market_event_handlers:
       - narrate "<&c>Specify a valid item!"
       - queue clear
       }
-    - if <yaml[MARKETSAVES].read[offer_constructor.<player>.<player.flag[market_slot_used]>.type]> == sell {
+    - if <yaml[MARKETSAVES].read[offer_constructor.<player>.<player.flag[market_slot_used]>.type]||null> == sell {
       - if <player.inventory.contains[<yaml[MARKETSAVES].read[offer_constructor.<player>.<player.flag[market_slot_used]>.item]>].quantity[<yaml[MARKETSAVES].read[offer_constructor.<player>.<player.flag[market_slot_used]>.quantity]||1>]> {
-        - take <yaml[MARKETSAVES].read[offer_constructor.<player>.<player.flag[market_slot_used]>.item]> qty:<yaml[MARKETSAVES].read[offer_constructor.<player>.<player.flag[market_slot_used]>.quantity]||1>
+        - define item <yaml[MARKETSAVES].read[offer_constructor.<player>.<player.flag[market_slot_used]>.item]>
+        - define amount <yaml[MARKETSAVES].read[offer_constructor.<player>.<player.flag[market_slot_used]>.quantity]||1>
+        - define pp <yaml[MARKETSAVES].read[offer_constructor.<player>.<player.flag[market_slot_used]>.price]||1>
+        - take <def[item]> qty:<def[amount]>
+        - if <def[amount]> == 1 {
+          - announce "<&7>[<&6>Global Market<&7>] <&e><&b><player.name><&e> added an offer of<&b> <def[amount]> <def[item].display||<def[item].replace[i@].replace[_].with[<&sp>]>> <&e>for<&b> $<def[pp].format_number||1><&e>."
+          } else {
+          - announce "<&7>[<&6>Global Market<&7>] <&e><&b><player.name><&e> added an offer of<&b> <def[amount]> <def[item].display||<def[item].replace[i@].replace[_].with[<&sp>]>> <&e>for<&b> $<def[pp].format_number||1> each<&e>."
+          }
         } else {
         - narrate "<&c>You don't have this many items!"
         - queue clear
         }
       } else {
       - if <player.money> >= <yaml[MARKETSAVES].read[offer_constructor.<player>.<player.flag[market_slot_used]>.price].mul[<yaml[MARKETSAVES].read[offer_constructor.<player>.<player.flag[market_slot_used]>.quantity]>]||0> {
-        - take money qty:<yaml[MARKETSAVES].read[offer_constructor.<player>.<player.flag[market_slot_used]>.price].mul[<yaml[MARKETSAVES].read[offer_constructor.<player>.<player.flag[market_slot_used]>.quantity]>]||0>
+        - define amount <yaml[MARKETSAVES].read[offer_constructor.<player>.<player.flag[market_slot_used]>.quantity]||1>
+        - define pp <yaml[MARKETSAVES].read[offer_constructor.<player>.<player.flag[market_slot_used]>.price]||1>
+        - take money qty:<def[pp].mul[<def[amount]>]||0>
         } else {
         - narrate "<&c>You don't have this much money!"
         - queue clear
@@ -421,7 +433,22 @@ market_selling_interface_quantity:
 market_get_offers:
   type: task
   debug: false
+  speed: 0
   script:
+  - inventory open d:in@market_offer_listing_inventory
+market_offer_listing_inventory:
+  type: inventory
+  inventory: CHEST
+  title: <&2>Offer listing - Page <player.flag[global_parket_listings_page]||1>
+  size: 54
+  definitions: 
+    div: i@black_stained_glass_pane[display_name=<&0><&sp>]
+    next: i@human_skull[skull_skin=MHF_Arrowright;display_name=<&c>Next Page]
+    prev: i@human_skull[skull_skin=MHF_Arrowleft;display_name=<&c>Previous Page]
+    search: i@human_skull[skull_skin=MHF_Question;display_name=<&6>Search]
+  procedural items:
+  - define page <player.flag[global_parket_listings_page].sub[1].mul[45].add[1]||1>
+  - define pagecounter 0
   - define items li@
   - foreach <yaml[MARKETSAVES].list_keys[live_offers]||none> {
     - define player %value%
@@ -431,15 +458,39 @@ market_get_offers:
         - define amount <yaml[MARKETSAVES].read[live_offers.%player%.%offer_ID%.quantity].sub[<yaml[MARKETSAVES].read[live_offers.%player%.%offer_ID%.progress]||0>]>
         - if %amount% > 0 {
           - define item <yaml[MARKETSAVES].read[live_offers.%player%.%offer_ID%.item]>
+          - if <def[item]> == i@air foreach next
+          - define pagecounter <def[pagecounter].add[1].as_int>
+          - if <def[pagecounter]> < <def[page]> foreach next
+          - if <def[page]> > <def[page].add[44]||45> goto finish
           - adjust %item% "lore:li@<&b><yaml[MARKETSAVES].read[live_offers.%player%.%offer_ID%.type].to_uppercase||none>ING|<&2>Amount<&co> <&a><def[amount].as_int>|<&2>Price per<&co> <&a><yaml[MARKETSAVES].read[live_offers.%player%.%offer_ID%.price]||none>|<&7>By <def[player].name>" save:item
           - flag market_auto_offer_data_<def[items].size.add[1].as_int>:%player%.%offer_id%
-          - define items "%items%<entry[item].result>|"
+          - define items "<def[items].include[<entry[item].result||i@barrier>]>"
           }
         }
       }
     }
-  - note "in@generic[size=99;title=<&2>Market Offer Listing;contents=<def[items]>]" as:market_offer_listing
-  - inventory open d:in@market_offer_listing
+  - mark finish
+  - determine <def[items].get[<def[page]>].to[<def[page].add[44]||45>]||li@> passively
+  slots: 
+    - "[] [] [] [] [] [] [] [] []"
+    - "[] [] [] [] [] [] [] [] []"
+    - "[] [] [] [] [] [] [] [] []"
+    - "[] [] [] [] [] [] [] [] []"
+    - "[] [] [] [] [] [] [] [] []"
+    - "[div] [div] [prev] [div] [search] [div] [next] [div] [div]"
+market_offer_listing_inventory_events:
+  type: world
+  debug: false
+  events:
+    on player clicks in market_offer_listing_inventory:
+    - determine cancelled passively
+    - if <context.raw_slot> == 48 {
+      - flag <player> global_parket_listings_page:<player.flag[global_parket_listings_page].sub[1].max[1].as_int||0>
+      - run market_get_offers
+      } else if <context.raw_slot> == 52 {
+      - flag <player> global_parket_listings_page:<player.flag[global_parket_listings_page].add[1].max[1].as_int||0>
+      - run market_get_offers
+      }
 #
 #
 #
@@ -450,7 +501,8 @@ market_offer_completer_initiator:
   type: world
   debug: false
   events:
-    on time 11 in world:
+    on system time minutely:
+    - if <context.minute.mod[10]> != 0 queue clear
     - announce to_console "<&7>force running market offer completer"
     - run market_offer_completer delay:2s
 market_offer_completer:
@@ -483,6 +535,10 @@ market_offer_completer:
                     - define item <yaml[MARKETSAVES].read[live_offers.%player2%.%offer_ID2%.item]>
                     - yaml id:MARKETSAVES set statistics.averages.%item%.amount:+:%transfer_amount%
                     - yaml id:MARKETSAVES set statistics.averages.%item%.value:+:<yaml[MARKETSAVES].read[live_offers.%player2%.%offer_ID2%.price].mul[%transfer_amount%]>
+                    - define price <yaml[MARKETSAVES].read[live_offers.%player2%.%offer_ID2%.price].mul[%transfer_amount%]||0>
+                    - if <def[price]||0> >= 100000 {
+                      - announce "<&7>[<&6>Global Market<&7>] <&e><&b><def[player2].name><&e> purchased <&b><def[transfer_amount].as_int> <def[item].display||<def[item].replace[i@].replace[_].with[<&sp>]>> <&e>for <&b>$<def[price].format_number><&e>."
+                      }
                     - foreach li@%player%|%player2% {
                       - if <def[value].is_online> {
                         - narrate "<&2>One of your global market offers updated." target:%value%
