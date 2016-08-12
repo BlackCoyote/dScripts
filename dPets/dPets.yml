@@ -58,11 +58,11 @@ dpets_constructor:
     } else {
     - yaml create id:dpets_config
     - yaml id:dpets_config set pets.stats.attention.color:4
-    - yaml id:dpets_config set pets.stats.attention.background_drain:-1
+    - yaml id:dpets_config set pets.stats.attention.background_drain:-0.1
     - yaml id:dpets_config set pets.stats.friends.color:3
-    - yaml id:dpets_config set pets.stats.friends.background_drain:-1
+    - yaml id:dpets_config set pets.stats.friends.background_drain:-0.1
     - yaml id:dpets_config set pets.stats.energy.color:a
-    - yaml id:dpets_config set pets.stats.energy.background_drain:5
+    - yaml id:dpets_config set pets.stats.energy.background_drain:2
     - yaml id:dpets_config set pets.use_stats:true
     - yaml savefile:/dpets/config.yml id:dpets_config
     }
