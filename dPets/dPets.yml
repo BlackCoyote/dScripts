@@ -3,7 +3,7 @@ dpets:
   name: dPets
   id: 104
   description: providing highly unique cosmetic-only pets for your server.
-  version: 12
+  version: 13
 #
 #
 # constructor + script tracker + config
@@ -64,6 +64,7 @@ dpets_constructor:
     - yaml id:dpets_config set pets.stats.energy.color:a
     - yaml id:dpets_config set pets.stats.energy.background_drain:2
     - yaml id:dpets_config set pets.use_stats:true
+    - yaml id:dpets_config set "pets.naming_scheme:<&lt>&d<&gt><&lt>player.name<&gt>'s Pet"
     - yaml savefile:/dpets/config.yml id:dpets_config
     }
 #
@@ -207,11 +208,12 @@ dpets_initiate_pet:
     }
   - flag <player> dpets.current_pet:<def[pet_id]>
   - define script <yaml[dpets_database].read[dpets.<def[pet_id]>.script]>
-  - create "<&d><player.name>'s Pet" <def[script].yaml_key[entity]> <player.location.find.surface_blocks.within[3].random.above||<player.location>> save:pet
+  - define name "<parse:<yaml[dpets_config].read[pets.naming_scheme]||<&lt>&d<&gt><&lt>player.name<&gt>'s Pet>>"
+  - create "<def[name]>" <def[script].yaml_key[entity]> <player.location.find.surface_blocks.within[3].random.above||<player.location>> save:pet
   - define pet <entry[pet].created_npc>
   - playeffect effect:cloud <def[pet].location> qty:25 offset:0.5 visibility:50
   - playsound sound:ENTITY_DONKEY_CHEST <def[pet].location> pitch:1
-  - adjust <def[pet]> "custom_name:<&d><player.name>'s Pet"
+  - adjust <def[pet]> "custom_name:<def[name]>"
   - flag <def[pet]> dpets.pet_owner:<player>
   - flag <player> "dpets.current_pet_UUID:<def[pet]>"
   - flag server "dpets.active_pets:->:<def[pet]>"
