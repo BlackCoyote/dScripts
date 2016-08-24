@@ -3,7 +3,7 @@ dpets:
   name: dPets
   id: 104
   description: providing highly unique cosmetic-only pets for your server.
-  version: 14
+  version: 15
 #
 #
 # constructor + script tracker + config
@@ -635,7 +635,7 @@ dpets_haspet:
   type: procedure
   debug: false
   script:
-  - if <player.has_flag[dpets.pet.%1%]||false> || <player.has_permission[dpets.pet.%1%]||false> || <player.has_permission[dpets.pet.%1%].global||false> || <player.is_op||false> || true {
+  - if <player.has_flag[dpets.pet.%1%]||false> || <player.has_permission[dpets.pet.%1%]||false> || <player.has_permission[dpets.pet.%1%].global||false> || <player.is_op||false> {
     - determine true
     } else {
     - determine false
@@ -644,7 +644,7 @@ dpets_hasability:
   type: procedure
   debug: false
   script:
-  - if <player.has_flag[dpets.pet.%1%].abilities.%2%||false> || <player.has_flag[dpets.pet.%1%.abilities.*]||false> || <player.has_permission[dpets.pet.%1%.abilities.%2%]||false> || <player.has_permission[dpets.pet.%1%.abilities.%2%].global||false> || <player.is_op||false> || true {
+  - if <player.has_flag[dpets.pet.%1%.abilities.%2%]||false> || <player.has_flag[dpets.pet.%1%.abilities.*]||false> || <player.has_permission[dpets.pet.%1%.abilities.%2%]||false> || <player.has_permission[dpets.pet.%1%.abilities.%2%].global||false> || <player.is_op||false> {
     - determine true
     } else {
     - determine false
