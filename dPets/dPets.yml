@@ -3,7 +3,7 @@ dpets:
   name: dPets
   id: 104
   description: providing highly unique cosmetic-only pets for your server.
-  version: 13
+  version: 14
 #
 #
 # constructor + script tracker + config
@@ -440,11 +440,11 @@ dpets_pet_events:
       - run dpets_call_pet
       }
     on entity damaged:
-    - if <context.entity.has_flag[dpets.pet_owner]||false> {
+    - if <context.entity.as_npc.has_flag[dpets.pet_owner]||false> {
       - determine cancelled passively
       }
-    on player damages entity ignorecancelled:true:
-    - if <context.entity.flag[dpets.pet_owner]||null> != <player> queue clear
+    on player damages npc ignorecancelled:true:
+    - if <context.entity.as_npc.flag[dpets.pet_owner]||null> != <player> queue clear
     - define script <yaml[dpets_database].read[dpets.<player.flag[dpets.current_pet]||null>.script]||null>
     - define pet <player.flag[dpets.current_pet_uuid]||null>
     - define pet_id <player.flag[dpets.current_pet]||null>
@@ -456,8 +456,8 @@ dpets_pet_events:
     - if "<def[script].list_keys[actions].contains[on left click]||false>" {
       - inject <def[script]> "path:actions.on left click"
       }
-    on player right clicks entity:
-    - if <context.entity.flag[dpets.pet_owner]||null> != <player> queue clear
+    on player right clicks npc:
+    - if <context.entity.as_npc.flag[dpets.pet_owner]||null> != <player> queue clear
     - define script <yaml[dpets_database].read[dpets.<player.flag[dpets.current_pet]||null>.script]||null>
     - define pet <player.flag[dpets.current_pet_uuid]||null>
     - if <player.has_flag[dpets.cooldowns.right_click]> {
