@@ -3,7 +3,7 @@ IRCBOT_version:
   name: smallIRCbot
   id: 97
   description: a small IRC Bot
-  version: 6
+  version: 7
 IRCBOT:
   type: world
   debug: false
@@ -44,6 +44,15 @@ IRCBOT:
     - define channel <context.channel>
     - define usedcommand <context.message.substring[1,1]||<&lt>>
     - define args <context.message.after[<def[usedcommand]>].replace[<&chr[000D]>].split_by[<&sp>]||none>
+    - if <yaml[small_irc_bot_config].read[config.admins]||li@> !contains <context.speaker.replace[<&chr[000D]>]> {
+      - define is_op false
+      } else {
+      - define is_op true
+      }
+    - event "irccommand" context:args|<def[args].space_separated>|is_op|<def[is_op]> save:result
+    - if <entry[result].determinations> contains cancelled {
+      - queue clear
+      }
     - choose <def[args].get[1]||null>:
       - case status:
         - define message "Status<&co> online - TPS<&co> <server.recent_tps.get[1].as_money> - Players<&co> <server.list_online_players.size||0>"
@@ -55,14 +64,14 @@ IRCBOT:
       - case online:
         - define message "<server.list_online_players.formatted>"
       - case drs:
-        - if <yaml[small_irc_bot_config].read[config.admins]||li@> !contains <context.speaker.replace[<&chr[000D]>]> {
+        - if <def[is_op].not> {
           - define message "You can't do this! D<&co><&lt>"
           } else {
           - execute as_server "denizen reload scripts"
           - define message "Reloaded all denizen scripts."
           }
       - case ex:
-        - if <yaml[small_irc_bot_config].read[config.admins]||li@> !contains <context.speaker.replace[<&chr[000D]>]> {
+        - if <def[is_op].not> {
           - define message "You can't do this!"
           } else {
           - execute as_server "<def[args].get[2].to[500].space_separated||null>" save:result
@@ -99,6 +108,9 @@ IRCBOT:
           }
         - flag server "ircbot.message_for_%to%:->:<&lb><util.date.time.year>/<util.date.time.month>/<util.date.time.day> <util.date.time><&rb> %from% - <def[msg].escaped>"
         - define message "Your message has been saved."
+    - if <entry[result].determinations.filter[starts_with[message=]].is_empty.not> {
+      - define message <entry[result].determinations.filter[starts_with[message=]].get[1].after[message=]>
+      }
     - mark finish
     - if <def[message].exists.not> queue clear
     - irc message %channel% "<&%colour%>%message%"
