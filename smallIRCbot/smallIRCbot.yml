@@ -108,8 +108,8 @@ IRCBOT:
           }
         - flag server "ircbot.message_for_%to%:->:<&lb><util.date.time.year>/<util.date.time.month>/<util.date.time.day> <util.date.time><&rb> %from% - <def[msg].escaped>"
         - define message "Your message has been saved."
-    - if <entry[result].determinations.filter[starts_with[message=]].is_empty.not> {
-      - define message <entry[result].determinations.filter[starts_with[message=]].get[1].after[message=]>
+    - if <entry[result].determinations.filter[starts_with[message=]].as_list.is_empty.not||false> {
+      - define message <entry[result].determinations.filter[starts_with[message=]].as_list.get[1].after[message=]>
       }
     - mark finish
     - if <def[message].exists.not> queue clear
