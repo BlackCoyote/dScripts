@@ -87,7 +87,7 @@ IRCBOT:
           - goto finish
           }
         - if <yaml[small_irc_bot_config].read[config.chat_command.trigger_event]||false> {
-          - event "player chats" "context:message|<def[args].get[2].to[500].space_separated||>|prefix|<&8>I|irc|true|is_external|true" player:<def[player]>
+          - event "player chats" "context:message|<def[args].get[2].to[500].space_separated||>|prefix|I|irc|true|is_external|true" player:<def[player]>
           } else {
           - announce "<&lb>IRC<&rb><&pipe><&8><def[player].name><&co><&f> <def[args].get[2].to[500].space_separated||>"
           }
