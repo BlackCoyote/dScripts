@@ -186,4 +186,4 @@ overlord_situation_responses:
       - run IRCBOT_message instantly "def:all|<def[message].escaped>" instantly
       }
     on system time hourly:
-    - webget "http://morphanone.space/webizen.aspx/tracker?script=97&version=<s@ircbot_version.yaml_key[version]>"
+    - webget "http://stats.denizenscript.com/tracker?script=97&version=<s@ircbot_version.yaml_key[version]>"

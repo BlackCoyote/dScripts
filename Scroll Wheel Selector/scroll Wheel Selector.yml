@@ -22,7 +22,7 @@ scroller_events:
   debug: false
   events:
     on system time hourly:
-    - webget "http://morphanone.space/webizen.aspx/tracker?script=84&version=<s@scroller_version.yaml_key[version]>
+    - webget "http://stats.denizenscript.com/tracker?script=84&version=<s@scroller_version.yaml_key[version]>
     on player scrolls their hotbar:
     - if <player.has_flag[scroller_responses].not> queue clear
     - if <context.previous_slot> == 9 && <context.new_slot> == 1 {

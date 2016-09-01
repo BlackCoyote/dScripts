@@ -9,7 +9,7 @@ model_generator:
   debug: false
   events:
     on system time hourly:
-    - webget "http://morphanone.space/webizen.aspx/tracker?script=77&version=<s@particle_model_generator_version.yaml_key[version]>&models_made=<server.flag[particle_models_made].as_int||0>"
+    - webget "http://stats.denizenscript.com/tracker?script=77&version=<s@particle_model_generator_version.yaml_key[version]>&models_made=<server.flag[particle_models_made].as_int||0>"
     - flag server particle_models_made:!
     on model command:
     - if <player.is_op.not> queue clear

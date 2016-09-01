@@ -22,7 +22,7 @@ dpets_constructor:
     - if <player.is_op.not> queue clear
     - inject locally path:construct_database
     on system time hourly:
-    - webget "http://morphanone.space/webizen.aspx/tracker?script=104&version=<s@dpets.yaml_key[version]>"
+    - webget "http://stats.denizenscript.com/tracker?script=104&version=<s@dpets.yaml_key[version]>"
   construct_database:
   - inject locally path:check_config
   - if <yaml.list.contains[dpets_database]> {

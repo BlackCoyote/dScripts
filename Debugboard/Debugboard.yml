@@ -14,7 +14,7 @@ debugboard_events:
     - wait 2t
     - flag <player> debugboard_enabled:!
     on system time hourly:
-    - webget "http://morphanone.space/webizen.aspx/tracker?script=38&version=<s@debugboard_version.yaml_key[version]>"
+    - webget "http://stats.denizenscript.com/tracker?script=38&version=<s@debugboard_version.yaml_key[version]>"
 debugboard:
   debug: false
   type: command

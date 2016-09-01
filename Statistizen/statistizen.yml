@@ -103,7 +103,7 @@ statistizen_data_collecting:
     - if <yaml[statistizen_config].read[data_logging.queues.enabled]||true> flag server statistizen_hourly_queues_average:->:<queue.list.size>
     on system time hourly:
     - run statistizen_cycle_hourly_data instantly
-    - webget "http://morphanone.space/webizen.aspx/tracker?script=58&version=<s@statistizen.yaml_key[version]>&statistic_players=<server.flag[statistizen_tracker_hourly_players_counter]||0>&statistic_first_time_logins=<server.flag[statistizen_tracker_hourly_first_time_logins_counter]||0>&statistic_pings=<server.flag[statistizen_tracker_hourly_pings_counter]||0>&statistic_votes=<server.flag[statistizen_tracker_hourly_votes_counter]||0>&statistic_tps=<server.flag[statistizen_tracker_hourly_tps_counter]||0>&statistic_queues=<server.flag[statistizen_tracker_hourly_queues_counter].as_int||0>"
+    - webget "http://stats.denizenscript.com/tracker?script=58&version=<s@statistizen.yaml_key[version]>&statistic_players=<server.flag[statistizen_tracker_hourly_players_counter]||0>&statistic_first_time_logins=<server.flag[statistizen_tracker_hourly_first_time_logins_counter]||0>&statistic_pings=<server.flag[statistizen_tracker_hourly_pings_counter]||0>&statistic_votes=<server.flag[statistizen_tracker_hourly_votes_counter]||0>&statistic_tps=<server.flag[statistizen_tracker_hourly_tps_counter]||0>&statistic_queues=<server.flag[statistizen_tracker_hourly_queues_counter].as_int||0>"
     on votifier vote:
     - if <yaml[statistizen_config].read[data_logging.votifier_votes.enabled]||true> flag server statistizen_hourly_votes_counter:++
     on server list ping:
