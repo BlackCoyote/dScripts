@@ -3,7 +3,7 @@ securizen:
   name: Securizen
   id: 51
   description: logging and rolling back features for your entire server.
-  version: 11
+  version: 12
 #####
 # Events for handling the writing and saving of data.
 ####
@@ -11,19 +11,19 @@ securizen_core:
   type: world
   debug: false
   events:
-    on player breaks hanging:
+    on player breaks hanging priority:999 ignorecancelled:false:
     - if <context.cancelled||false> determine cancelled
     - run securizen_write_data def:entity_change|<player>|<context.hanging.location.block>|m@air|<context.hanging.describe>
-    on player places hanging:
+    on player places hanging priority:999 ignorecancelled:false:
     - if <context.cancelled||false> determine cancelled
     - run securizen_write_data def:entity_change|<player>|<context.hanging.location.block>|<context.hanging.describe>|m@air
-    on player breaks block priority:999:
+    on player breaks block  priority:999 ignorecancelled:false9:
     - if <context.cancelled||false> determine cancelled
     - run securizen_write_data def:block_change|<player>|<context.location>|m@air|<context.material>
-    on player places block priority:999:
+    on player places block priority:999 ignorecancelled:false:
     - if <context.cancelled||false> determine cancelled
     - run securizen_write_data def:block_change|<player>|<context.location>|<context.material>|<context.old_material>
-    on player empties bucket priority:999:
+    on player empties bucket priority:999 ignorecancelled:false:
     - if <context.cancelled||false> determine cancelled
     - if <context.item.material> == m@water_bucket {
       - define material m@stationary_water
@@ -33,15 +33,15 @@ securizen_core:
       - queue clear
       }
     - run securizen_write_data def:block_change|<player>|<context.relative>|%material%|<context.relative.material>
-    on player fills bucket priority:999:
+    on player fills bucket priority:999 ignorecancelled:false:
     - if <context.cancelled||false> determine cancelled
     - run securizen_write_data def:block_change|<player>|<context.location>|m@air
-    on entity explodes priority:999:
+    on entity explodes priority:999 ignorecancelled:false:
     - if <context.cancelled||false> determine cancelled
     - foreach <context.blocks> {
       - run securizen_write_data def:block_change|<context.entity.entity_type>|%value%|m@air|<def[value].material>
       }
-    on block burns priority:999:
+    on block burns priority:999 ignorecancelled:false:
     - if <context.cancelled||false> determine cancelled
     - run securizen_write_data def:block_change|FIRE|<context.location>|m@air|<context.material>
     on chunk unloads:
