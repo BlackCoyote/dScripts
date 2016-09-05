@@ -3,7 +3,7 @@ statistizen:
   name: Statistizen
   id: 58
   description: Providing useful statistics to help you develop your server.
-  version: 11
+  version: 12
 #
 #
 # config manager, handles the config file
@@ -40,6 +40,7 @@ statistizen_reload_config:
       - yaml id:statistizen_config set data_logging.first_time_logins.enabled:true
       - yaml id:statistizen_config set web_page.port:10123
       - yaml id:statistizen_config set web_page.pagename:statistics
+      - yaml id:statistizen_config set web_page.graphs.round_y_notches:true
       - yaml id:statistizen_config "savefile:/statistizen/config/config.yml"
       } else {
       - yaml "load:/statistizen/config/config.yml" id:statistizen_config
@@ -482,7 +483,7 @@ statistizen_show_data:
     - yaml id:statistizen_hourly_votes unload
 statistizen_web_page:
   type: world
-  debug: false
+  debug: true
   page: <!DOCTYPE html>
     <html>
         <head>
@@ -574,26 +575,50 @@ statistizen_web_page:
       - define page "<s@statistizen_web_page.yaml_key[page]>"
       - define page <def[page].escaped>
       - define highest <server.flag[statistics_daily_logins].split_by[,].numerical.last.as_int||1>
-      - define max <el@10.power[<def[highest].as_int.length>].as_int>
+      - if <yaml[statistizen_config].read[web_page.graphs.round_y_notches]||true> {
+        - define max <el@10.power[<def[highest].as_int.length>].as_int>
+        } else {
+        - define max <def[highest]>
+        }
       - define page <parse:<def[page].replace[&lt<&lc>].with[<&lt>].replace[<&rc>&gt].with[<&gt>].replace[&dot].with[.].replace[&amp].with[&].replace[&at].with[<&at>].replace[&lb].with[<&lb>].replace[&rb].with[<&rb>]>>
       - define page <def[page].unescaped>
       - define highest <server.flag[statistics_daily_logins].split_by[,].numerical.last.as_int||1>
-      - define max <el@10.power[<def[highest].as_int.length>].as_int>
+      - if <yaml[statistizen_config].read[web_page.graphs.round_y_notches]||true> {
+        - define max <el@10.power[<def[highest].as_int.length>].as_int>
+        } else {
+        - define max <def[highest]>
+        }
       - define page <def[page].replace[url1].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Online<&pc>20Players&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<def[max].div[10].max[1].as_int||1>&xnotches=1&xsteps=0.04166&max=<def[max]>&values=<server.flag[statistics_daily_logins]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
       - define highest <server.flag[statistics_daily_first_time_logins].split_by[,].numerical.last.as_int||1>
-      - define max <el@10.power[<def[highest].as_int.length>].as_int>
+      - if <yaml[statistizen_config].read[web_page.graphs.round_y_notches]||true> {
+        - define max <el@10.power[<def[highest].as_int.length>].as_int>
+        } else {
+        - define max <def[highest]>
+        }
       - define page <def[page].replace[url2].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=First<&pc>20Time<&pc>20Logins&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<def[max].div[10].max[1].as_int||1>&xnotches=1&xsteps=0.04166&max=<def[max]>&values=<server.flag[statistics_daily_first_time_logins]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
       - define highest <server.flag[statistics_daily_pings].split_by[,].numerical.last.as_int||1>
       - define max <el@10.power[<def[highest].as_int.length>].as_int>
       - define page <def[page].replace[url3].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Unique<&pc>20Pings&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<def[max].div[10].max[1].as_int||1>&xnotches=1&xsteps=0.04166&max=<def[max]>&values=<server.flag[statistics_daily_pings]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
       - define highest <server.flag[statistics_daily_TPS].split_by[,].numerical.last.as_int||1>
-      - define max <el@10.power[<def[highest].as_int.length>].as_int>
+      - if <yaml[statistizen_config].read[web_page.graphs.round_y_notches]||true> {
+        - define max <el@10.power[<def[highest].as_int.length>].as_int>
+        } else {
+        - define max <def[highest]>
+        }
       - define page <def[page].replace[url4].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Average<&pc>20TPS&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<def[max].div[10].max[1].as_int||1>&xnotches=1&xsteps=0.04166&max=<def[max]>&values=<server.flag[statistics_daily_TPS]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
       - define highest <server.flag[statistics_daily_queues].split_by[,].numerical.last.as_int||1>
-      - define max <el@10.power[<def[highest].as_int.length>].as_int>
+      - if <yaml[statistizen_config].read[web_page.graphs.round_y_notches]||true> {
+        - define max <el@10.power[<def[highest].as_int.length>].as_int>
+        } else {
+        - define max <def[highest]>
+        }
       - define page <def[page].replace[url5].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Average<&pc>20queues&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<def[max].div[10].max[1].as_int||1>&xnotches=1&xsteps=0.04166&max=<def[max]>&values=<server.flag[statistics_daily_queues]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
       - define highest <server.flag[statistics_daily_votes].split_by[,].numerical.last.as_int||1>
-      - define max <el@10.power[<def[highest].as_int.length>].as_int>
+      - if <yaml[statistizen_config].read[web_page.graphs.round_y_notches]||true> {
+        - define max <el@10.power[<def[highest].as_int.length>].as_int>
+        } else {
+        - define max <def[highest]>
+        }
       - define page <def[page].replace[url6].with[http<&co>//neo.mcmonkey.org/graph_api/graph_line.png?title=Votifier<&pc>20Votes&show_points=false&width=1000&Height=500&xtitle=Days&ytitle=Amount&ynotches=<def[max].div[10].max[1].as_int||1>&xnotches=1&xsteps=0.04166&max=<def[max]>&values=<server.flag[statistics_daily_votes]||0>&xend=10&xstart=0&match_xsteps=true&xlabels=%labels%]>
       - determine "<def[page]>"
       }
