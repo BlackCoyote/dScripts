@@ -1164,8 +1164,8 @@ towns_translations:
       withdrew-money: You withdrew <def[number]> from the town bank.
       invalid-rule: You must specify a valid rule! Valid rules are <def[rulelist]>
       invalid-rank: You must specify a valid rank! Valid ranks are <def[ranklist]>
-      outline-enabled: You will no longer see the outline of chunks when entering them.
-      outline-disabled: You will now see the outline of chunks when entering them.
+      outline-enabled: You will now see the outline of chunks when entering them.
+      outline-disabled: You will no longer see the outline of chunks when entering them.
       invalid-center-chunk: You can only set your town center within your town boundaries.
       invalid-spawnpoint-location: You can only set a spawnpoint within your town boundaries.
       invalid-type-for-spawnpoint: You can only set a spawnpoint for a town or outpost! Not for <def[type]>!
