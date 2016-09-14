@@ -1191,7 +1191,7 @@ towns_translations:
       chunk_unclaim: <def[playername]> unclaimed a chunk of land!
       chunk-reward-unclaim: Your town has lost a chunk of land!
       rule-change: <def[player].name> changed the <def[rule]> rule to <def[state]>.
-      forced-rule-change: The <def[rule]> rule in your town was set to <ef[state]>.
+      forced-rule-change: The <def[rule]> rule in your town was set to <def[state]>.
       rank-change: <def[playername]> has been assigned the <def[rank]> rank.
 ########################
 #
