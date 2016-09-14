@@ -689,6 +689,7 @@ towns_disband_town:
     - define chunklist <proc[towns_get_chunks].context[<def[town]>].parse[replace[/].with[,].as_chunk]>
     - if <yaml.list> contains towns_town_<def[town]> yaml unload id:towns_town_<def[town]>
     - if <server.list_files[/towns/town_saves]> contains "<def[town]>.yml" adjust server "delete_file:/towns/town_saves/<def[town]>.yml"
+    - define townname <proc[towns_get_name].context[<def[town]>]>
     - announce "<parse:<proc[towns_get_translation].context[town-disbanded]>>" format:towns_format1
     - foreach <def[chunklist]>:
       - run towns_update_dynmap_chunk def:<def[value]>
@@ -1174,9 +1175,9 @@ towns_translations:
       spawnpoint-updated: Your town spawnpoint has been updated.
       # executable messages
       town-created: <def[playername]> created the town of <def[townname]>!
-      town-disbanded: The town of <def[name]> has fallen to ruins!
+      town-disbanded: The town of <def[townname]> has fallen to ruins!
       player-joined-town: <def[playername]> joined your town!
-      player-joined-town-personal: You joined the town of <proc[towns_get_name].context[<def[town]>]>!
+      player-joined-town-personal: You joined the town of <def[townname]>!
       player-left-town: <def[playername]> left your town!
       player-left-town-personal: You left the town of <def[townname]>!
       player-kicked: <def[playername]> was kicked from your town!
