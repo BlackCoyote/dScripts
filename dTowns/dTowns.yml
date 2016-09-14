@@ -183,32 +183,32 @@ towns_command_handler:
         - inject locally path:help
   help:
     - define c <script.yaml_key[usage]>
-    - narrate "%c% help <&0>-<&7> <proc[towns_get_translation].context[command-help-info]>" format:towns_format1
-    - narrate "%c% info (player)<&0>-<&7> <proc[towns_get_translation].context[command-info-info]>" format:towns_format1
-    - narrate "%c% list<&0>-<&7> <proc[towns_get_translation].context[command-list-info]>" format:towns_format1
-    - narrate "%c% create (name) <&0>-<&7> <proc[towns_get_translation].context[command-create-info]>" format:towns_format1
-    - narrate "%c% teleport <&0>-<&7> <proc[towns_get_translation].context[command-teleport-info]>" format:towns_format1
-    - narrate "%c% setspawn (town/outpost) <&0>-<&7> <proc[towns_get_translation].context[command-setspawn-info]>" format:towns_format1
-    - narrate "%c% center <&0>-<&7> <proc[towns_get_translation].context[command-center-info]>" format:towns_format1
-    - narrate "%c% teleport <&0>-<&7> <proc[towns_get_translation].context[command-teleport-info]>" format:towns_format1
-    - narrate "%c% invite (player) <&0>-<&7> <proc[towns_get_translation].context[command-invite-info]>" format:towns_format1
-    - narrate "%c% accept <&0>-<&7> <proc[towns_get_translation].context[command-accept-info]>" format:towns_format1
-    - narrate "%c% leave <&0>-<&7> <proc[towns_get_translation].context[command-leave-info]>" format:towns_format1
-    - narrate "%c% kick (player) <&0>-<&7> <proc[towns_get_translation].context[command-kick-info]>" format:towns_format1
-    - narrate "%c% deposit (<&ns>) <&0>-<&7> <proc[towns_get_translation].context[command-deposit-info]>" format:towns_format1
-    - narrate "%c% withdraw (<&ns>) <&0>-<&7> <proc[towns_get_translation].context[command-withdraw-info]>" format:towns_format1
-    - narrate "%c% toggle (pistons/pvp/titlescreen) <&0>-<&7> <proc[towns_get_translation].context[command-toggle-info]>" format:towns_format1
-    - narrate "%c% rank (player) (rank) <&0>-<&7> <proc[towns_get_translation].context[command-rank-info]>" format:towns_format1
-    - narrate "%c% claim <&0>-<&7> <proc[towns_get_translation].context[command-claim-info]>" format:towns_format1
-    - narrate "%c% outpost <&0>-<&7> <proc[towns_get_translation].context[command-outpost-info]>" format:towns_format1
-    - narrate "%c% unclaim <&0>-<&7> <proc[towns_get_translation].context[command-unclaim-info]>" format:towns_format1
-    - narrate "%c% disband <&0>-<&7> <proc[towns_get_translation].context[command-disband-info]>" format:towns_format1
-    - narrate "%c% rename (name) <&0>-<&7> <proc[towns_get_translation].context[command-rename-info]>" format:towns_format1
-    - narrate "%c% map <&0>-<&7> <proc[towns_get_translation].context[command-map-info]>" format:towns_format1
-    - narrate "%c% outline <&0>-<&7> <proc[towns_get_translation].context[command-outline-info]>" format:towns_format1
+    - narrate "%c% help <&0>-<&7> <parse:<proc[towns_get_translation].context[command-help-info]>>" format:towns_format1
+    - narrate "%c% info (player)<&0>-<&7> <parse:<proc[towns_get_translation].context[command-info-info]>>" format:towns_format1
+    - narrate "%c% list<&0>-<&7> <parse:<proc[towns_get_translation].context[command-list-info]>>" format:towns_format1
+    - narrate "%c% create (name) <&0>-<&7> <parse:<proc[towns_get_translation].context[command-create-info]>>" format:towns_format1
+    - narrate "%c% teleport <&0>-<&7> <parse:<proc[towns_get_translation].context[command-teleport-info]>>" format:towns_format1
+    - narrate "%c% setspawn (town/outpost) <&0>-<&7> <parse:<proc[towns_get_translation].context[command-setspawn-info]>>" format:towns_format1
+    - narrate "%c% center <&0>-<&7> <parse:<proc[towns_get_translation].context[command-center-info]>>" format:towns_format1
+    - narrate "%c% teleport <&0>-<&7> <parse:<proc[towns_get_translation].context[command-teleport-info]>>" format:towns_format1
+    - narrate "%c% invite (player) <&0>-<&7> <parse:<proc[towns_get_translation].context[command-invite-info]>>" format:towns_format1
+    - narrate "%c% accept <&0>-<&7> <parse:<proc[towns_get_translation].context[command-accept-info]>>" format:towns_format1
+    - narrate "%c% leave <&0>-<&7> <parse:<proc[towns_get_translation].context[command-leave-info]>>" format:towns_format1
+    - narrate "%c% kick (player) <&0>-<&7> <parse:<proc[towns_get_translation].context[command-kick-info]>>" format:towns_format1
+    - narrate "%c% deposit (<&ns>) <&0>-<&7> <parse:<proc[towns_get_translation].context[command-deposit-info]>>" format:towns_format1
+    - narrate "%c% withdraw (<&ns>) <&0>-<&7> <parse:<proc[towns_get_translation].context[command-withdraw-info]>>" format:towns_format1
+    - narrate "%c% toggle (pistons/pvp/titlescreen) <&0>-<&7> <parse:<proc[towns_get_translation].context[command-toggle-info]>>" format:towns_format1
+    - narrate "%c% rank (player) (rank) <&0>-<&7> <parse:<proc[towns_get_translation].context[command-rank-info]>>" format:towns_format1
+    - narrate "%c% claim <&0>-<&7> <parse:<proc[towns_get_translation].context[command-claim-info]>>" format:towns_format1
+    - narrate "%c% outpost <&0>-<&7> <parse:<proc[towns_get_translation].context[command-outpost-info]>>" format:towns_format1
+    - narrate "%c% unclaim <&0>-<&7> <parse:<proc[towns_get_translation].context[command-unclaim-info]>>" format:towns_format1
+    - narrate "%c% disband <&0>-<&7> <parse:<proc[towns_get_translation].context[command-disband-info]>>" format:towns_format1
+    - narrate "%c% rename (name) <&0>-<&7> <parse:<proc[towns_get_translation].context[command-rename-info]>>" format:towns_format1
+    - narrate "%c% map <&0>-<&7> <parse:<proc[towns_get_translation].context[command-map-info]>>" format:towns_format1
+    - narrate "%c% outline <&0>-<&7> <parse:<proc[towns_get_translation].context[command-outline-info]>>" format:towns_format1
   create:
     - if <proc[towns_get_town]> != null {
-      - narrate "<&c><proc[towns_get_translation].context[already-in-town]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[already-in-town]>>" format:towns_format1
       - queue clear
       }
     - define cost <yaml[towns_config].read[towns.creation.creation_cost]||100>
@@ -217,12 +217,12 @@ towns_command_handler:
       - queue clear
       }
     - if <player.has_permission[towns.town.create].not||true> {
-      - narrate "<&c><proc[towns_get_translation].context[not-allowed-create]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[not-allowed-create]>>" format:towns_format1
       - queue clear
       }
     - define name <context.raw_args.after[create<&sp>]>
     - if <def[name]> == null || <def[name]> == "" {
-      - narrate "<&c><proc[towns_get_translation].context[no-name-specified]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[no-name-specified]>>" format:towns_format1
       - queue clear
       }
     - take money qty:<def[cost]>
@@ -230,27 +230,27 @@ towns_command_handler:
   disband:
     - define town <proc[towns_get_town]>
     - if <def[town]> == null {
-      - narrate "<&c><proc[towns_get_translation].context[not-in-town]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[not-in-town]>>" format:towns_format1
       - queue clear
       }
     - if <proc[towns_get_rank]> != owner {
-      - narrate "<&c><proc[towns_get_translation].context[not-owner-of-town]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[not-owner-of-town]>>" format:towns_format1
       - queue clear
       }
     - run towns_disband_town def:<def[town]>
   invite:
     - define town <proc[towns_get_town]>
     - if <def[town]> == null {
-      - narrate "<&c><proc[towns_get_translation].context[not-in-town]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[not-in-town]>>" format:towns_format1
       - queue clear
       }
     - if li@owner|assistant !contains <proc[towns_get_rank]> {
-      - narrate "<&c><proc[towns_get_translation].context[insufficient-rank]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[insufficient-rank]>>" format:towns_format1
       - queue clear
       }
     - define target <server.match_player[<context.args.get[2]>]||null>
     - if <def[target]> == null {
-      - narrate "<&c><proc[towns_get_translation].context[invalid-player-specified]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[invalid-player-specified]>>" format:towns_format1
       - queue clear
       }
     - if <proc[towns_get_town].context[<def[target]>]> != null {
@@ -266,44 +266,44 @@ towns_command_handler:
     - narrate "<parse:<proc[towns_get_translation].context[invitation-recieved]>>" targets:<def[target]> format:towns_format1
   accept:
     - if <player.has_flag[towns.invited_to].not> {
-      - narrate "<&c><proc[towns_get_translation].context[no-invitations]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[no-invitations]>>" format:towns_format1
       - queue clear
       }
     - if <proc[towns_get_town]> != null {
-      - narrate "<&c><proc[towns_get_translation].context[already-in-town]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[already-in-town]>>" format:towns_format1
       - queue clear
       }
     - define town <player.flag[towns.invited_to]||null>
     - if <def[town]> == null {
-      - narrate "<&c><proc[towns_get_translation].context[invalid-invitation]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[invalid-invitation]>>" format:towns_format1
       - queue clear
       }
     - run towns_add_player def:<def[town]>|<player>
   leave:
     - define town <proc[towns_get_town]>
     - if <def[town]> == null {
-      - narrate "<&c><proc[towns_get_translation].context[not-in-town]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[not-in-town]>>" format:towns_format1
       - queue clear
       }
     - if li@owner contains <proc[towns_get_rank]> {
       - define command <script.yaml_key[usage]>
-      - narrate "<&c><proc[towns_get_translation].context[owner-cant-leave]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[owner-cant-leave]>>" format:towns_format1
       - queue clear
       }
     - run towns_remove_player def:<def[town]>|<player>
   kick:
     - define town <proc[towns_get_town]>
     - if <def[town]> == null {
-      - narrate "<&c><proc[towns_get_translation].context[not-in-town]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[not-in-town]>>" format:towns_format1
       - queue clear
       }
     - if li@owner|assistant !contains <proc[towns_get_rank]> {
-      - narrate "<&c><proc[towns_get_translation].context[insufficient-rank]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[insufficient-rank]>>" format:towns_format1
       - queue clear
       }
     - define target <server.match_player[<context.args.get[2]>]||null>
     - if <def[target]> == null {
-      - narrate "<&c><proc[towns_get_translation].context[invalid-player-specified]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[invalid-player-specified]>>" format:towns_format1
       - queue clear
       }
     - define playername <def[target].name>
@@ -315,27 +315,27 @@ towns_command_handler:
   rename:
     - define town <proc[towns_get_town]>
     - if <def[town]> == null {
-      - narrate "<&c><proc[towns_get_translation].context[not-in-town]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[not-in-town]>>" format:towns_format1
       - queue clear
       }
     - if <proc[towns_get_rank]> != owner {
-      - narrate "<&c><proc[towns_get_translation].context[not-owner-of-town]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[not-owner-of-town]>>" format:towns_format1
       - queue clear
       }
     - define name <context.raw_args.after[rename<&sp>]>
     - if <def[name]> == null || <def[name]> == "" {
-      - narrate "<&c><proc[towns_get_translation].context[must-specify-townname]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[must-specify-townname]>>" format:towns_format1
       - queue clear
       }
     - run towns_rename_town def:<def[town]>|<def[name].escaped>
   claim:
     - define town <proc[towns_get_town]>
     - if <def[town]> == null {
-      - narrate "<&c><proc[towns_get_translation].context[not-in-town]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[not-in-town]>>" format:towns_format1
       - queue clear
       }
     - if li@owner|assistant !contains <proc[towns_get_rank]> {
-      - narrate "<&c><proc[towns_get_translation].context[insufficient-rank]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[insufficient-rank]>>" format:towns_format1
       - queue clear
       }
     - if <proc[towns_get_bank_money].context[<def[town]>]> < <yaml[towns_config].read[towns.claiming.claiming_cost]||100> {
@@ -351,16 +351,16 @@ towns_command_handler:
       }
     - define chunk <player.location.chunk>
     - if <def[currentchunks]> contains <proc[towns_format_chunk_to_save].context[<def[chunk]>]> {
-      - narrate "<&c><proc[towns_get_translation].context[chunk-already-claimed-by-you]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[chunk-already-claimed-by-you]>>" format:towns_format1
       - queue clear
       }
     - define viablechunks li@<proc[towns_format_chunk_to_save].context[<def[chunk].add[1,0]>]>|<proc[towns_format_chunk_to_save].context[<def[chunk].add[-1,0]>]>|<proc[towns_format_chunk_to_save].context[<def[chunk].add[0,1]>]>|<proc[towns_format_chunk_to_save].context[<def[chunk].add[0,-1]>]>
     - if <def[currentchunks].contains_any[<def[viablechunks]>].not> && <def[currentchunks].size> > 0 {
-      - narrate "<&c><proc[towns_get_translation].context[chunk-not-attached]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[chunk-not-attached]>>" format:towns_format1
       - queue clear
       }
     - if <server.list_notables[cuboids].filter[intersects[<def[chunk].cuboid>]].size> > 0 || <def[chunk].cuboid.regions.size||0> > 0 {
-      - narrate "<&c><proc[towns_get_translation].context[chunk-already-claimed-by-other]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[chunk-already-claimed-by-other]>>" format:towns_format1
       - queue clear
       }
     - yaml id:towns_town_<def[town]> set town.bank.money:-:<yaml[towns_config].read[towns.claiming.claiming_cost]||100>
@@ -368,11 +368,11 @@ towns_command_handler:
   outpost:
     - define town <proc[towns_get_town]>
     - if <def[town]> == null {
-      - narrate "<&c><proc[towns_get_translation].context[not-in-town]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[not-in-town]>>" format:towns_format1
       - queue clear
       }
     - if li@owner|assistant !contains <proc[towns_get_rank]> {
-      - narrate "<&c><proc[towns_get_translation].context[insufficient-rank]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[insufficient-rank]>>" format:towns_format1
       - queue clear
       }
     - if <proc[towns_get_bank_money].context[<def[town]>]> < <yaml[towns_config].read[towns.claiming.outpost_claiming_cost]||1000> {
@@ -387,12 +387,12 @@ towns_command_handler:
       - queue clear
       }
     - if <proc[towns_get_max_outposts].context[<def[town]>]> <= <proc[towns_get_outposts].context[<def[town]>].size> {
-      - narrate "<&c><proc[towns_get_translation].context[max-outposts]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[max-outposts]>>" format:towns_format1
       - queue clear
       }
     - define chunk <player.location.chunk>
     - if <def[currentchunks]> contains <proc[towns_format_chunk_to_save].context[<def[chunk]>]> {
-      - narrate "<&c><proc[towns_get_translation].context[chunk-already-claimed-by-you]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[chunk-already-claimed-by-you]>>" format:towns_format1
       - queue clear
       }
     - define viablechunks li@<proc[towns_format_chunk_to_save].context[<def[chunk].add[1,0]>]>|<proc[towns_format_chunk_to_save].context[<def[chunk].add[-1,0]>]>|<proc[towns_format_chunk_to_save].context[<def[chunk].add[0,1]>]>|<proc[towns_format_chunk_to_save].context[<def[chunk].add[0,-1]>]>
@@ -401,7 +401,7 @@ towns_command_handler:
       # - queue clear
       # }
     - if <server.list_notables[cuboids].filter[intersects[<def[chunk].cuboid>]].size> > 0 || <def[chunk].cuboid.regions.size||0> > 0 {
-      - narrate "<&c><proc[towns_get_translation].context[chunk-already-claimed-by-other]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[chunk-already-claimed-by-other]>>" format:towns_format1
       - queue clear
       }
     - yaml id:towns_town_<def[town]> set town.bank.money:-:<yaml[towns_config].read[towns.claiming.outpost_claiming_cost]||1000>
@@ -409,42 +409,42 @@ towns_command_handler:
   unclaim:
     - define town <proc[towns_get_town]>
     - if <def[town]> == null {
-      - narrate "<&c><proc[towns_get_translation].context[not-in-town]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[not-in-town]>>" format:towns_format1
       - queue clear
       }
     - if li@owner|assistant !contains <proc[towns_get_rank]> {
-      - narrate "<&c><proc[towns_get_translation].context[insufficient-rank]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[insufficient-rank]>>" format:towns_format1
       - queue clear
       }
     - define currentchunks <proc[towns_get_chunks].context[<def[town]>]>
     - if <def[currentchunks].size> <= 0 {
-      - narrate "<&c><proc[towns_get_translation].context[has-no-chunks]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[has-no-chunks]>>" format:towns_format1
       - queue clear
       }
     - define chunk <player.location.chunk>
     - if <def[currentchunks]> !contains <proc[towns_format_chunk_to_save].context[<def[chunk]>]> {
-      - narrate "<&c><proc[towns_get_translation].context[chunk-not-yours]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[chunk-not-yours]>>" format:towns_format1
       - queue clear
       }
     - define is_essential <proc[towns_chunk_is_essential].context[<def[chunk]>]>
     - if <def[is_essential]> {
-      - narrate "<&c><proc[towns_get_translation].context[chunk-is-essential]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[chunk-is-essential]>>" format:towns_format1
       - queue clear
       }
     - run towns_unclaim_chunk def:<def[town]>|<def[chunk]>|<player>
   deposit:
     - define town <proc[towns_get_town]>
     - if <def[town]> == null {
-      - narrate "<&c><proc[towns_get_translation].context[not-in-town]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[not-in-town]>>" format:towns_format1
       - queue clear
       }
     - define amount <context.args.get[2].as_int||null>
     - if <def[amount]> == null {
-      - narrate "<&c><proc[towns_get_translation].context[must-specify-valid-number]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[must-specify-valid-number]>>" format:towns_format1
       - queue clear
       }
     - if <player.money> < <def[amount]> {
-      - narrate "<&c><proc[towns_get_translation].context[not-enough-money-player]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[not-enough-money-player]>>" format:towns_format1
       - queue clear
       }
     - take money qty:<def[amount]>
@@ -452,20 +452,20 @@ towns_command_handler:
   withdraw:
     - define town <proc[towns_get_town]>
     - if <def[town]> == null {
-      - narrate "<&c><proc[towns_get_translation].context[not-in-town]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[not-in-town]>>" format:towns_format1
       - queue clear
       }
     - if li@owner !contains <proc[towns_get_rank]> {
-      - narrate "<&c><proc[towns_get_translation].context[insufficient-rank]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[insufficient-rank]>>" format:towns_format1
       - queue clear
       }
     - define amount <context.args.get[2].as_int||null>
     - if <def[amount]> == null {
-      - narrate "<&c><proc[towns_get_translation].context[must-specify-valid-number]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[must-specify-valid-number]>>" format:towns_format1
       - queue clear
       }
     - if <proc[towns_get_bank_money].context[<def[town]>]> < <def[amount]> {
-      - narrate "<&c><proc[towns_get_translation].context[not-enough-money]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[not-enough-money]>>" format:towns_format1
       - queue clear
       }
     - give money qty:<def[amount]>
@@ -475,11 +475,11 @@ towns_command_handler:
   toggle:
     - define town <proc[towns_get_town]>
     - if <def[town]> == null {
-      - narrate "<&c><proc[towns_get_translation].context[not-in-town]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[not-in-town]>>" format:towns_format1
       - queue clear
       }
     - if li@owner|assistant !contains <proc[towns_get_rank]> {
-      - narrate "<&c><proc[towns_get_translation].context[insufficient-rank]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[insufficient-rank]>>" format:towns_format1
       - queue clear
       }
     - define rule <context.args.get[2]||null>
@@ -494,16 +494,16 @@ towns_command_handler:
   rank:
     - define town <proc[towns_get_town]>
     - if <def[town]> == null {
-      - narrate "<&c><proc[towns_get_translation].context[not-in-town]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[not-in-town]>>" format:towns_format1
       - queue clear
       }
     - if li@owner !contains <proc[towns_get_rank]> {
-      - narrate "<&c><proc[towns_get_translation].context[insufficient-rank]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[insufficient-rank]>>" format:towns_format1
       - queue clear
       }
     - define target <server.match_offline_player[<context.args.get[2]||null>]||null>
     - if <def[target]> == null {
-      - narrate "<&c><proc[towns_get_translation].context[inexistant-player-specified]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[inexistant-player-specified]>>" format:towns_format1
       - queue clear
       }
     - if <proc[towns_get_town].context[<def[target]>]> != <def[town]> {
@@ -521,28 +521,28 @@ towns_command_handler:
   outline:
     - define town <proc[towns_get_town]>
     - if <def[town]> == null {
-      - narrate "<&c><proc[towns_get_translation].context[not-in-town]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[not-in-town]>>" format:towns_format1
       - queue clear
       }
     - if <player.has_flag[towns.show_outline]> {
       - flag <player> "towns.show_outline:!"
-      - narrate "<&c><proc[towns_get_translation].context[outline-enabled]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[outline-enabled]>>" format:towns_format1
       } else {
       - flag <player> "towns.show_outline:true" duration:5m
-      - narrate "<&c><proc[towns_get_translation].context[outline-disabled]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[outline-disabled]>>" format:towns_format1
       }
   setspawn:
     - define town <proc[towns_get_town]>
     - if <def[town]> == null {
-      - narrate "<&c><proc[towns_get_translation].context[not-in-town]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[not-in-town]>>" format:towns_format1
       - queue clear
       }
     - if li@owner|assistant !contains <proc[towns_get_rank]> {
-      - narrate "<&c><proc[towns_get_translation].context[insufficient-rank]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[insufficient-rank]>>" format:towns_format1
       - queue clear
       }
     - if <proc[towns_get_town_from_chunk].context[<player.location.chunk>]> != <def[town]> {
-      - narrate "<&c><proc[towns_get_translation].context[invalid-spawnpoint-location]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[invalid-spawnpoint-location]>>" format:towns_format1
       - queue clear
       }
     - define type <context.args.get[2]||town>
@@ -553,40 +553,40 @@ towns_command_handler:
     - choose <def[type]>:
       - case town:
         - yaml id:towns_town_<def[town]> set town.spawnpoint:<player.location.escaped>
-        - narrate "<proc[towns_get_translation].context[spawnpoint-updated]>" format:towns_format1
+        - narrate "<parse:<proc[towns_get_translation].context[spawnpoint-updated]>>" format:towns_format1
         - run towns_update_dynmap_spawnpoint def:<def[town]>
       - case outpost:
         - if <proc[towns_get_chunk_type].context[<player.location.chunk>]> != outpost {
-          - narrate "<&c><proc[towns_get_translation].context[not-outpost-chunk]>" format:towns_format1
+          - narrate "<&c><parse:<proc[towns_get_translation].context[not-outpost-chunk]>>" format:towns_format1
           - queue clear
           }
         - yaml id:towns_town_<def[town]> set town.chunks.<proc[towns_format_chunk_to_save].context[<player.location.chunk>]>.spawnpoint:<player.location.escaped>
-        - narrate "<proc[towns_get_translation].context[spawnpoint-updated]>" format:towns_format1
+        - narrate "<parse:<proc[towns_get_translation].context[spawnpoint-updated]>>" format:towns_format1
   teleport:
     - if <player.is_op> {
       - if <context.args.get[2]||null> != null {
         - define player <server.match_offline_player[<context.args.get[2]||null>]||null>
         - if <def[player]> == null {
-          - narrate "<&c><proc[towns_get_translation].context[invalid-player-specified]>" format:towns_format1
+          - narrate "<&c><parse:<proc[towns_get_translation].context[invalid-player-specified]>>" format:towns_format1
           - queue clear
           } else {
           - define town <proc[towns_get_town].context[<def[player]>]>
           - if <def[town]> == null {
-            - narrate "<&c><proc[towns_get_translation].context[player-not-in-town]>" format:towns_format1
+            - narrate "<&c><parse:<proc[towns_get_translation].context[player-not-in-town]>>" format:towns_format1
             - queue clear
             }
           }
         } else {
         - define town <proc[towns_get_town]>
         - if <def[town]> == null {
-          - narrate "<&c><proc[towns_get_translation].context[not-in-town]>" format:towns_format1
+          - narrate "<&c><parse:<proc[towns_get_translation].context[not-in-town]>>" format:towns_format1
           - queue clear
           }
         }
       } else {
       - define town <proc[towns_get_town]>
       - if <def[town]> == null {
-        - narrate "<&c><proc[towns_get_translation].context[not-in-town]>" format:towns_format1
+        - narrate "<&c><parse:<proc[towns_get_translation].context[not-in-town]>>" format:towns_format1
         - queue clear
         }
       }
@@ -595,16 +595,16 @@ towns_command_handler:
   center:
     - define town <proc[towns_get_town]>
     - if <def[town]> == null {
-      - narrate "<&c><proc[towns_get_translation].context[not-in-town]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[not-in-town]>>" format:towns_format1
       - queue clear
       }
     - if li@owner|assistant !contains <proc[towns_get_rank]> {
-      - narrate "<&c><proc[towns_get_translation].context[insufficient-rank]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[insufficient-rank]>>" format:towns_format1
       - queue clear
       }
     - define chunk <player.location.chunk>
     - if <proc[towns_get_town_from_chunk].context[<def[chunk]>]> != <def[town]> {
-      - narrate "<&c><proc[towns_get_translation].context[invalid-center-chunk]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[invalid-center-chunk]>>" format:towns_format1
       - queue clear
       }
     - define type <proc[towns_get_chunk_type].context[<def[chunk]>]>
@@ -628,15 +628,15 @@ towns_command_handler:
       - define target <player>
       }
     - if <def[target]> == null {
-      - narrate "<&c><proc[towns_get_translation].context[inexistant-player-specified]>" format:towns_format1
+      - narrate "<&c><parse:<proc[towns_get_translation].context[inexistant-player-specified]>>" format:towns_format1
       - queue clear
       }
     - define town <proc[towns_get_town].context[<def[target]>]>
     - if <def[town]> == null {
       - if <def[target]> == <player> {
-        - narrate "<&c><proc[towns_get_translation].context[not-in-town]>" format:towns_format1
+        - narrate "<&c><parse:<proc[towns_get_translation].context[not-in-town]>>" format:towns_format1
         } else {
-        - narrate "<&c><proc[towns_get_translation].context[player-not-in-town]>" format:towns_format1
+        - narrate "<&c><parse:<proc[towns_get_translation].context[player-not-in-town]>>" format:towns_format1
         }
       - queue clear
       }
@@ -1194,6 +1194,93 @@ towns_translations:
       rule-change: <def[player].name> changed the <def[rule]> rule to <def[state]>.
       forced-rule-change: The <def[rule]> rule in your town was set to <def[state]>.
       rank-change: <def[playername]> has been assigned the <def[rank]> rank.
+    spanish:
+      # command help
+      command-help-info: Muestra esta p<&chr[00E1]>gina.
+      command-info-info: Muestra informaci<&chr[00F3]>n sobre tu ciudad.
+      command-list-info: Muestra una lista de las ciudades existentes.
+      command-create-info: Crea una nueva ciudad.
+      command-teleport-info: Abre el men<&chr[00FA]> de teletransporte.
+      command-setspawn-info: Administra puntos de aparici<&chr[00F3]>n en tu ciudad.
+      command-center-info: Fija el chunk central de tu ciudad.
+      command-teleport-info: Te permite teletransportarte a varios lugares.
+      command-invite-info: Invita a un jugador a tu ciudad.
+      command-accept-info: Acepta tu invitaci<&chr[00F3]>n pendiente.
+      command-leave-info: Te elimina de tu ciudad actual.
+      command-leave-info: Expulsa a un jugador de tu ciudad.
+      command-deposit-info: Deposita dinero en tu ciudad.
+      command-withdraw-info: Extrae dinero de tu ciudad.
+      command-toggle-info: Cambia una regla determinada de tu ciudad.
+      command-rank-info: Cambia el rango de un jugador.
+      command-claim-info: Reclama el chunk en el que te encuentras.
+      command-outpost-info: Reclama un puesto avanzado en tu posici<&chr[00F3]>n.
+      command-unclaim-info: Libera el chunk en el que te encuentras.
+      command-disband-info: Disuelve tu ciudad.
+      command-rename-info: Cambia el nombre de tu ciudad.
+      command-map-info: Muestra un mapa de tu zona actual.
+      command-outline-info: Muestra los bordes del chunk de una ciudad.
+      # command response
+      already-in-town: <&chr[00A1]>Ya est<&chr[00E1]>s en una ciudad!
+      not-enough-money-to-create: No tienes suficiente dinero para crear una ciudad. Necesitas $<def[cost]>.
+      not-allowed-create: No tienes permiso para crear una ciudad.
+      no-name-specified: <&chr[00A1]>Debes especificar un nombre para tu ciudad!
+      not-in-town: <&chr[00A1]>No est<&chr[00E1]>s en ninguna ciudad!
+      player-not-in-town: <&chr[00A1]>Este jugador no est<&chr[00E1]> en ninguna ciudad!
+      not-owner-of-town: No eres el due<&chr[00F1]>o de esta ciudad.
+      insufficient-rank: No tienes el rango adecuado para hacer esto.
+      invalid-player-specified: <&chr[00A1]>Este jugador no est<&chr[00E1]> conectado!
+      inexistant-player-specified: <&chr[00A1]>Este jugador no existe!
+      target-player-already-in-town: <&chr[00A1]><def[playername]> ya est<&chr[00E1]> en una ciudad!
+      invited-player: Has invitado a <def[playername]> a tu ciudad.
+      invitation-recieved: <&chr[00A1]><def[playername]> te ha invitado a la ciudad de <def[townname]>!<&nl><&chr[00A1]>Escribe '<def[command]> accept' para aceptar la invitaci<&chr[00F3]>n!
+      no-invitations: <&chr[00A1]>No tienes invitaciones que aceptar!
+      invalid-invitation: La ciudad a la que has sido invitado ya no existe.
+      owner-cant-leave: <&chr[00A1]>Eres el due<&chr[00F1]>o de esta ciudad! No puedes abandonarla. En vez de esto, utiliza '<def[command]> disband'.
+      player-not-in-your-town: <def[playername]> no est<&chr[00E1]> en tu ciudad.
+      must-specify-townname: <&chr[00A1]>Debes especificar un nombre para tu ciudad!
+      not-enough-money: Tu ciudad no tiene suficiente dinero en el banco.
+      not-enough-money-player: No tienes tanto dinero.
+      max-chunks: Tu ciudad ya se encuentra al l<&chr[00ED]>mite de tama<&chr[00F1]>o de <def[max]> chunks.
+      max-outposts: Tu ciudad no puede tener m<&chr[00E1]>s puestos avanzados.
+      chunk-already-claimed-by-you: Este chunk ya pertenece a tu ciudad.
+      chunk-already-claimed-by-other: <&chr[00A1]>Este chunk ya est<&chr[00E1]> ocupado!
+      chunk-not-attached: S<&chr[00F3]>lo puedes reclamar tierra que rodee a tu ciudad.
+      has-no-chunks: Tu ciudad no tiene ning<&chr[00FA]>n chunk.
+      chunk-not-yours: Este chunk no pertenece a tu ciudad.
+      chunk-is-essential: No puedes liberar este chunk porque los chunks circundantes no est<&chr[00E1]>n conectados a ning<&chr[00FA]>n otro puesto avanzado o chunk central.
+      must-specify-valid-number: <&chr[00A1]>Debes espedificar una cantidad v<&chr[00E1]>lida!
+      withdrew-money: Has extra<&chr[00ED]>do <def[number]> del banco de la ciudad.
+      invalid-rule: <&chr[00A1]>Debes especificar una regla v<&chr[00E1]>lida! Las reglas v<&chr[00E1]>lidas son <def[rulelist]>
+      invalid-rank: <&chr[00A1]>Debes especificar un rango v<&chr[00E1]>lido! Los rangos v<&chr[00E1]>lidos son <def[ranklist]>
+      outline-enabled: Ahora ver<&chr[00E1]>s el borde de los chunks cuando entres en ellos.
+      outline-disabled: Ya no ver<&chr[00E1]>s el borde de los chunks cuando entres en ellos.
+      invalid-center-chunk: S<&chr[00F3]>lo puedes fijar el centro de tu ciudad dentro de los l<&chr[00ED]>mites de tu ciudad.
+      invalid-spawnpoint-location: S<&chr[00F3]>lo puedes fijar un punto de aparici<&chr[00F3]>n dentro de los l<&chr[00ED]>mites de tu ciudad.
+      invalid-type-for-spawnpoint: <&chr[00A1]>S<&chr[00F3]>lo puedes fijar un punto de aparici<&chr[00F3]>n para una ciudad o puesto avanzado! <&chr[00A1]>No para <def[type]>!
+      invalid-type-for-center: <&chr[00A1]>No puedes fijar el centro de tu ciudad en un chunk <def[type]>!
+      not-outpost-chunk: <&chr[00A1]><&chr[00C9]>ste no es un chunk de puesto avanzado!
+      spawnpoint-updated: El punto de aparici<&chr[00F3]>n de tu ciudad ha sido actualizado.
+      # executable messages
+      town-created: <&chr[00A1]><def[playername]> cre<&chr[00F3]> la ciudad de <def[townname]>!
+      town-disbanded: <&chr[00A1]>La ciudad de <def[name]> se ha arruinado!
+      player-joined-town: <&chr[00A1]><def[playername]> se ha unido a tu ciudad!
+      player-joined-town-personal: <&chr[00A1]>Te has unido a la ciudad de <def[townname]>!
+      player-left-town: <&chr[00A1]><def[playername]> abandon<&chr[00F3]> tu ciudad!
+      player-left-town-personal: <&chr[00A1]>Has abandonado la ciudad de <def[townname]>!
+      player-kicked: <&chr[00A1]><def[playername]> fue expulsado de tu ciudad!
+      player-kicked-personal: <&chr[00A1]>Has sido expulsado de la ciudad de <def[townname]>!
+      town-renamed: Tu ciudad ha sido renombrada a <def[townname]>
+      bonus-chunks: Tu ciudad ha sido recompensada con <def[amount]> chunks de bonificaci<&chr[00F3]>n.
+      bonus-outpost: Tu ciudad ha sido recompensada con <def[amount]> puestos avanzados de bonificaci<&chr[00F3]>n.
+      deposit-money: <def[playername]> deposit<&chr[00F3]> $<def[amount]> en el banco de la ciudad.
+      bonus-money: <&chr[00A1]>Tu cuidad ha sido recompensada con $<def[amount]>!
+      chunk_claim: <&chr[00A1]><def[playername]> reclam<&chr[00F3]> un chunk de tierra!
+      chunk-reward-claim: <&chr[00A1]>Tu ciudad ha recibido un chunk de tierra!
+      chunk_unclaim: <&chr[00A1]><def[playername]> liber<&chr[00F3]> un chunk de tierra!
+      chunk-reward-unclaim: <&chr[00A1]>Tu ciudad ha perdido un chunk de tierra!
+      rule-change: <def[player].name> cambi<&chr[00F3]> la regla <def[rule]> a <def[state]>.
+      forced-rule-change: La regla <def[rule]> en tu ciudad fue fijada a <def[state]>.
+      rank-change: <def[playername]> ha sido asignado el rango <def[rank]>.
 ########################
 #
 # tags
