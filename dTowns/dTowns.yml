@@ -8,7 +8,7 @@ towns_version:
   name: dTowns
   id: 110
   description: dTowns
-  version: 2
+  version: 5
 towns_script_tracker:
   type: world
   debug: false
@@ -24,7 +24,7 @@ towns_file_handler:
   type: world
   debug: false
   events:
-    on server prestart priority:-1:
+    on server prestart:
     - run towns_reload_config
     - wait 1t
     - run towns_load_lookup_table
@@ -1281,6 +1281,93 @@ towns_translations:
       rule-change: <def[player].name> cambi<&chr[00F3]> la regla <def[rule]> a <def[state]>.
       forced-rule-change: La regla <def[rule]> en tu ciudad fue fijada a <def[state]>.
       rank-change: <def[playername]> ha sido asignado el rango <def[rank]>.
+    french:
+      # command help
+      command-help-info: Affiche cette page.
+      command-info-info: Affiche des information sur votre ville.
+      command-list-info: Affiche une liste de villes existantes.
+      command-create-info: Cr<&chr[00E9]>e une nouvelle ville.
+      command-teleport-info: Ouvre le menu de t<&chr[00E9]>l<&chr[00E9]>portation.
+      command-setspawn-info: G<&chr[00E8]>re les points de spawn dans votre ville.
+      command-center-info: Fixe le chunk central de votre ville.
+      command-teleport-info: Vous permet de vous t<&chr[00E9]>l<&chr[00E9]>porter <&chr[00E0]> divers endroits.
+      command-invite-info: Invite un joueur <&chr[00E0]> votre ville.
+      command-accept-info: Accepte votre invitation en attente.
+      command-leave-info: Vous retire de votre ville actuelle.
+      command-leave-info: Expulse un joueur de votre ville.
+      command-deposit-info: D<&chr[00E9]>pose de l'argent dans votre ville.
+      command-withdraw-info: Pr<&chr[00E9]>leve de l'argent de votre ville.
+      command-toggle-info: Bascule une certaine r<&chr[00E8]>gle dans votre ville.
+      command-rank-info: Change un grade d'un joueur.
+      command-claim-info: Annexe le chunk ou vous vous tenez.
+      command-outpost-info: Annexe un avant-poste <&chr[00E0]> votre location.
+      command-unclaim-info: Desanexxe le chunk ou vous vous tenez.
+      command-disband-info: Dissoud votre ville.
+      command-rename-info: Change le nom de votre ville.
+      command-map-info: Montre une carte de votre zone actuelle.
+      command-outline-info: Montre le contour d'un chunk de ville.
+      # command response
+      already-in-town: Vous faite d<&chr[00E9]>j<&chr[00E0]> partit d'une ville!
+      not-enough-money-to-create: Vous n'avez pas assez d'argent pour cr<&chr[00E9]>er une ville. Vous devez avoir $<def[cost]>.
+      not-allowed-create: Vous n'êtes pas autoris<&chr[00E9]> <&chr[00E0]> cr<&chr[00E9]>er une ville.
+      no-name-specified: Vous devez sp<&chr[00E9]>cifier un nom pour votre ville!
+      not-in-town: Vous n'êtes pas dans une ville!
+      player-not-in-town: Ce joueur n'est pas dans une ville!
+      not-owner-of-town: Vous n'êtes pas le propri<&chr[00E9]>taire de cette ville.
+      insufficient-rank: Vous n'avez pas le bon rang pour faire cela.
+      invalid-player-specified: Ce joueur n'est pas en ligne!
+      inexistant-player-specified: Ce joueur n'existe pas!
+      target-player-already-in-town: <def[playername]> est d<&chr[00E9]>ja dans une ville!
+      invited-player: Vous avez invit<&chr[00E9]> <def[playername]> <&chr[00E0]> votre ville.
+      invitation-recieved: <def[playername]> vous a invit<&chr[00E9]> <&chr[00E0]> rejoindre la ville de <def[townname]>!<&nl>Tapez '<def[command]> accept' pour accepter l'invitation!
+      no-invitations: Vous n'avez aucune invitation <&chr[00E0]> accepter!
+      invalid-invitation: La ville ou vous avez <&chr[00E9]>t<&chr[00E9]> invit<&chr[00E9]> n'existe plus.
+      owner-cant-leave: Vous êtes le propri<&chr[00E9]>taire de cette ville! Vous ne pouvez pas la quitterY. Utilisez <def[command]> disband <&chr[00E0]> la place.
+      player-not-in-your-town: <def[playername]> n'est pas dans votre ville.
+      must-specify-townname: Vous devez sp<&chr[00E9]>cifier un nom pour votre ville!
+      not-enough-money: Votre ville n'a pas assez d'argent dans la banque.
+      not-enough-money-player: Vous n'avez pas autant cette somme.
+      max-chunks: Votre ville est d<&chr[00E9]>j<&chr[00E0]> <&chr[00E0]> sa taille limite de <def[max]> chunks.
+      max-outposts: Votre ville ne peut pas avoir d'avants-poste suppl<&chr[00E9]>mentaires.
+      chunk-already-claimed-by-you: Ce chunk appartient d<&chr[00E9]>ja <&chr[00E0]> votre ville.
+      chunk-already-claimed-by-other: Ce chunk est d<&chr[00E9]>j<&chr[00E0]> occup<&chr[00E9]>!
+      chunk-not-attached: Vous ne pouvez annexer seulement le terrain autour de votre ville.
+      has-no-chunks: Votre ville n'a pas de chunk.
+      chunk-not-yours: Votre chunk n'appartient pas <&chr[00E0]> votre ville.
+      chunk-is-essential: Vous ne pouvez pas desannexer ce chunk car les chunk autour de cette zone ne sont pas connect<&chr[00E9]> <&chr[00E0]> aucun avant-poste ou chunk central.
+      must-specify-valid-number: Vous devez sp<&chr[00E9]>cifier un montant valide!
+      withdrew-money: Vous avez pr<&chr[00E9]>lev<&chr[00E9]> <def[number]> de la banque de ville.
+      invalid-rule: Vous devez sp<&chr[00E9]>cifier une r<&chr[00E8]>gle valide! Les r<&chr[00E8]>gles valide sont <def[rulelist]>
+      invalid-rank: Vous devez sp<&chr[00E9]>cifier un rang valide! Les rangs valide sont <def[ranklist]>
+      outline-enabled: Vous allez maintenant voir le contour des chunk lorsque vous entrez sur eux.
+      outline-disabled: Vous n'allez plus voir le contor des chunk lorsque vous entrez sur eux.
+      invalid-center-chunk: Vous pouvez seulement fixer le point central de votre ville dans les limites de votre ville.
+      invalid-spawnpoint-location: Vous pouvez seulement fixer un point de spawn dans les limites de votre ville.
+      invalid-type-for-spawnpoint: Vous pouvez seulement fixer un point de spawn pour votre ville ou vos avant-poste! Pas pour <def[type]>!
+      invalid-type-for-center: Vous ne pouvez pas fixer le centre de votre ville sur un chunk <def[type]>!
+      not-outpost-chunk: Cela n'est pas un chunk avant-poste!
+      spawnpoint-updated: Votre point de spawn a <&chr[00E9]>t<&chr[00E9]> mis <&chr[00E0]> jour.
+      # executable messages
+      town-created: <def[playername]> a cr<&chr[00E9]>e la ville de <def[townname]>!
+      town-disbanded: La ville de <def[townname]> est tomb<&chr[00E9]> en ruine!
+      player-joined-town: <def[playername]> a rejoint votre ville!
+      player-joined-town-personal: Vous avez rejoint la ville de <def[townname]>!
+      player-left-town: <def[playername]> a quitt<&chr[00E9]> votre ville!
+      player-left-town-personal: Vous avez quitt<&chr[00E9]> la ville de <def[townname]>!
+      player-kicked: <def[playername]> a <&chr[00E9]>t<&chr[00E9]> expuls<&chr[00E9]> de votre ville!
+      player-kicked-personal: Vous avez <&chr[00E9]>t<&chr[00E9]> expuls<&chr[00E9]> de la ville de <def[townname]>!
+      town-renamed: Votre ville a <&chr[00E9]>t<&chr[00E9]> renomm<&chr[00E9]> en <def[townname]>
+      bonus-chunks: Il a <&chr[00E9]>t<&chr[00E9]> attribu<&chr[00E9]> <&chr[00E0]> votre ville <def[amount]> chunks bonus.
+      bonus-outpost: Il a <&chr[00E9]>t<&chr[00E9]> attribu<&chr[00E9]> <&chr[00E0]> votre ville <def[amount]> avant-poste bonus.
+      deposit-money: <def[playername]> <&chr[00E0]> d<&chr[00E9]>pos<&chr[00E9]> $<def[amount]> dans la banque de la ville.
+      bonus-money: Il a <&chr[00E9]>t<&chr[00E9]> attribu<&chr[00E9]> <&chr[00E0]> votre ville $<def[amount]>!
+      chunk_claim: <def[playername]> a annex<&chr[00E9]> un chunk de terrain!
+      chunk-reward-claim: Il vous a <&chr[00E9]>t<&chr[00E9]> attribu<&chr[00E9]> <&chr[00E0]> votre ville un chunk de terrain!
+      chunk_unclaim: <def[playername]> a d<&chr[00E9]>sannex<&chr[00E9]> un chunk de terrain!
+      chunk-reward-unclaim: Votre ville a perdu un chunk de terrain!
+      rule-change: <def[player].name> a chang<&chr[00E9]> la r<&chr[00E8]>gle <def[rule]> <&chr[00E0]> <def[state]>.
+      forced-rule-change: La r<&chr[00E8]>gle <def[rule]> dans votre ville a <&chr[00E9]>t<&chr[00E9]> fix<&chr[00E9]> <&chr[00E0]> <def[state]>.
+      rank-change: <def[playername]> a <&chr[00E9]>t<&chr[00E9]> assign<&chr[00E9]> le rang de <def[rank]>.
 ########################
 #
 # tags
