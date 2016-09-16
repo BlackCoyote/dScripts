@@ -8,7 +8,7 @@ towns_version:
   name: dTowns
   id: 110
   description: dTowns
-  version: 5
+  version: 6
 towns_script_tracker:
   type: world
   debug: false
@@ -1120,7 +1120,7 @@ towns_translations:
       command-invite-info: Invites a player to your town.
       command-accept-info: Accepts your pending invitation.
       command-leave-info: Removes you from your current town.
-      command-leave-info: Kicks a player from your town.
+      command-kick-info: Kicks a player from your town.
       command-deposit-info: Deposits money into your town.
       command-withdraw-info: Withdraws money from your town.
       command-toggle-info: Toggles a certain rule in your town.
@@ -1207,7 +1207,7 @@ towns_translations:
       command-invite-info: Invita a un jugador a tu ciudad.
       command-accept-info: Acepta tu invitaci<&chr[00F3]>n pendiente.
       command-leave-info: Te elimina de tu ciudad actual.
-      command-leave-info: Expulsa a un jugador de tu ciudad.
+      command-kick-info: Expulsa a un jugador de tu ciudad.
       command-deposit-info: Deposita dinero en tu ciudad.
       command-withdraw-info: Extrae dinero de tu ciudad.
       command-toggle-info: Cambia una regla determinada de tu ciudad.
@@ -1294,7 +1294,7 @@ towns_translations:
       command-invite-info: Invite un joueur <&chr[00E0]> votre ville.
       command-accept-info: Accepte votre invitation en attente.
       command-leave-info: Vous retire de votre ville actuelle.
-      command-leave-info: Expulse un joueur de votre ville.
+      command-kick-info: Expulse un joueur de votre ville.
       command-deposit-info: D<&chr[00E9]>pose de l'argent dans votre ville.
       command-withdraw-info: Pr<&chr[00E9]>leve de l'argent de votre ville.
       command-toggle-info: Bascule une certaine r<&chr[00E8]>gle dans votre ville.
