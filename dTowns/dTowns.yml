@@ -248,19 +248,19 @@ towns_command_handler:
       - narrate "<&c><parse:<proc[towns_get_translation].context[insufficient-rank]>>" format:towns_format1
       - queue clear
       }
-    - define target <server.match_player[<context.args.get[2]>]||null>
+    - define target <server.match_player[<context.args.get[2]||null>]||null>
     - if <def[target]> == null {
       - narrate "<&c><parse:<proc[towns_get_translation].context[invalid-player-specified]>>" format:towns_format1
       - queue clear
       }
+    - define playername <def[target].name||null>
     - if <proc[towns_get_town].context[<def[target]>]> != null {
-      - define playername <def[target].name>
       - narrate "<&c><parse:<proc[towns_get_translation].context[target-player-already-in-town]>>" format:towns_format1
       - queue clear
       }
     - flag <def[target]> towns.invited_to:<def[town]> duration:1m
     - narrate "<parse:<proc[towns_get_translation].context[invited-player]>>" format:towns_format1
-    - define playername <player.name>
+    - define playername <player.name||null>
     - define townname <proc[towns_get_name].context[<def[town]>]||unnamed>
     - define command <script.yaml_key[usage]>
     - narrate "<parse:<proc[towns_get_translation].context[invitation-recieved]>>" targets:<def[target]> format:towns_format1
