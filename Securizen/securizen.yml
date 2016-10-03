@@ -66,8 +66,7 @@ securizen_write_data:
   speed: 0
   definitions: type|cause|location|material|old_material
   script:
-  - wait 1t
-  - async:
+    - wait 1t
     - if !<yaml.list.contains[securizen_<def[location].chunk>]> {
       - if !<server.has_file[/securizen/data/<def[location].chunk.world.name>/<def[location].chunk.x>/<def[location].chunk.z>/data.yml]> {
         - yaml create id:securizen_<def[location].chunk>
