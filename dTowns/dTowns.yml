@@ -8,7 +8,7 @@ towns_version:
   name: dTowns
   id: 110
   description: dTowns
-  version: 6
+  version: 7
 towns_script_tracker:
   type: world
   debug: false
@@ -29,6 +29,8 @@ towns_file_handler:
     - wait 1t
     - run towns_load_lookup_table
     - run towns_update_townlist
+    - wait 1t
+    - run towns_fix_cuboids
     on reload scripts:
     - run towns_reload_config
     on player joins:
@@ -114,6 +116,17 @@ towns_save:
       - run towns_checkunload_town def:<def[town]>
       }
   - announce to_ops "<&7>Towns data saved."
+towns_fix_cuboids:
+  type: task
+  debug: false
+  speed: 0
+  script:
+  - foreach <yaml[towns_lookup_table].list_keys[towns]>:
+    - define town <def[value]>
+    - foreach <proc[towns_get_chunks].context[<def[town]>]>:
+      - define chunk <proc[towns_format_chunk_to_normal].context[<def[value]>]>
+      - define chunkname <def[chunk]>
+      - note <def[chunk].cuboid> as:towns/<def[town]>/<def[chunkname]>
 ########################
 #
 # command handler
