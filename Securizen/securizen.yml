@@ -3,7 +3,7 @@ securizen:
   name: Securizen
   id: 51
   description: logging and rolling back features for your entire server.
-  version: 12
+  version: 13
 #####
 # Events for handling the writing and saving of data.
 ####
@@ -35,7 +35,7 @@ securizen_core:
     - run securizen_write_data def:block_change|<player>|<context.relative>|%material%|<context.relative.material>
     on player fills bucket priority:999 ignorecancelled:false:
     - if <context.cancelled||false> determine cancelled
-    - run securizen_write_data def:block_change|<player>|<context.location>|m@air
+    - run securizen_write_data def:block_change|<player>|<context.location>|m@air|<context.material>
     on entity explodes priority:999 ignorecancelled:false:
     - if <context.cancelled||false> determine cancelled
     - foreach <context.blocks> {
