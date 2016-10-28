@@ -1717,7 +1717,6 @@ towns_update_dynmap_chunk:
       - if <def[town]> == null queue clear
       - define cuboid <def[chunk].cuboid>
       - define world <def[cuboid].max.world.name>
-      - if <def[world]> != spawn110 queue clear
       - define name <proc[towns_get_name].context[<def[town]>]>
       - choose <proc[towns_get_chunk_type].context[<def[chunk]>]>:
         - case center:
