@@ -8,7 +8,7 @@ towns_version:
   name: dTowns
   id: 110
   description: dTowns
-  version: 7
+  version: 8
 towns_script_tracker:
   type: world
   debug: false
@@ -1293,7 +1293,7 @@ towns_translations:
       invalid-type-for-center: <&chr[00A1]>No puedes fijar el centro de tu ciudad en un chunk <def[type]>!
       not-outpost-chunk: <&chr[00A1]><&chr[00C9]>ste no es un chunk de puesto avanzado!
       spawnpoint-updated: El punto de aparici<&chr[00F3]>n de tu ciudad ha sido actualizado.
-      no-economy: Town economy is not enabled.
+      no-economy: La econom<&chr[00ED]>a de las ciudades no est<&chr[00E1]> activada.
       # executable messages
       town-created: <&chr[00A1]><def[playername]> cre<&chr[00F3]> la ciudad de <def[townname]>!
       town-disbanded: <&chr[00A1]>La ciudad de <def[name]> se ha arruinado!
@@ -1381,7 +1381,7 @@ towns_translations:
       invalid-type-for-center: Vous ne pouvez pas fixer le centre de votre ville sur un chunk <def[type]>!
       not-outpost-chunk: Cela n'est pas un chunk avant-poste!
       spawnpoint-updated: Votre point de spawn a <&chr[00E9]>t<&chr[00E9]> mis <&chr[00E0]> jour.
-      no-economy: Town economy is not enabled.
+      no-economy: L'<&chr[00E9]>conomie de la ville n'est pas activ<&chr[00E9]>e.
       # executable messages
       town-created: <def[playername]> a cr<&chr[00E9]>e la ville de <def[townname]>!
       town-disbanded: La ville de <def[townname]> est tomb<&chr[00E9]> en ruine!
