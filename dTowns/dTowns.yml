@@ -52,6 +52,7 @@ towns_reload_config:
     - yaml load:/towns/config/config.yml id:towns_config
     } else {
     - yaml create id:towns_config
+    - yaml id:towns_config set towns.use_economy:true
     - yaml id:towns_config set towns.creation.creation_cost:500
     - yaml id:towns_config set towns.claiming.claiming_cost:100
     - yaml id:towns_config set towns.claiming.outpost_claiming_cost:1000
@@ -224,11 +225,6 @@ towns_command_handler:
       - narrate "<&c><parse:<proc[towns_get_translation].context[already-in-town]>>" format:towns_format1
       - queue clear
       }
-    - define cost <yaml[towns_config].read[towns.creation.creation_cost]||100>
-    - if <player.money> < <def[cost]> {
-      - narrate "<&c><parse:<proc[towns_get_translation].context[not-enough-money-to-create]>>" format:towns_format1
-      - queue clear
-      }
     - if <player.has_permission[towns.town.create].not||true> {
       - narrate "<&c><parse:<proc[towns_get_translation].context[not-allowed-create]>>" format:towns_format1
       - queue clear
@@ -238,7 +234,14 @@ towns_command_handler:
       - narrate "<&c><parse:<proc[towns_get_translation].context[no-name-specified]>>" format:towns_format1
       - queue clear
       }
-    - take money qty:<def[cost]>
+    - if <yaml[towns_config].read[towns.use_economy]||true> {
+      - define cost <yaml[towns_config].read[towns.creation.creation_cost]||100>
+      - if <player.money> < <def[cost]> {
+        - narrate "<&c><parse:<proc[towns_get_translation].context[not-enough-money-to-create]>>" format:towns_format1
+        - queue clear
+        }
+      - take money qty:<def[cost]>
+      }
     - run towns_create_town def:<player>|<def[name].escaped>
   disband:
     - define town <proc[towns_get_town]>
@@ -351,10 +354,12 @@ towns_command_handler:
       - narrate "<&c><parse:<proc[towns_get_translation].context[insufficient-rank]>>" format:towns_format1
       - queue clear
       }
-    - if <proc[towns_get_bank_money].context[<def[town]>]> < <yaml[towns_config].read[towns.claiming.claiming_cost]||100> {
-      - define required <yaml[towns_config].read[towns.claiming.claiming_cost]||100>
-      - narrate "<&c><parse:<proc[towns_get_translation].context[not-enough-money]>>" format:towns_format1
-      - queue clear
+    - if <yaml[towns_config].read[towns.use_economy]||true> {
+      - if <proc[towns_get_bank_money].context[<def[town]>]> < <yaml[towns_config].read[towns.claiming.claiming_cost]||100> {
+        - define required <yaml[towns_config].read[towns.claiming.claiming_cost]||100>
+        - narrate "<&c><parse:<proc[towns_get_translation].context[not-enough-money]>>" format:towns_format1
+        - queue clear
+        }
       }
     - define currentchunks <proc[towns_get_chunks].context[<def[town]>]>
     - if <def[currentchunks].size> >= <proc[towns_get_max_chunks].context[<def[town]>]> {
@@ -376,7 +381,9 @@ towns_command_handler:
       - narrate "<&c><parse:<proc[towns_get_translation].context[chunk-already-claimed-by-other]>>" format:towns_format1
       - queue clear
       }
-    - yaml id:towns_town_<def[town]> set town.bank.money:-:<yaml[towns_config].read[towns.claiming.claiming_cost]||100>
+    - if <yaml[towns_config].read[towns.use_economy]||true> {
+      - yaml id:towns_town_<def[town]> set town.bank.money:-:<yaml[towns_config].read[towns.claiming.claiming_cost]||100>
+      }
     - run towns_claim_chunk def:<def[town]>|<def[chunk]>|normal|<player>
   outpost:
     - define town <proc[towns_get_town]>
@@ -388,10 +395,12 @@ towns_command_handler:
       - narrate "<&c><parse:<proc[towns_get_translation].context[insufficient-rank]>>" format:towns_format1
       - queue clear
       }
-    - if <proc[towns_get_bank_money].context[<def[town]>]> < <yaml[towns_config].read[towns.claiming.outpost_claiming_cost]||1000> {
-      - define required <yaml[towns_config].read[towns.claiming.outpost_claiming_cost]||1000>
-      - narrate "<&c><parse:<proc[towns_get_translation].context[not-enough-money]>>" format:towns_format1
-      - queue clear
+    - if <yaml[towns_config].read[towns.use_economy]||true> {
+      - if <proc[towns_get_bank_money].context[<def[town]>]> < <yaml[towns_config].read[towns.claiming.outpost_claiming_cost]||1000> {
+        - define required <yaml[towns_config].read[towns.claiming.outpost_claiming_cost]||1000>
+        - narrate "<&c><parse:<proc[towns_get_translation].context[not-enough-money]>>" format:towns_format1
+        - queue clear
+        }
       }
     - define currentchunks <proc[towns_get_chunks].context[<def[town]>]>
     - if <def[currentchunks].size> >= <proc[towns_get_max_chunks].context[<def[town]>]> {
@@ -417,7 +426,9 @@ towns_command_handler:
       - narrate "<&c><parse:<proc[towns_get_translation].context[chunk-already-claimed-by-other]>>" format:towns_format1
       - queue clear
       }
-    - yaml id:towns_town_<def[town]> set town.bank.money:-:<yaml[towns_config].read[towns.claiming.outpost_claiming_cost]||1000>
+    - if <yaml[towns_config].read[towns.use_economy]||true> {
+      - yaml id:towns_town_<def[town]> set town.bank.money:-:<yaml[towns_config].read[towns.claiming.outpost_claiming_cost]||1000>
+      }
     - run towns_claim_chunk def:<def[town]>|<def[chunk]>|outpost|<player>
   unclaim:
     - define town <proc[towns_get_town]>
@@ -447,6 +458,10 @@ towns_command_handler:
     - run towns_unclaim_chunk def:<def[town]>|<def[chunk]>|<player>
   deposit:
     - define town <proc[towns_get_town]>
+    - if !<yaml[towns_config].read[towns.use_economy]||true> {
+      - narrate "<&c><parse:<proc[towns_get_translation].context[no-economy]>>"
+      - queue clear
+      }
     - if <def[town]> == null {
       - narrate "<&c><parse:<proc[towns_get_translation].context[not-in-town]>>" format:towns_format1
       - queue clear
@@ -464,6 +479,10 @@ towns_command_handler:
     - run towns_give_money def:<def[town]>|<def[amount]>|<player>
   withdraw:
     - define town <proc[towns_get_town]>
+    - if !<yaml[towns_config].read[towns.use_economy]||true> {
+      - narrate "<&c><parse:<proc[towns_get_translation].context[no-economy]>>"
+      - queue clear
+      }
     - if <def[town]> == null {
       - narrate "<&c><parse:<proc[towns_get_translation].context[not-in-town]>>" format:towns_format1
       - queue clear
@@ -1186,6 +1205,7 @@ towns_translations:
       invalid-type-for-center: You can't set your town center on a <def[type]> chunk!
       not-outpost-chunk: This is not an outpost chunk!
       spawnpoint-updated: Your town spawnpoint has been updated.
+      no-economy: Town economy is not enabled.
       # executable messages
       town-created: <def[playername]> created the town of <def[townname]>!
       town-disbanded: The town of <def[townname]> has fallen to ruins!
@@ -1273,6 +1293,7 @@ towns_translations:
       invalid-type-for-center: <&chr[00A1]>No puedes fijar el centro de tu ciudad en un chunk <def[type]>!
       not-outpost-chunk: <&chr[00A1]><&chr[00C9]>ste no es un chunk de puesto avanzado!
       spawnpoint-updated: El punto de aparici<&chr[00F3]>n de tu ciudad ha sido actualizado.
+      no-economy: Town economy is not enabled.
       # executable messages
       town-created: <&chr[00A1]><def[playername]> cre<&chr[00F3]> la ciudad de <def[townname]>!
       town-disbanded: <&chr[00A1]>La ciudad de <def[name]> se ha arruinado!
@@ -1360,6 +1381,7 @@ towns_translations:
       invalid-type-for-center: Vous ne pouvez pas fixer le centre de votre ville sur un chunk <def[type]>!
       not-outpost-chunk: Cela n'est pas un chunk avant-poste!
       spawnpoint-updated: Votre point de spawn a <&chr[00E9]>t<&chr[00E9]> mis <&chr[00E0]> jour.
+      no-economy: Town economy is not enabled.
       # executable messages
       town-created: <def[playername]> a cr<&chr[00E9]>e la ville de <def[townname]>!
       town-disbanded: La ville de <def[townname]> est tomb<&chr[00E9]> en ruine!
