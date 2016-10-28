@@ -1335,13 +1335,13 @@ towns_translations:
       command-rank-info: Change un grade d'un joueur.
       command-claim-info: Annexe le chunk ou vous vous tenez.
       command-outpost-info: Annexe un avant-poste <&chr[00E0]> votre location.
-      command-unclaim-info: Desanexxe le chunk ou vous vous tenez.
-      command-disband-info: Dissoud votre ville.
+      command-unclaim-info: Desannexe le chunk ou vous vous tenez.
+      command-disband-info: Dissous votre ville.
       command-rename-info: Change le nom de votre ville.
       command-map-info: Montre une carte de votre zone actuelle.
       command-outline-info: Montre le contour d'un chunk de ville.
       # command response
-      already-in-town: Vous faite d<&chr[00E9]>j<&chr[00E0]> partit d'une ville!
+      already-in-town: Vous faite d<&chr[00E9]>j<&chr[00E0]> partie d'une ville!
       not-enough-money-to-create: Vous n'avez pas assez d'argent pour cr<&chr[00E9]>er une ville. Vous devez avoir $<def[cost]>.
       not-allowed-create: Vous n'êtes pas autoris<&chr[00E9]> <&chr[00E0]> cr<&chr[00E9]>er une ville.
       no-name-specified: Vous devez sp<&chr[00E9]>cifier un nom pour votre ville!
@@ -1356,13 +1356,13 @@ towns_translations:
       invitation-recieved: <def[playername]> vous a invit<&chr[00E9]> <&chr[00E0]> rejoindre la ville de <def[townname]>!<&nl>Tapez '<def[command]> accept' pour accepter l'invitation!
       no-invitations: Vous n'avez aucune invitation <&chr[00E0]> accepter!
       invalid-invitation: La ville ou vous avez <&chr[00E9]>t<&chr[00E9]> invit<&chr[00E9]> n'existe plus.
-      owner-cant-leave: Vous êtes le propri<&chr[00E9]>taire de cette ville! Vous ne pouvez pas la quitterY. Utilisez <def[command]> disband <&chr[00E0]> la place.
+      owner-cant-leave: Vous êtes le propri<&chr[00E9]>taire de cette ville! Vous ne pouvez pas la quitter. Utilisez <def[command]> disband <&chr[00E0]> la place.
       player-not-in-your-town: <def[playername]> n'est pas dans votre ville.
       must-specify-townname: Vous devez sp<&chr[00E9]>cifier un nom pour votre ville!
       not-enough-money: Votre ville n'a pas assez d'argent dans la banque.
-      not-enough-money-player: Vous n'avez pas autant cette somme.
+      not-enough-money-player: Vous n'avez pas autant de cette somme.
       max-chunks: Votre ville est d<&chr[00E9]>j<&chr[00E0]> <&chr[00E0]> sa taille limite de <def[max]> chunks.
-      max-outposts: Votre ville ne peut pas avoir d'avants-poste suppl<&chr[00E9]>mentaires.
+      max-outposts: Votre ville ne peut pas avoir d'avant-poste suppl<&chr[00E9]>mentaires.
       chunk-already-claimed-by-you: Ce chunk appartient d<&chr[00E9]>ja <&chr[00E0]> votre ville.
       chunk-already-claimed-by-other: Ce chunk est d<&chr[00E9]>j<&chr[00E0]> occup<&chr[00E9]>!
       chunk-not-attached: Vous ne pouvez annexer seulement le terrain autour de votre ville.
@@ -1374,7 +1374,7 @@ towns_translations:
       invalid-rule: Vous devez sp<&chr[00E9]>cifier une r<&chr[00E8]>gle valide! Les r<&chr[00E8]>gles valide sont <def[rulelist]>
       invalid-rank: Vous devez sp<&chr[00E9]>cifier un rang valide! Les rangs valide sont <def[ranklist]>
       outline-enabled: Vous allez maintenant voir le contour des chunk lorsque vous entrez sur eux.
-      outline-disabled: Vous n'allez plus voir le contor des chunk lorsque vous entrez sur eux.
+      outline-disabled: Vous n'allez plus voir le contour des chunk lorsque vous entrez sur eux.
       invalid-center-chunk: Vous pouvez seulement fixer le point central de votre ville dans les limites de votre ville.
       invalid-spawnpoint-location: Vous pouvez seulement fixer un point de spawn dans les limites de votre ville.
       invalid-type-for-spawnpoint: Vous pouvez seulement fixer un point de spawn pour votre ville ou vos avant-poste! Pas pour <def[type]>!
@@ -1392,7 +1392,7 @@ towns_translations:
       player-kicked: <def[playername]> a <&chr[00E9]>t<&chr[00E9]> expuls<&chr[00E9]> de votre ville!
       player-kicked-personal: Vous avez <&chr[00E9]>t<&chr[00E9]> expuls<&chr[00E9]> de la ville de <def[townname]>!
       town-renamed: Votre ville a <&chr[00E9]>t<&chr[00E9]> renomm<&chr[00E9]> en <def[townname]>
-      bonus-chunks: Il a <&chr[00E9]>t<&chr[00E9]> attribu<&chr[00E9]> <&chr[00E0]> votre ville <def[amount]> chunks bonus.
+      bonus-chunks: Il a <&chr[00E9]>t<&chr[00E9]> attribu<&chr[00E9]> <&chr[00E0]> votre ville <def[amount]> chunk bonus.
       bonus-outpost: Il a <&chr[00E9]>t<&chr[00E9]> attribu<&chr[00E9]> <&chr[00E0]> votre ville <def[amount]> avant-poste bonus.
       deposit-money: <def[playername]> <&chr[00E0]> d<&chr[00E9]>pos<&chr[00E9]> $<def[amount]> dans la banque de la ville.
       bonus-money: Il a <&chr[00E9]>t<&chr[00E9]> attribu<&chr[00E9]> <&chr[00E0]> votre ville $<def[amount]>!
