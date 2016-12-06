@@ -8,7 +8,7 @@ towns_version:
   name: dTowns
   id: 110
   description: dTowns
-  version: 8
+  version: 9
 towns_script_tracker:
   type: world
   debug: false
@@ -126,7 +126,7 @@ towns_fix_cuboids:
     - define town <def[value]>
     - foreach <proc[towns_get_chunks].context[<def[town]>]>:
       - define chunk <proc[towns_format_chunk_to_normal].context[<def[value]>]>
-      - define chunkname <def[chunk]>
+      - define chunkname <proc[towns_format_chunk_to_save].context[<def[chunk]>]>
       - note <def[chunk].cuboid> as:towns/<def[town]>/<def[chunkname]>
 ########################
 #
