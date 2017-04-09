@@ -3,14 +3,14 @@ scroller_version:
   name: Scroll Wheel Selector
   id: 84
   description: A menu that uses the mouse scroll wheel to select.
-  version: 2
+  version: 3
 scroller:
   type: task
   debug: false
   speed: 0
   script:
   - flag player scroller_responses:!
-  - foreach <queue.definitions.exclude[1]> {
+  - foreach <queue.definitions.exclude[1].exclude[raw_context]> {
     - flag player "scroller_responses:->:<&sp><def[%value%]>"
     }
   - flag <player> scroller_responses_counter:0
